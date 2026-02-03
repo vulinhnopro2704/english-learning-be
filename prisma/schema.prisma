@@ -1,56 +1,55 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../generated/prisma"
-  moduleFormat = "cjs"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model courses {
+model Course {
   id          Int       @id(map: "api_course_pkey") @default(autoincrement())
   title       String    @db.VarChar(255)
-  en_title    String?   @db.VarChar(255)
+  enTitle    String?   @db.VarChar(255)
   description String?
   image       String?   @db.VarChar(255)
-  created_at  DateTime  @db.Timestamptz(6)
-  updated_at  DateTime  @db.Timestamptz(6)
+  createdAt  DateTime  @db.Timestamptz(6)
+  updatedAt  DateTime  @db.Timestamptz(6)
   icon        String?   @db.VarChar(10)
-  lessons     lessons[]
+  lessons     Lesson[]
 }
 
 /// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
-model lessons {
+model Lesson {
   id          Int      @id(map: "api_lesson_pkey") @default(autoincrement())
   title       String   @db.VarChar(255)
   description String?
   image       String?  @db.VarChar(255)
-  created_at  DateTime @db.Timestamptz(6)
-  updated_at  DateTime @db.Timestamptz(6)
-  course_id   Int?
-  courses     courses? @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "api_lesson_course_id_cc1d5c75_fk_api_course_id")
-  words       words[]
+  createdAt  DateTime @db.Timestamptz(6)
+  updatedAt  DateTime @db.Timestamptz(6)
+  courseId   Int?
+  course     Course? @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "api_lesson_course_id_cc1d5c75_fk_api_course_id")
+  words       Word[]
 
-  @@index([course_id], map: "api_lesson_course_id_cc1d5c75")
+  @@index([courseId], map: "api_lesson_course_id_cc1d5c75")
 }
 
 /// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
-model words {
+model Word {
   id            Int      @id(map: "api_word_pkey") @default(autoincrement())
   word          String   @db.VarChar(255)
   pronunciation String?  @db.VarChar(255)
   meaning       String
   example       String?
-  example_vi    String?
+  exampleVi    String?
   image         String?  @db.VarChar(255)
   audio         String?  @db.VarChar(255)
-  created_at    DateTime @db.Timestamptz(6)
-  updated_at    DateTime @db.Timestamptz(6)
-  lesson_id     Int?
+  createdAt    DateTime @db.Timestamptz(6)
+  updatedAt    DateTime @db.Timestamptz(6)
+  lessonId     Int?
   pos           String?  @db.VarChar(255)
   cefr          String?  @db.VarChar(10)
-  lessons       lessons? @relation(fields: [lesson_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "api_word_lesson_id_ee17c753_fk_api_lesson_id")
+  lesson       Lesson? @relation(fields: [lessonId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "api_word_lesson_id_ee17c753_fk_api_lesson_id")
 
-  @@index([lesson_id], map: "api_word_lesson_id_ee17c753")
+  @@index([lessonId], map: "api_word_lesson_id_ee17c753")
 }
