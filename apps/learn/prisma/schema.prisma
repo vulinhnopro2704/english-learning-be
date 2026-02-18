@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Content Models
+model Course {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(255)
+  enTitle     String?  @db.VarChar(255)
+  description String?
+  image       String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+  icon        String?  @db.VarChar(10)
+  
+  lessons     Lesson[]
+  
+  progress    UserCourseProgress[]
+}
+
+model Lesson {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(255)
+  description String?
+  image       String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+  courseId    Int?
+  
+  course      Course?  @relation(fields: [courseId], references: [id])
+  words       Word[]
+  
+  progress    UserLessonProgress[]
+  
+  @@index([courseId])
+}
+
+model Word {
+  id            Int      @id @default(autoincrement())
+  word          String   @db.VarChar(255)
+  pronunciation String?  @db.VarChar(255)
+  meaning       String
+  example       String?
+  exampleVi     String?
+  image         String?  @db.VarChar(255)
+  audio         String?  @db.VarChar(255)
+  pos           String?  @db.VarChar(255)
+  cefr          String?  @db.VarChar(10)
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(6)
+  lessonId      Int?
+  
+  lesson        Lesson?  @relation(fields: [lessonId], references: [id])
+  
+  progress      UserWordProgress[]
+  
+  @@index([lessonId])
+}
+
+// User Learning Data (Linked by userId)
+model UserStreak {
+  userId        Int      @id // Primary Key is UserId
+  currentStreak Int      @default(0)
+  longestStreak Int      @default(0)
+  lastActivity  DateTime @db.Timestamptz(6)
+}
+
+model UserCourseProgress {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id") // No relation to User table
+  courseId    Int
+  
+  isCompleted Boolean  @default(false)
+  startedAt   DateTime @default(now()) @db.Timestamptz(6)
+  lastAccessedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, courseId])
+  @@index([userId])
+}
+
+model UserLessonProgress {
+  id          Int          @id @default(autoincrement())
+  userId      Int
+  lessonId    Int
+  
+  status      LessonStatus @default(LOCKED)
+  score       Int          @default(0)
+  completedAt DateTime?    @db.Timestamptz(6)
+  
+  lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+}
+
+model UserWordProgress {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  wordId      Int
+  
+  status      WordMasteryLevel @default(NEW)
+  proficiency Int              @default(0) // 0-100
+  nextReview  DateTime?        @db.Timestamptz(6) // SRS Algorithm
+  lastReviewedAt DateTime?     @db.Timestamptz(6)
+  
+  word        Word             @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordId])
+  @@index([userId])
+  @@index([nextReview]) // For cron jobs finding words to review
+}
+
+enum LessonStatus {
+  LOCKED
+  UNLOCKED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum WordMasteryLevel {
+  NEW       // 0 - Not yet learned
+  LEVEL_1   // 1 - Just learned / Short term
+  LEVEL_2   // 2 - 1 day
+  LEVEL_3   // 3 - 3 days
+  LEVEL_4   // 4 - 1 week
+  LEVEL_5   // 5 - 2 weeks / Mastered
+}

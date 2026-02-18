@@ -1,29 +1,36 @@
 {
   "name": "english-be",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "English Learning Platform",
+  "author": "TRUONG VU LINH",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
-    "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "build:auth": "nest build auth",
+    "build:learn": "nest build learn",
+    "build:storage": "nest build storage",
+    "start:auth": "nest start auth",
+    "start:auth:dev": "nest start auth --watch",
+    "start:auth:prod": "node dist/apps/auth/main",
+    "start:learn": "nest start learn",
+    "start:learn:dev": "nest start learn --watch",
+    "start:learn:prod": "node dist/apps/learn/main",
+    "start:storage": "nest start storage",
+    "start:storage:dev": "nest start storage --watch",
+    "start:storage:prod": "node dist/apps/storage/main"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.1",
+    "passport": "^0.7.0",
+    "passport-facebook": "^3.0.0",
+    "passport-google-oauth20": "^2.0.0",
     "prisma": "^7.3.0",
+    "@prisma/client": "^7.3.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -59,7 +66,7 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
@@ -67,7 +74,10 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "coverageDirectory": "./coverage",
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/apps/"
+    ]
   }
 }
