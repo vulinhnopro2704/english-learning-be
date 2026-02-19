@@ -2,8 +2,8 @@ import { Controller, Get } from '@nestjs/common';
 
 @Controller('storage')
 export class StorageController {
-  @Get('health')
-  healthCheck() {
-    return 'ok';
+  @Get('hello')
+  getHello(): string {
+    return 'Hello, Storage!';
   }
 }

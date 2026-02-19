@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { LearnService } from './learn.service';
+import { LearnService } from './learn.service.js';
 
 @Controller('learn')
 export class LearnController {

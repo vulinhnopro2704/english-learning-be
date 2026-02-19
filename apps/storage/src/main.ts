@@ -1,5 +1,6 @@
+import 'dotenv';
 import { NestFactory } from '@nestjs/core';
-import { StorageModule } from './storage.module';
+import { StorageModule } from './storage.module.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(StorageModule);
