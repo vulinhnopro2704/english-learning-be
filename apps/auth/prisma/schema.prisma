@@ -1,17 +1,19 @@
 generator client {
   provider        = "prisma-client"
   output          = "../src/generated/prisma"
+
 }
 
 datasource db {
   provider = "postgresql"
+  schemas = ["auth"]
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
+  id            String    @id @db.Uuid
   email         String    @unique @db.VarChar(255)
   name          String?   @db.VarChar(255)
-  password      String?   @db.VarChar(255)
+  password      String?   @db.Text
   avatar        String?
   role          UserRole  @default(USER)
   createdAt     DateTime  @default(now()) @db.Timestamptz(6)
@@ -19,11 +21,12 @@ model User {
   lastLoginAt   DateTime? @db.Timestamptz(6)
   
   accounts      AuthAccount[]
+  @@schema("auth")
 }
 
 model AuthAccount {
-  id                Int          @id @default(autoincrement())
-  userId            Int
+  id                String       @id @db.Uuid
+  userId            String       @db.Uuid
   provider          AuthProvider
   providerAccountId String
   accessToken       String?      @db.Text
@@ -32,16 +35,21 @@ model AuthAccount {
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@schema("auth")
 }
 
 enum UserRole {
   USER
   ADMIN
   CONTENT_CREATOR
+
+  @@schema("auth")
 }
 
 enum AuthProvider {
   GOOGLE
   FACEBOOK
   EMAIL
+
+  @@schema("auth")
 }
