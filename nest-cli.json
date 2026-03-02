@@ -15,6 +15,15 @@
         "tsConfigPath": "apps/auth/tsconfig.app.json"
       }
     },
+    "gateway": {
+      "type": "application",
+      "root": "apps/gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/gateway/tsconfig.app.json"
+      }
+    },
     "learn": {
       "type": "application",
       "root": "apps/learn",
