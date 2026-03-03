@@ -7,19 +7,22 @@ datasource db {
   provider = "postgresql"
 }
 
-// Content Models
+// ─── Content Models ──────────────────────────────────────────────────────────
+
 model Course {
   id          Int      @id @default(autoincrement())
   title       String   @db.VarChar(255)
   enTitle     String?  @db.VarChar(255)
   description String?
   image       String?  @db.VarChar(255)
+  icon        String?  @db.VarChar(10)
+  order       Int      @default(0)
+  isPublished Boolean  @default(false)
   createdAt   DateTime @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @db.Timestamptz(6)
-  icon        String?  @db.VarChar(10)
-  
+
   lessons     Lesson[]
-  
+
   progress    UserCourseProgress[]
 }
 
@@ -28,15 +31,16 @@ model Lesson {
   title       String   @db.VarChar(255)
   description String?
   image       String?  @db.VarChar(255)
+  order       Int      @default(0)
+  isPublished Boolean  @default(false)
   createdAt   DateTime @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @db.Timestamptz(6)
   courseId    Int?
-  
+
   course      Course?  @relation(fields: [courseId], references: [id])
   words       Word[]
-  
   progress    UserLessonProgress[]
-  
+
   @@index([courseId])
 }
 
@@ -54,17 +58,19 @@ model Word {
   createdAt     DateTime @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime @updatedAt @db.Timestamptz(6)
   lessonId      Int?
-  
+
   lesson        Lesson?  @relation(fields: [lessonId], references: [id])
-  
   progress      UserWordProgress[]
-  
+  vocabularyNotes UserVocabularyNote[]
+  reviewLogs      ReviewLog[]
+
   @@index([lessonId])
 }
 
-// User Learning Data (Linked by userId)
+// ─── User Learning Models (userId = UUID from Auth service) ──────────────────
+
 model UserStreak {
-  userId        Int      @id // Primary Key is UserId
+  userId        String   @id @db.Uuid
   currentStreak Int      @default(0)
   longestStreak Int      @default(0)
   lastActivity  DateTime @db.Timestamptz(6)
@@ -72,28 +78,26 @@ model UserStreak {
 
 model UserCourseProgress {
   id          Int      @id @default(autoincrement())
-  userId      Int      @map("user_id") // No relation to User table
+  userId      String   @db.Uuid
   courseId    Int
-  
   isCompleted Boolean  @default(false)
   startedAt   DateTime @default(now()) @db.Timestamptz(6)
   lastAccessedAt DateTime @updatedAt @db.Timestamptz(6)
 
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  
+
   @@unique([userId, courseId])
   @@index([userId])
 }
 
 model UserLessonProgress {
   id          Int          @id @default(autoincrement())
-  userId      Int
+  userId      String       @db.Uuid
   lessonId    Int
-  
   status      LessonStatus @default(LOCKED)
   score       Int          @default(0)
   completedAt DateTime?    @db.Timestamptz(6)
-  
+
   lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
@@ -101,21 +105,82 @@ model UserLessonProgress {
 }
 
 model UserWordProgress {
-  id          Int              @id @default(autoincrement())
-  userId      Int
-  wordId      Int
-  
-  status      WordMasteryLevel @default(NEW)
-  proficiency Int              @default(0) // 0-100
-  nextReview  DateTime?        @db.Timestamptz(6) // SRS Algorithm
-  lastReviewedAt DateTime?     @db.Timestamptz(6)
-  
-  word        Word             @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  id             Int              @id @default(autoincrement())
+  userId         String           @db.Uuid
+  wordId         Int
+  status         WordMasteryLevel @default(NEW)
+  proficiency    Int              @default(0)
+  nextReview     DateTime?        @db.Timestamptz(6)
+  lastReviewedAt DateTime?        @db.Timestamptz(6)
+  reviewCount    Int              @default(0)
+  correctCount   Int              @default(0)
+
+  // ── FSRS DHP State ──
+  state          Int              @default(0)   // 0=New, 1=Learning, 2=Review, 3=Relearning
+  difficulty     Float            @default(0)   // D parameter (1–10)
+  stability      Float            @default(0)   // S parameter
+  interval       Int              @default(0)   // days until next review
+  reps           Int              @default(0)   // total review count
+  lapses         Int              @default(0)   // total forget count
+
+  word           Word             @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  reviewLogs     ReviewLog[]
 
   @@unique([userId, wordId])
   @@index([userId])
-  @@index([nextReview]) // For cron jobs finding words to review
+  @@index([nextReview])
+  @@index([userId, status])
 }
+
+model UserVocabularyNote {
+  id            Int      @id @default(autoincrement())
+  userId        String   @db.Uuid
+  wordId        Int
+  note          String?
+  isFavorite    Boolean  @default(false)
+  customExample String?
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(6)
+
+  word          Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordId])
+  @@index([userId])
+}
+
+// ─── FSRS Models ─────────────────────────────────────────────────────────────
+
+model ReviewLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  wordId        Int
+  grade         Int      // 1=Again, 2=Hard, 3=Good, 4=Easy
+  state         Int      // state before grading (0=New, 1=Learning, 2=Review, 3=Relearning)
+  elapsedDays   Int
+  scheduledDays Int
+  difficulty    Float
+  stability     Float
+  durationMs    Int      @default(0)
+  reviewedAt    DateTime @db.Timestamptz(6)
+
+  word         Word             @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  userProgress UserWordProgress @relation(fields: [userId, wordId], references: [userId, wordId], onDelete: Cascade)
+
+  @@index([userId, wordId])
+  @@index([reviewedAt])
+}
+
+model UserFSRSSetting {
+  id               Int      @id @default(autoincrement())
+  userId           String   @unique @db.Uuid
+  weights          Json     @default("[]")
+  easyDays         Int[]    @default([])
+  maxReviewsPerDay Int      @default(100)
+  requestRetention Float    @default(0.9)
+  updatedAt        DateTime @updatedAt @db.Timestamptz(6)
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
 
 enum LessonStatus {
   LOCKED
@@ -125,10 +190,10 @@ enum LessonStatus {
 }
 
 enum WordMasteryLevel {
-  NEW       // 0 - Not yet learned
-  LEVEL_1   // 1 - Just learned / Short term
-  LEVEL_2   // 2 - 1 day
-  LEVEL_3   // 3 - 3 days
-  LEVEL_4   // 4 - 1 week
-  LEVEL_5   // 5 - 2 weeks / Mastered
+  NEW       // Chưa học
+  LEVEL_1   // Vừa học — ôn sau 1 ngày
+  LEVEL_2   // Ôn sau 3 ngày
+  LEVEL_3   // Ôn sau 1 tuần
+  LEVEL_4   // Ôn sau 2 tuần
+  LEVEL_5   // Mastered — ôn sau 1 tháng
 }
