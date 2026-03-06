@@ -1,0 +1,15 @@
+node_modules
+dist
+.env
+.env.*
+.git
+.gitignore
+*.md
+log-rotate
+*.log
+*.log.*
+coverage
+.vscode
+.idea
+test
+jest-e2e.json

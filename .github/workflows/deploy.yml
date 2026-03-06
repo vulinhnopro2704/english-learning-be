@@ -1,0 +1,133 @@
+name: Deploy Microservices
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'auth/**'
+      - 'learn/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/deploy.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
+jobs:
+  # ── Build & Push Docker Images ─────────────────────────
+  build-auth:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Auth image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/auth:latest
+            ${{ env.IMAGE_PREFIX }}/auth:${{ github.sha }}
+
+  build-learn:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Learn image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./learn
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/learn:latest
+            ${{ env.IMAGE_PREFIX }}/learn:${{ github.sha }}
+
+  # ── Deploy to VPS ──────────────────────────────────────
+  deploy:
+    needs: [build-auth, build-learn]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            set -e
+
+            DEPLOY_DIR="/home/deploy/english-learning-be"
+            mkdir -p "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+
+            # ── Pull latest code (for docker-compose.yml) ──
+            if [ -d .git ]; then
+              git pull origin main
+            else
+              git clone https://github.com/${{ github.repository }}.git .
+            fi
+
+            # ── Login to GHCR ──
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ secrets.VPS_USER }} --password-stdin
+
+            # ── Create root .env (docker-compose variables) ──
+            cat > .env << ENVEOF
+            AUTH_IMAGE=${{ env.IMAGE_PREFIX }}/auth:latest
+            LEARN_IMAGE=${{ env.IMAGE_PREFIX }}/learn:latest
+            AUTH_PORT=${{ secrets.AUTH_PORT }}
+            LEARN_PORT=${{ secrets.LEARN_PORT }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+            REDIS_PORT=${{ secrets.REDIS_PORT }}
+            ENVEOF
+
+            # ── Create auth/.env ──
+            mkdir -p auth
+            cat > auth/.env << ENVEOF
+            DATABASE_URL=${{ secrets.AUTH_DATABASE_URL }}
+            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
+            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+            JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
+            JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
+            REDIS_URL=redis://:${{ secrets.REDIS_PASSWORD }}@redis:6379
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+            PORT=${{ secrets.AUTH_PORT }}
+            ENVEOF
+
+            # ── Create learn/.env ──
+            mkdir -p learn
+            cat > learn/.env << ENVEOF
+            DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
+            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+            PORT=${{ secrets.LEARN_PORT }}
+            ENVEOF
+
+            # ── Pull images & deploy ──
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker image prune -f
+
+            echo "✅ Deployment complete!"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
