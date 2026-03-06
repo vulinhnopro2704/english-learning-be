@@ -8,6 +8,14 @@ import {
   ParseIntPipe,
   UseGuards,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { ProgressService } from './progress.service';
 import {
   CourseProgressFilterDto,
@@ -18,6 +26,8 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+@ApiTags('progress')
+@ApiBearerAuth()
 @Controller('progress')
 @UseGuards(JwtAuthGuard)
 export class ProgressController {
@@ -26,6 +36,10 @@ export class ProgressController {
   // ═══ COURSE PROGRESS ═══════════════════════════════════════════════════════
 
   @Post('courses/:courseId/start')
+  @ApiOperation({ summary: 'Start a course for the current user' })
+  @ApiParam({ name: 'courseId', type: Number })
+  @ApiResponse({ status: 201, description: 'Course started' })
+  @ApiResponse({ status: 404, description: 'Course not found' })
   startCourse(
     @CurrentUser('id') userId: string,
     @Param('courseId', ParseIntPipe) courseId: number,
@@ -34,6 +48,8 @@ export class ProgressController {
   }
 
   @Get('courses')
+  @ApiOperation({ summary: 'Get current user enrolled courses' })
+  @ApiResponse({ status: 200, description: 'List of enrolled courses' })
   getMyCourses(
     @CurrentUser('id') userId: string,
     @Query() filter: CourseProgressFilterDto,
@@ -44,6 +60,10 @@ export class ProgressController {
   // ═══ LESSON PROGRESS ═══════════════════════════════════════════════════════
 
   @Post('lessons/:lessonId/complete')
+  @ApiOperation({ summary: 'Mark a lesson as completed' })
+  @ApiParam({ name: 'lessonId', type: Number })
+  @ApiResponse({ status: 201, description: 'Lesson completed' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
   completeLesson(
     @CurrentUser('id') userId: string,
     @Param('lessonId', ParseIntPipe) lessonId: number,
@@ -53,6 +73,8 @@ export class ProgressController {
   }
 
   @Get('lessons')
+  @ApiOperation({ summary: 'Get current user lesson progress' })
+  @ApiResponse({ status: 200, description: 'List of lesson progress' })
   getMyLessons(
     @CurrentUser('id') userId: string,
     @Query() filter: LessonProgressFilterDto,
@@ -63,6 +85,14 @@ export class ProgressController {
   // ═══ WORD PRACTICE (FSRS) ═════════════════════════════════════════════════
 
   @Get('review')
+  @ApiOperation({ summary: 'Get words due for review (spaced repetition)' })
+  @ApiQuery({
+    name: 'take',
+    required: false,
+    type: Number,
+    description: 'Number of words to return (default: 20)',
+  })
+  @ApiResponse({ status: 200, description: 'List of words to review' })
   getWordsToReview(
     @CurrentUser('id') userId: string,
     @Query('take') take?: string,
@@ -74,11 +104,16 @@ export class ProgressController {
   }
 
   @Post('review')
+  @ApiOperation({ summary: 'Submit a word review result' })
+  @ApiResponse({ status: 201, description: 'Review recorded' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
   reviewWord(@CurrentUser('id') userId: string, @Body() dto: ReviewWordDto) {
     return this.progressService.reviewWord(userId, dto);
   }
 
   @Get('words')
+  @ApiOperation({ summary: 'Get current user word progress' })
+  @ApiResponse({ status: 200, description: 'List of word progress' })
   getMyWords(
     @CurrentUser('id') userId: string,
     @Query() filter: WordProgressFilterDto,
@@ -89,6 +124,8 @@ export class ProgressController {
   // ═══ STATS ════════════════════════════════════════════════════════════════
 
   @Get('stats')
+  @ApiOperation({ summary: 'Get overall learning statistics' })
+  @ApiResponse({ status: 200, description: 'User learning statistics' })
   getStats(@CurrentUser('id') userId: string) {
     return this.progressService.getProgressStats(userId);
   }
