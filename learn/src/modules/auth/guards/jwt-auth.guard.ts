@@ -5,7 +5,10 @@ import { AuthGuard } from '@nestjs/passport';
 export class JwtAuthGuard extends AuthGuard('jwt') {
   handleRequest<T>(err: Error | null, user: T): T {
     if (err || !user) {
-      throw err || new UnauthorizedException('Access token is invalid or has been revoked');
+      throw (
+        err ||
+        new UnauthorizedException('Access token is invalid or has been revoked')
+      );
     }
     return user;
   }
