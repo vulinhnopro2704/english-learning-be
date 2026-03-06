@@ -67,6 +67,7 @@ jobs:
   deploy:
     needs: [build-auth, build-learn]
     runs-on: ubuntu-latest
+    environment: Production
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
