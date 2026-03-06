@@ -11,9 +11,6 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-*/log-rotate/*
-**.log*
-**.log.*
 
 # OS
 .DS_Store
@@ -57,4 +54,3 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-generated
