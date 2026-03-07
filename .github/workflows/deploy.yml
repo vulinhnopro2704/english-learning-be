@@ -69,6 +69,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: Production
     steps:
+      - name: Test SSH connectivity
+        run: |
+          nc -zv -w 10 ${{ secrets.VPS_HOST }} ${{ secrets.VPS_PORT }} || true
+          curl -s ifconfig.me
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
