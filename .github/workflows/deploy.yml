@@ -74,7 +74,7 @@ jobs:
           nc -zv -w 10 ${{ secrets.VPS_HOST }} ${{ secrets.VPS_PORT }} || true
           curl -s ifconfig.me
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
