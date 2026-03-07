@@ -29,7 +29,7 @@ class ReviewRequest(CamelModel):
     word_id: int
     is_correct: bool
     duration_ms: int = Field(ge=0, default=0)
-    exercise_type: str = "flashcard"  # flashcard, multi_choice, listen_fill, dictation
+    exercise_type: str = "FLASHCARD"  # FLASHCARD, MULTI_CHOICE, LISTEN_FILL, DICTATION
 
 
 class ReviewItem(CamelModel):
@@ -38,7 +38,7 @@ class ReviewItem(CamelModel):
     word_id: int
     is_correct: bool
     duration_ms: int = Field(ge=0, default=0)
-    exercise_type: str = "flashcard"
+    exercise_type: str = "FLASHCARD"
 
 
 class BulkReviewRequest(CamelModel):

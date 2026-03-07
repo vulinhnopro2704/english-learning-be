@@ -17,10 +17,10 @@ from app.models import CardMemoryState, FSRSConfig, ReviewLog
 # ─── Auto-grading thresholds (milliseconds) ──────────────────────────────────
 # Adjustable per exercise type
 GRADE_THRESHOLDS: dict[str, dict[str, int]] = {
-    "flashcard": {"easy_max_ms": 3000, "hard_min_ms": 10000},
-    "multi_choice": {"easy_max_ms": 3000, "hard_min_ms": 8000},
-    "listen_fill": {"easy_max_ms": 5000, "hard_min_ms": 15000},
-    "dictation": {"easy_max_ms": 8000, "hard_min_ms": 20000},
+    "FLASHCARD": {"easy_max_ms": 3000, "hard_min_ms": 10000},
+    "MULTI_CHOICE": {"easy_max_ms": 3000, "hard_min_ms": 8000},
+    "LISTEN_FILL": {"easy_max_ms": 5000, "hard_min_ms": 15000},
+    "DICTATION": {"easy_max_ms": 8000, "hard_min_ms": 20000},
 }
 
 DEFAULT_THRESHOLD = {"easy_max_ms": 3000, "hard_min_ms": 10000}
@@ -206,7 +206,7 @@ async def bulk_review(
             word_id=item["word_id"],
             is_correct=item["is_correct"],
             duration_ms=item.get("duration_ms", 0),
-            exercise_type=item.get("exercise_type", "flashcard"),
+            exercise_type=item.get("exercise_type", "FLASHCARD"),
         )
         results.append((card_state, grade))
     return results
