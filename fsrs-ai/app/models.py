@@ -9,13 +9,14 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     Index,
+    MetaData,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
-    pass
+    metadata = MetaData(schema="fsrs")
 
 
 class CardMemoryState(Base):

@@ -18,6 +18,7 @@ from app.routers import helper, optimize, review
 async def lifespan(app: FastAPI):
     # Create tables on startup (dev convenience; use Alembic in production)
     async with engine.begin() as conn:
+        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS fsrs"))
         await conn.run_sync(Base.metadata.create_all)
     yield
     await engine.dispose()

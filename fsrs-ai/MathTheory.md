@@ -223,9 +223,8 @@ difficulty: currentCard.difficulty
 ]);
 Bước 4: Module Optimizer (Python Machine Learning) Vì bạn yêu cầu kiến trúc Microservice + AI, phần AI sẽ nằm ở một service Python độc lập.
 Theo định kỳ (ví dụ mỗi tuần 1 lần), service Python này sẽ query bảng ReviewLog của những user có đủ lượng data log.
-Nó sẽ chạy bộ FSRS Optimizer (cũng được cung cấp sẵn mã nguồn trên repo fsrs4anki-optimizer dưới dạng Jupyter Notebook / Python scripts)
-.
-Optimizer áp dụng Gradient Descent (hoặc MLE) để tìm ra mảng tham số w mới tối ưu hóa riêng cho user đó.
+Nó sẽ sử dụng class `Optimizer` tích hợp sẵn trong thư viện `fsrs` (cài bằng `fsrs[optimizer]`).
+Optimizer áp dụng thuật toán học máy để tìm ra mảng tham số w mới (21 tham số trong v6) tối ưu hóa riêng cho user đó.
 Lưu mảng w mới này vào bảng UserFSRSSetting.weights. Các lần tính toán tiếp theo ở Bước 3 sẽ lấy bộ w cá nhân hóa này để sử dụng, làm cho lịch trình học của sinh viên ngày càng chính xác tuyệt đối! 3. Các tính năng "Mới mẻ và Hoàn thiện" tạo điểm nhấn
 Để đồ án của bạn vượt trội hơn các website học từ vựng thông thường, bạn có thể đưa vào các tính năng ưu việt của thuật toán FSRS:
 Load Balancing (Cân bằng tải): Khi hệ thống tính toán ngày ôn tập tối ưu, nó có thể thêm một chút nhiễu ngẫu nhiên (fuzz) để phân bổ đều số lượng thẻ cần học, giúp sinh viên không bị quá tải vào một ngày cụ thể
