@@ -14,58 +14,58 @@ env:
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
 
 jobs:
-  # ── Build & Push Docker Images ─────────────────────────
-  build-auth:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
+  # # ── Build & Push Docker Images ─────────────────────────
+  # build-auth:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Log in to GitHub Container Registry
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Auth image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./auth
-          push: true
-          tags: |
-            ${{ env.IMAGE_PREFIX }}/auth:latest
-            ${{ env.IMAGE_PREFIX }}/auth:${{ github.sha }}
+  #     - name: Build and push Auth image
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: ./auth
+  #         push: true
+  #         tags: |
+  #           ${{ env.IMAGE_PREFIX }}/auth:latest
+  #           ${{ env.IMAGE_PREFIX }}/auth:${{ github.sha }}
 
-  build-learn:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
+  # build-learn:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Log in to GitHub Container Registry
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Learn image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./learn
-          push: true
-          tags: |
-            ${{ env.IMAGE_PREFIX }}/learn:latest
-            ${{ env.IMAGE_PREFIX }}/learn:${{ github.sha }}
+  #     - name: Build and push Learn image
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: ./learn
+  #         push: true
+  #         tags: |
+  #           ${{ env.IMAGE_PREFIX }}/learn:latest
+  #           ${{ env.IMAGE_PREFIX }}/learn:${{ github.sha }}
 
   # ── Deploy to VPS ──────────────────────────────────────
   deploy:
-    needs: [build-auth, build-learn]
+    # needs: [build-auth, build-learn]
     runs-on: ubuntu-latest
     environment: Production
     steps:
@@ -73,6 +73,8 @@ jobs:
         run: |
           HOST="${{ secrets.VPS_HOST }}"
           PORT="${{ secrets.VPS_PORT }}"
+          echo "HOST=${{ secrets.VPS_HOST }}"
+          echo "PORT=${{ secrets.VPS_PORT }}"
           echo "VPS_HOST length: ${#HOST}, first 4 chars: ${HOST:0:4}..."
           echo "VPS_PORT length: ${#PORT}, value: $PORT"
           echo "VPS_USER length: ${#VPS_USER}"
