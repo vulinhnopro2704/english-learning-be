@@ -36,6 +36,7 @@ model Lesson {
   course      Course?              @relation(fields: [courseId], references: [id])
   progress    UserLessonProgress[]
   words       Word[]
+  sessions    PracticeSession[]
 
   @@index([courseId])
 }
@@ -178,4 +179,25 @@ enum WordMasteryLevel {
   LEVEL_3
   LEVEL_4
   LEVEL_5
+}
+
+enum PracticeType {
+  FSRS         // Ôn tập (Review) — spaced repetition
+  LEARN_LESSON // Học mới (Learn) — lesson-based
+}
+
+model PracticeSession {
+  id              Int           @id @default(autoincrement())
+  userId          String        @db.Uuid
+  type            PracticeType
+  lessonId        Int?
+  totalWords      Int           @default(0)
+  correctCount    Int           @default(0)
+  totalDurationMs Int           @default(0)
+  startedAt       DateTime      @default(now()) @db.Timestamptz(6)
+  completedAt     DateTime?     @db.Timestamptz(6)
+  lesson          Lesson?       @relation(fields: [lessonId], references: [id])
+
+  @@index([userId])
+  @@index([userId, type])
 }

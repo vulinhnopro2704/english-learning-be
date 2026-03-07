@@ -7,6 +7,7 @@ import { WordsModule } from './modules/words/words.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
 import { StreakModule } from './modules/streak/streak.module';
+import { PracticeModule } from './modules/practice/practice.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { StreakModule } from './modules/streak/streak.module';
     ProgressModule,
     VocabularyModule,
     StreakModule,
+    PracticeModule,
   ],
 })
 export class LearnModule {}

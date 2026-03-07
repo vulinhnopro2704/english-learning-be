@@ -30,6 +30,18 @@ services:
     networks:
       - app-network
 
+  # ── FSRS-AI Service ───────────────────────────────
+  fsrs-ai:
+    image: ${FSRS_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/fsrs-ai:latest}
+    container_name: fsrs-ai-service
+    ports:
+      - '${FSRS_PORT:-8000}:8000'
+    env_file:
+      - ./fsrs-ai/.env
+    restart: unless-stopped
+    networks:
+      - app-network
+
   # ── Redis ─────────────────────────────────────────
   redis:
     image: redis:7-alpine
