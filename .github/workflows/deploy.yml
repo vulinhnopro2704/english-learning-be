@@ -91,8 +91,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           debug: true
-          timeout: 60s
-          command_timeout: 30m
+          timeout: 300s
+          command_timeout: 50m
           script: |
             set -e
 
