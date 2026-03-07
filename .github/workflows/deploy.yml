@@ -81,13 +81,32 @@ jobs:
           echo "VPS_SSH_KEY length: ${#KEY}"
           echo "Runner IP: $(curl -s ifconfig.me)"
           echo "---"
+
+          echo "Debug: Pinging $HOST"
+          ping -c 4 -W 2 $HOST || echo "ping failed"
+          echo "---"
+
+          echo "Debug: traceroute to $HOST (requires traceroute, installing if needed)"
+          sudo apt-get update -y && sudo apt-get install -y traceroute nmap
+          traceroute $HOST || echo "traceroute failed"
+          echo "---"
+
+          echo "Debug: Testing HTTP/HTTPS connectivity (just in case)"
+          curl -kv -m 5 https://$HOST || echo "HTTPS curl failed"
+          echo "---"
+
+          echo "Debug: Port scanning with nmap (if allowed)"
+          nmap -p $PORT -Pn $HOST || echo "nmap failed"
+          echo "---"
+
+          echo "Debug: Netcat SSH Port Test"
           nc -zv -w 10 $HOST $PORT || true
         env:
           VPS_USER: ${{ secrets.VPS_USER }}
           KEY: ${{ secrets.VPS_SSH_KEY }}
           PASSWORD: ${{ secrets.VPS_PASSWORD }}
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -104,12 +123,8 @@ jobs:
             mkdir -p "$DEPLOY_DIR"
             cd "$DEPLOY_DIR"
 
-            # ── Pull latest code (for docker-compose.yml) ──
-            if [ -d .git ]; then
-              git pull origin main
-            else
-              git clone https://github.com/${{ github.repository }}.git .
-            fi
+            # ── Download docker-compose.yml directly (no git clone needed) ──
+            curl -sSL "https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.yml" -o docker-compose.yml
 
             # ── Login to GHCR ──
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ secrets.VPS_USER }} --password-stdin
