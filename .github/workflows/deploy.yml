@@ -69,10 +69,20 @@ jobs:
     runs-on: ubuntu-latest
     environment: Production
     steps:
-      - name: Test SSH connectivity
+      - name: Debug secrets & Test SSH connectivity
         run: |
-          nc -zv -w 10 ${{ secrets.VPS_HOST }} ${{ secrets.VPS_PORT }} || true
-          curl -s ifconfig.me
+          HOST="${{ secrets.VPS_HOST }}"
+          PORT="${{ secrets.VPS_PORT }}"
+          echo "VPS_HOST length: ${#HOST}, first 4 chars: ${HOST:0:4}..."
+          echo "VPS_PORT length: ${#PORT}, value: $PORT"
+          echo "VPS_USER length: ${#VPS_USER}"
+          echo "VPS_SSH_KEY length: ${#KEY}"
+          echo "Runner IP: $(curl -s ifconfig.me)"
+          echo "---"
+          nc -zv -w 10 $HOST $PORT || true
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          KEY: ${{ secrets.VPS_SSH_KEY }}
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
