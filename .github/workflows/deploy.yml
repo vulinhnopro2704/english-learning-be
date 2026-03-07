@@ -83,6 +83,7 @@ jobs:
         env:
           VPS_USER: ${{ secrets.VPS_USER }}
           KEY: ${{ secrets.VPS_SSH_KEY }}
+          PASSWORD: ${{ secrets.VPS_PASSWORD }}
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -90,9 +91,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
+          password: ${{ secrets.VPS_PASSWORD }}
           debug: true
-          timeout: 300s
-          command_timeout: 50m
+          timeout: 80s
+          command_timeout: 30m
           script: |
             set -e
 
