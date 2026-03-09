@@ -67,7 +67,7 @@ export class AuthService {
       },
     });
 
-    const tokens = await this.generateTokens(user.id, user.email);
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
     this.logger.log(`User registered: ${user.email}`);
 
     return {
@@ -94,7 +94,7 @@ export class AuthService {
       data: { lastLoginAt: new Date() },
     });
 
-    const tokens = await this.generateTokens(user.id, user.email);
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
     this.logger.log(`User logged in: ${user.email}`);
 
     return {
@@ -131,7 +131,7 @@ export class AuthService {
     const refreshTtl = this.parseDurationToSeconds(this.refreshExpiration);
     await this.redisService.blacklistToken(userId, oldRefreshJti, refreshTtl);
 
-    const tokens = await this.generateTokens(user.id, user.email);
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
     this.logger.log(`Tokens refreshed for user: ${user.email}`);
 
     return {
@@ -150,7 +150,7 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
-  async generateTokens(userId: string, email: string) {
+  async generateTokens(userId: string, email: string, role: string) {
     const accessJti = uuidv7();
     const refreshJti = uuidv7();
 
@@ -161,11 +161,11 @@ export class AuthService {
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
-        { sub: userId, email, jti: accessJti, type: 'access' },
+        { sub: userId, email, role, jti: accessJti, type: 'access' },
         { secret: this.accessSecret, expiresIn: accessExpiresIn },
       ),
       this.jwtService.signAsync(
-        { sub: userId, email, jti: refreshJti, type: 'refresh' },
+        { sub: userId, email, role, jti: refreshJti, type: 'refresh' },
         { secret: this.refreshSecret, expiresIn: refreshExpiresIn },
       ),
     ]);

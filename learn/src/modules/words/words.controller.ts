@@ -8,15 +8,25 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { WordsService } from './words.service';
 import { CreateWordDto } from './dtos/create-word.dto';
 import { UpdateWordDto } from './dtos/update-word.dto';
 import { WordFilterDto } from './dtos/word-filter.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('words')
+@ApiBearerAuth()
 @Controller('words')
+@UseGuards(JwtAuthGuard)
 export class WordsController {
   constructor(private readonly wordsService: WordsService) {}
 

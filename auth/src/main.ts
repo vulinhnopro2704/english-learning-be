@@ -33,39 +33,45 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // ── Swagger / OpenAPI ───────────────────────────
-  const config = new DocumentBuilder()
-    .setTitle('Auth API')
-    .setDescription(
-      'English Learning Platform — Authentication & User Management',
-    )
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addCookieAuth('access_token')
-    .addTag('auth', 'Authentication endpoints')
-    .addTag('users', 'User management endpoints')
-    .build();
+  const swaggerEnabled = (process.env.SWAGGER_ENABLED ?? 'true') === 'true';
+  const swaggerPath = process.env.SWAGGER_PATH ?? 'api-docs';
 
-  const document = SwaggerModule.createDocument(app, config);
+  if (swaggerEnabled) {
+    const config = new DocumentBuilder()
+      .setTitle(process.env.SWAGGER_TITLE ?? 'Auth API')
+      .setDescription(
+        'English Learning Platform — Authentication & User Management',
+      )
+      .setVersion('1.0')
+      .addBearerAuth()
+      .addCookieAuth('access_token')
+      .addTag('auth', 'Authentication endpoints')
+      .addTag('users', 'User management endpoints')
+      .build();
 
-  // Classic Swagger UI (fallback)
-  SwaggerModule.setup('api-docs/swagger', app, document);
+    const document = SwaggerModule.createDocument(app, config);
 
-  // Scalar UI — modern API reference
-  app.use(
-    '/api-docs',
-    apiReference({
-      content: document,
-      theme: 'kepler',
-    }),
-  );
+    SwaggerModule.setup(`${swaggerPath}/swagger`, app, document);
+
+    app.use(
+      `/${swaggerPath}`,
+      apiReference({
+        content: document,
+        theme: 'kepler',
+      }),
+    );
+  }
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`📚 API Docs (Scalar):  http://localhost:${port}/api-docs`);
-  console.log(
-    `📋 Swagger UI:         http://localhost:${port}/api-docs/swagger`,
-  );
+  if (swaggerEnabled) {
+    console.log(
+      `📚 API Docs (Scalar):  http://localhost:${port}/${swaggerPath}`,
+    );
+    console.log(
+      `📋 Swagger UI:         http://localhost:${port}/${swaggerPath}/swagger`,
+    );
+  }
 }
 bootstrap();

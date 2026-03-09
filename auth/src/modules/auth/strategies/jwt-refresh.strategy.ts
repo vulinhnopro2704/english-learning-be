@@ -26,7 +26,6 @@ export class JwtRefreshStrategy extends PassportStrategy(
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
     };
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     super(options);
   }
 

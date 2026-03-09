@@ -1,0 +1,429 @@
+import {
+  HttpStatus,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import type { NextFunction, Request, Response } from 'express';
+import { RedisService } from '../redis/redis.service';
+
+interface AccessTokenPayload {
+  sub: string;
+  email: string;
+  role?: string;
+  jti: string;
+  type: 'access' | 'refresh';
+  exp?: number;
+}
+
+@Injectable()
+export class GatewayProxyService {
+  private readonly logger = new Logger(GatewayProxyService.name);
+  private readonly authDocsPrefix = '/auth/api-docs';
+  private readonly learnDocsPrefix = '/learn/api-docs';
+
+  private readonly authUpstreamUrl: string;
+  private readonly learnUpstreamUrl: string;
+  private readonly swaggerPath: string;
+  private readonly swaggerEnabled: boolean;
+  private readonly rateLimitWindowSec: number;
+  private readonly rateLimitMax: number;
+  private readonly trustXForwardedFor: boolean;
+  private readonly envIpBlacklist: Set<string>;
+
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
+    private readonly redisService: RedisService,
+  ) {
+    this.authUpstreamUrl =
+      this.configService.get<string>('AUTH_UPSTREAM_URL') ?? 'http://auth:3001';
+    this.learnUpstreamUrl =
+      this.configService.get<string>('LEARN_UPSTREAM_URL') ??
+      'http://learn:3002';
+    this.swaggerPath = `/${(this.configService.get<string>('SWAGGER_PATH') ?? 'api-docs').replace(/^\/+/, '')}`;
+    this.swaggerEnabled =
+      (this.configService.get<string>('SWAGGER_ENABLED') ?? 'true') === 'true';
+    this.rateLimitWindowSec = Number(
+      this.configService.get<string>('RATE_LIMIT_WINDOW_SEC') ?? '60',
+    );
+    this.rateLimitMax = Number(
+      this.configService.get<string>('RATE_LIMIT_MAX') ?? '100',
+    );
+    this.trustXForwardedFor =
+      (this.configService.get<string>('TRUST_X_FORWARDED_FOR') ?? 'true') ===
+      'true';
+
+    const blacklistRaw = this.configService.get<string>('IP_BLACKLIST') ?? '';
+    this.envIpBlacklist = new Set(
+      blacklistRaw
+        .split(',')
+        .map((ip) => ip.trim())
+        .filter(Boolean),
+    );
+  }
+
+  async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
+    if (this.shouldBypass(req)) {
+      next();
+      return;
+    }
+
+    const clientIp = this.getClientIp(req);
+
+    if (await this.isBlockedIp(clientIp)) {
+      res.status(HttpStatus.FORBIDDEN).json({
+        message: 'IP address is blocked',
+      });
+      return;
+    }
+
+    const isLimited = await this.isRateLimited(clientIp);
+    if (isLimited) {
+      res.setHeader('Retry-After', `${this.rateLimitWindowSec}`);
+      res.status(HttpStatus.TOO_MANY_REQUESTS).json({
+        message: 'Too many requests',
+      });
+      return;
+    }
+
+    const targetBase = this.resolveTargetBase(req.path);
+
+    let forwardedIdentity: AccessTokenPayload | null = null;
+    if (this.requiresAuth(req.method, req.path)) {
+      try {
+        forwardedIdentity = await this.verifyAccessToken(req);
+      } catch (error) {
+        const message =
+          error instanceof UnauthorizedException
+            ? error.message
+            : 'Unauthorized';
+        res.status(HttpStatus.UNAUTHORIZED).json({ message });
+        return;
+      }
+    }
+
+    await this.forwardRequest(
+      req,
+      res,
+      targetBase,
+      forwardedIdentity,
+      clientIp,
+    );
+  }
+
+  private shouldBypass(req: Request): boolean {
+    if (req.method === 'OPTIONS') {
+      return true;
+    }
+
+    if (req.path === '/health') {
+      return true;
+    }
+
+    if (req.path === '/docs') {
+      return true;
+    }
+
+    if (!this.swaggerEnabled) {
+      return false;
+    }
+
+    return (
+      req.path === this.swaggerPath ||
+      req.path.startsWith(`${this.swaggerPath}/`)
+    );
+  }
+
+  private resolveTargetBase(path: string): string {
+    if (path.startsWith(this.authDocsPrefix)) {
+      return this.authUpstreamUrl;
+    }
+
+    if (path.startsWith(this.learnDocsPrefix)) {
+      return this.learnUpstreamUrl;
+    }
+
+    if (path.startsWith('/auth') || path.startsWith('/users')) {
+      return this.authUpstreamUrl;
+    }
+    return this.learnUpstreamUrl;
+  }
+
+  private requiresAuth(method: string, path: string): boolean {
+    const normalizedMethod = method.toUpperCase();
+
+    if (path === '/auth/login' && normalizedMethod === 'POST') {
+      return false;
+    }
+
+    if (path === '/auth/register' && normalizedMethod === 'POST') {
+      return false;
+    }
+
+    if (path === '/auth/refresh' && normalizedMethod === 'POST') {
+      return false;
+    }
+
+    if (
+      path.startsWith(this.authDocsPrefix) ||
+      path.startsWith(this.learnDocsPrefix)
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private async verifyAccessToken(req: Request): Promise<AccessTokenPayload> {
+    const token = this.extractAccessToken(req);
+    if (!token) {
+      throw new UnauthorizedException('Missing access token');
+    }
+
+    let payload: AccessTokenPayload;
+    try {
+      payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token, {
+        secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid or expired access token');
+    }
+
+    if (payload.type !== 'access') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+
+    if (!payload.sub || !payload.jti) {
+      throw new UnauthorizedException('Malformed token payload');
+    }
+
+    const revoked = await this.redisService.isTokenBlacklisted(
+      payload.sub,
+      payload.jti,
+    );
+    if (revoked) {
+      throw new UnauthorizedException('Access token has been revoked');
+    }
+
+    return payload;
+  }
+
+  private extractAccessToken(req: Request): string | null {
+    const authorization = req.headers.authorization;
+    if (authorization?.startsWith('Bearer ')) {
+      return authorization.slice(7).trim();
+    }
+
+    const cookies = req.cookies as Record<string, string> | undefined;
+    return cookies?.access_token ?? null;
+  }
+
+  private async isBlockedIp(clientIp: string): Promise<boolean> {
+    if (this.envIpBlacklist.has(clientIp)) {
+      return true;
+    }
+
+    try {
+      return await this.redisService.isIpBlacklisted(clientIp);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to validate IP blacklist in Redis for IP ${clientIp}: ${(error as Error).message}`,
+      );
+      return false;
+    }
+  }
+
+  private async isRateLimited(clientIp: string): Promise<boolean> {
+    const window = Math.floor(Date.now() / 1000 / this.rateLimitWindowSec);
+    const key = `RATE_LIMIT_${clientIp}_${window}`;
+
+    try {
+      const count = await this.redisService.incrementRateLimit(
+        key,
+        this.rateLimitWindowSec + 1,
+      );
+      return count > this.rateLimitMax;
+    } catch (error) {
+      this.logger.warn(
+        `Failed to apply rate limit for IP ${clientIp}: ${(error as Error).message}`,
+      );
+      return false;
+    }
+  }
+
+  private getClientIp(req: Request): string {
+    if (this.trustXForwardedFor) {
+      const forwarded = req.header('x-forwarded-for');
+      if (forwarded) {
+        const firstIp = forwarded.split(',')[0]?.trim();
+        if (firstIp) {
+          return firstIp;
+        }
+      }
+    }
+
+    return req.ip ?? req.socket.remoteAddress ?? 'unknown';
+  }
+
+  private async forwardRequest(
+    req: Request,
+    res: Response,
+    targetBase: string,
+    identity: AccessTokenPayload | null,
+    clientIp: string,
+  ): Promise<void> {
+    const targetPath = this.rewriteTargetPath(req.path);
+    const targetUrl = new URL(
+      targetPath +
+        (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''),
+      targetBase,
+    );
+
+    const headers = this.buildForwardHeaders(req, identity, clientIp);
+    const hasBody = !['GET', 'HEAD'].includes(req.method.toUpperCase());
+
+    const body = hasBody ? this.buildRequestBody(req, headers) : undefined;
+
+    try {
+      const response = await fetch(targetUrl, {
+        method: req.method,
+        headers,
+        body,
+      });
+
+      this.copyResponseHeaders(response, res);
+      res.status(response.status);
+
+      const responseText = await response.text();
+      if (!responseText) {
+        res.end();
+        return;
+      }
+
+      res.send(responseText);
+    } catch (error) {
+      this.logger.error(
+        `Forward request failed for ${req.method} ${req.originalUrl}: ${(error as Error).message}`,
+      );
+      res.status(HttpStatus.BAD_GATEWAY).json({
+        message: 'Failed to reach upstream service',
+      });
+    }
+  }
+
+  private rewriteTargetPath(path: string): string {
+    if (path.startsWith(this.authDocsPrefix)) {
+      return path.replace(this.authDocsPrefix, '/api-docs');
+    }
+
+    if (path.startsWith(this.learnDocsPrefix)) {
+      return path.replace(this.learnDocsPrefix, '/api-docs');
+    }
+
+    return path;
+  }
+
+  private buildForwardHeaders(
+    req: Request,
+    identity: AccessTokenPayload | null,
+    clientIp: string,
+  ): Headers {
+    const headers = new Headers();
+
+    Object.entries(req.headers).forEach(([name, value]) => {
+      if (value == null) {
+        return;
+      }
+
+      const lowerName = name.toLowerCase();
+      if (
+        lowerName === 'host' ||
+        lowerName === 'content-length' ||
+        lowerName === 'connection' ||
+        lowerName === 'authorization' ||
+        lowerName === 'x-user-id' ||
+        lowerName === 'x-user-role' ||
+        lowerName === 'x-user-email' ||
+        lowerName === 'x-user-jti'
+      ) {
+        return;
+      }
+
+      if (Array.isArray(value)) {
+        value.forEach((v) => headers.append(name, v));
+        return;
+      }
+
+      headers.set(name, value);
+    });
+
+    if (identity) {
+      headers.set('x-user-id', identity.sub);
+      headers.set('x-user-role', identity.role ?? 'user');
+      headers.set('x-user-email', identity.email);
+      headers.set('x-user-jti', identity.jti);
+    }
+
+    headers.set('x-forwarded-for', clientIp);
+
+    return headers;
+  }
+
+  private buildRequestBody(
+    req: Request,
+    headers: Headers,
+  ): BodyInit | undefined {
+    if (req.body == null) {
+      return undefined;
+    }
+
+    if (Buffer.isBuffer(req.body)) {
+      return new Uint8Array(req.body);
+    }
+
+    if (typeof req.body === 'string') {
+      return req.body;
+    }
+
+    const contentType = headers.get('content-type') ?? '';
+    if (!contentType) {
+      headers.set('content-type', 'application/json');
+      return JSON.stringify(req.body);
+    }
+
+    if (contentType.includes('application/json')) {
+      return JSON.stringify(req.body);
+    }
+
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      return new URLSearchParams(req.body as Record<string, string>).toString();
+    }
+
+    return JSON.stringify(req.body);
+  }
+
+  private copyResponseHeaders(
+    upstream: globalThis.Response,
+    res: Response,
+  ): void {
+    upstream.headers.forEach((value, name) => {
+      const lowerName = name.toLowerCase();
+      if (
+        lowerName === 'content-length' ||
+        lowerName === 'transfer-encoding' ||
+        lowerName === 'connection'
+      ) {
+        return;
+      }
+      res.setHeader(name, value);
+    });
+
+    const setCookies = upstream.headers.getSetCookie();
+    if (setCookies.length > 0) {
+      res.setHeader('set-cookie', setCookies);
+    }
+  }
+}

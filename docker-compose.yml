@@ -1,14 +1,49 @@
 services:
+  # ── API Gateway (Public Entry) ──────────────────
+  api-gateway:
+    image: ${GATEWAY_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/gateway:latest}
+    container_name: api-gateway
+    ports:
+      - '${API_GATEWAY_PORT:-3000}:${API_GATEWAY_PORT:-3000}'
+    environment:
+      - PORT=${API_GATEWAY_PORT:-3000}
+      - AUTH_UPSTREAM_URL=${AUTH_UPSTREAM_URL:-http://auth:3001}
+      - LEARN_UPSTREAM_URL=${LEARN_UPSTREAM_URL:-http://learn:3002}
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
+      - RATE_LIMIT_WINDOW_SEC=${RATE_LIMIT_WINDOW_SEC:-60}
+      - TRUST_X_FORWARDED_FOR=${TRUST_X_FORWARDED_FOR:-true}
+      - TRUST_PROXY=${TRUST_PROXY:-loopback}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+      - IP_BLACKLIST=${IP_BLACKLIST:-}
+      - SWAGGER_ENABLED=${GATEWAY_SWAGGER_ENABLED:-true}
+      - SWAGGER_PATH=${GATEWAY_SWAGGER_PATH:-api-docs}
+      - SWAGGER_TITLE=${GATEWAY_SWAGGER_TITLE:-API Gateway}
+    depends_on:
+      redis:
+        condition: service_healthy
+      auth:
+        condition: service_started
+      learn:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app-network
+
   # ── Auth Service ──────────────────────────────────
   auth:
     image: ${AUTH_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/auth:latest}
     container_name: auth-service
-    ports:
-      - '${AUTH_PORT:-3001}:${AUTH_PORT:-3001}'
+    expose:
+      - '${AUTH_PORT:-3001}'
     env_file:
       - ./auth/.env
     environment:
       - PORT=${AUTH_PORT:-3001}
+      - SWAGGER_ENABLED=${AUTH_SWAGGER_ENABLED:-true}
+      - SWAGGER_PATH=${AUTH_SWAGGER_PATH:-api-docs}
+      - SWAGGER_TITLE=${AUTH_SWAGGER_TITLE:-Auth API}
     depends_on:
       redis:
         condition: service_healthy
@@ -20,12 +55,15 @@ services:
   learn:
     image: ${LEARN_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/learn:latest}
     container_name: learn-service
-    ports:
-      - '${LEARN_PORT:-3002}:${LEARN_PORT:-3002}'
+    expose:
+      - '${LEARN_PORT:-3002}'
     env_file:
       - ./learn/.env
     environment:
       - PORT=${LEARN_PORT:-3002}
+      - SWAGGER_ENABLED=${LEARN_SWAGGER_ENABLED:-true}
+      - SWAGGER_PATH=${LEARN_SWAGGER_PATH:-api-docs}
+      - SWAGGER_TITLE=${LEARN_SWAGGER_TITLE:-Learn API}
     restart: unless-stopped
     networks:
       - app-network

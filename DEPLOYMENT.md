@@ -7,12 +7,12 @@ Push to main ──► GitHub Actions
                      │
                ┌─────┴──────┐
                ▼             ▼
-          Build Auth    Build Learn
-           Image         Image
-               │             │
-               ▼             ▼
-          Push to GHCR  Push to GHCR
-               └─────┬──────┘
+        Build Gateway  Build Auth   Build Learn
+             Image        Image        Image
+                  │           │            │
+                  ▼           ▼            ▼
+           Push to GHCR Push to GHCR  Push to GHCR
+                  └───────────┬───────────┘
                      ▼
               SSH into VPS
                      │
@@ -23,12 +23,18 @@ Push to main ──► GitHub Actions
      Secrets                    │
           ┌─────────────────────┤
           ▼          ▼          ▼
-    auth-service  learn-service  redis
-     (PM2)         (PM2)
-     :3001         :3002        :6379
-          │          │
-          ▼          ▼
-     Neon PostgreSQL (Cloud)
+           api-gateway     redis
+                :3000        :6379
+                     │
+      ┌────────┴────────┐
+      ▼                 ▼
+ auth-service      learn-service
+  (internal)        (internal)
+      :3001             :3002
+      │                  │
+      └──────────┬───────┘
+                         ▼
+            Neon PostgreSQL (Cloud)
 ```
 
 ### Tech Stack
@@ -78,6 +84,20 @@ Push to main ──► GitHub Actions
 | `JWT_REFRESH_EXPIRATION` | JWT refresh token time-to-live | `7d`                                             |
 | `AUTH_PORT`              | Port cho Auth service          | `3001`                                           |
 
+### 🚪 API Gateway
+
+| Secret                    | Mô tả                                      | Ví dụ             |
+| ------------------------- | ------------------------------------------ | ----------------- |
+| `API_GATEWAY_PORT`        | Port public cho gateway                    | `3000`            |
+| `RATE_LIMIT_MAX`          | Số request tối đa / cửa sổ                 | `100`             |
+| `RATE_LIMIT_WINDOW_SEC`   | Kích thước cửa sổ rate limit (giây)        | `60`              |
+| `TRUST_X_FORWARDED_FOR`   | Có đọc IP từ `X-Forwarded-For` hay không   | `true`            |
+| `TRUST_PROXY`             | Cấu hình trusted proxy cho Express         | `loopback`        |
+| `IP_BLACKLIST`            | Danh sách IP chặn, phân tách bằng dấu phẩy | `1.2.3.4,5.6.7.8` |
+| `GATEWAY_SWAGGER_ENABLED` | Bật/tắt docs của gateway                   | `true`            |
+| `GATEWAY_SWAGGER_PATH`    | Path docs gateway                          | `api-docs`        |
+| `GATEWAY_SWAGGER_TITLE`   | Tiêu đề docs gateway                       | `API Gateway`     |
+
 ### 📚 Learn Service
 
 | Secret               | Mô tả                        | Ví dụ                                            |
@@ -92,6 +112,17 @@ Push to main ──► GitHub Actions
 | `CORS_ORIGIN`    | Allowed CORS origin (frontend URL) | `https://your-frontend.com` |
 | `REDIS_PASSWORD` | Redis password                     | `a-strong-password`         |
 | `REDIS_PORT`     | Redis port trên VPS                | `6379`                      |
+
+### 📘 Swagger cho Auth/Learn (tuỳ chọn, cho môi trường dev)
+
+| Secret                  | Mô tả                  | Mặc định    |
+| ----------------------- | ---------------------- | ----------- |
+| `AUTH_SWAGGER_ENABLED`  | Bật/tắt docs auth      | `true`      |
+| `AUTH_SWAGGER_PATH`     | Path docs auth nội bộ  | `api-docs`  |
+| `AUTH_SWAGGER_TITLE`    | Tiêu đề docs auth      | `Auth API`  |
+| `LEARN_SWAGGER_ENABLED` | Bật/tắt docs learn     | `true`      |
+| `LEARN_SWAGGER_PATH`    | Path docs learn nội bộ | `api-docs`  |
+| `LEARN_SWAGGER_TITLE`   | Tiêu đề docs learn     | `Learn API` |
 
 ---
 
@@ -133,7 +164,7 @@ echo "YOUR_GHCR_PAT" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-s
 
 Push code lên branch `main` → GitHub Actions tự động:
 
-1. Build Docker images cho auth và learn
+1. Build Docker images cho gateway, auth và learn
 2. Push images lên GHCR
 3. SSH vào VPS → tạo `.env` files → pull images → `docker compose up`
 
@@ -160,7 +191,7 @@ english-learning-be/
 │   ├── prisma/
 │   ├── src/
 │   └── package.json
-├── gateway/                     # (sẽ thêm sau)
+├── gateway/
 ├── notification/                # (sẽ thêm sau)
 ├── storage/                     # (sẽ thêm sau)
 ├── docker-compose.yml           # Orchestrate all services
@@ -179,14 +210,18 @@ cd /home/deploy/english-learning-be
 docker compose ps
 
 # Xem logs
+docker compose logs -f api-gateway # Gateway logs
 docker compose logs -f auth        # Auth service logs
 docker compose logs -f learn       # Learn service logs
 docker compose logs -f redis       # Redis logs
 
 # Restart 1 service
+docker compose restart api-gateway
 docker compose restart auth
 
 # Rebuild & deploy lại 1 service
+docker compose pull api-gateway
+docker compose up -d api-gateway
 docker compose pull auth
 docker compose up -d auth
 
