@@ -65,46 +65,10 @@ jobs:
 
   # ── Deploy to VPS ──────────────────────────────────────
   deploy:
-    # needs: [build-auth, build-learn]
+    needs: [build-auth, build-learn]
     runs-on: ubuntu-latest
     environment: Production
     steps:
-      - name: Debug secrets & Test SSH connectivity
-        run: |
-          HOST="${{ secrets.VPS_HOST }}"
-          PORT="${{ secrets.VPS_PORT }}"
-          echo "HOST=${{ secrets.VPS_HOST }}"
-          echo "PORT=${{ secrets.VPS_PORT }}"
-          echo "VPS_HOST length: ${#HOST}, first 4 chars: ${HOST:0:4}..."
-          echo "VPS_PORT length: ${#PORT}, value: $PORT"
-          echo "VPS_USER length: ${#VPS_USER}"
-          echo "VPS_SSH_KEY length: ${#KEY}"
-          echo "Runner IP: $(curl -s ifconfig.me)"
-          echo "---"
-
-          echo "Debug: Pinging $HOST"
-          ping -c 4 -W 2 $HOST || echo "ping failed"
-          echo "---"
-
-          echo "Debug: traceroute to $HOST (requires traceroute, installing if needed)"
-          sudo apt-get update -y && sudo apt-get install -y traceroute nmap
-          traceroute $HOST || echo "traceroute failed"
-          echo "---"
-
-          echo "Debug: Testing HTTP/HTTPS connectivity (just in case)"
-          curl -kv -m 5 https://$HOST || echo "HTTPS curl failed"
-          echo "---"
-
-          echo "Debug: Port scanning with nmap (if allowed)"
-          nmap -p $PORT -Pn $HOST || echo "nmap failed"
-          echo "---"
-
-          echo "Debug: Netcat SSH Port Test"
-          nc -zv -w 10 $HOST $PORT || true
-        env:
-          VPS_USER: ${{ secrets.VPS_USER }}
-          KEY: ${{ secrets.VPS_SSH_KEY }}
-          PASSWORD: ${{ secrets.VPS_PASSWORD }}
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
@@ -113,21 +77,46 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           password: ${{ secrets.VPS_PASSWORD }}
-          debug: true
           timeout: 80s
           command_timeout: 30m
           script: |
             set -e
 
-            DEPLOY_DIR="/home/deploy/english-learning-be"
-            mkdir -p "$DEPLOY_DIR"
+            export SUDO_PASSWORD='${{ secrets.VPS_PASSWORD }}'
+            SUDO_ASKPASS_SCRIPT="$(mktemp)"
+            cat > "$SUDO_ASKPASS_SCRIPT" << 'EOF'
+            #!/bin/sh
+            printf '%s\n' "$SUDO_PASSWORD"
+            EOF
+            chmod 700 "$SUDO_ASKPASS_SCRIPT"
+            export SUDO_ASKPASS="$SUDO_ASKPASS_SCRIPT"
+
+            sudo_run() {
+              sudo -A "$@"
+            }
+
+            DEPLOY_DIR="${DEPLOY_DIR:-/home/deploy/english-learning-be}"
+            sudo_run mkdir -p "$DEPLOY_DIR"
+            sudo_run chown -R "$USER":"$USER" "$DEPLOY_DIR"
             cd "$DEPLOY_DIR"
 
+            # Ensure deploy directory is writable before downloading files
+            test -w "$DEPLOY_DIR" || {
+              echo "❌ No write permission for $DEPLOY_DIR"
+              ls -ld "$DEPLOY_DIR"
+              id
+              exit 1
+            }
+
             # ── Download docker-compose.yml directly (no git clone needed) ──
-            curl -sSL "https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.yml" -o docker-compose.yml
+            TMP_COMPOSE="$(mktemp "$DEPLOY_DIR/docker-compose.yml.XXXXXX")"
+            curl -fsSL --retry 3 --connect-timeout 10 \
+              "https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.yml" \
+              -o "$TMP_COMPOSE"
+            mv "$TMP_COMPOSE" docker-compose.yml
 
             # ── Login to GHCR ──
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ secrets.VPS_USER }} --password-stdin
+            echo "${{ secrets.GHCR_PAT }}" | sudo_run docker login ghcr.io -u ${{ secrets.VPS_USER }} --password-stdin
 
             # ── Create root .env (docker-compose variables) ──
             cat > .env << ENVEOF
@@ -162,9 +151,11 @@ jobs:
             ENVEOF
 
             # ── Pull images & deploy ──
-            docker compose pull
-            docker compose up -d --remove-orphans
-            docker image prune -f
+            sudo_run docker compose pull
+            sudo_run docker compose up -d --remove-orphans
+            sudo_run docker image prune -f
 
             echo "✅ Deployment complete!"
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            sudo_run docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+            rm -f "$SUDO_ASKPASS_SCRIPT"
