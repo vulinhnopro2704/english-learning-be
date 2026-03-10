@@ -23,9 +23,11 @@ export class GatewayProxyService {
   private readonly logger = new Logger(GatewayProxyService.name);
   private readonly authDocsPrefix = '/auth/api-docs';
   private readonly learnDocsPrefix = '/learn/api-docs';
+  private readonly fsrsAiDocsPrefix = '/fsrs-ai/api-docs';
 
   private readonly authUpstreamUrl: string;
   private readonly learnUpstreamUrl: string;
+  private readonly fsrsAiUpstreamUrl: string;
   private readonly swaggerPath: string;
   private readonly swaggerEnabled: boolean;
   private readonly rateLimitWindowSec: number;
@@ -43,6 +45,9 @@ export class GatewayProxyService {
     this.learnUpstreamUrl =
       this.configService.get<string>('LEARN_UPSTREAM_URL') ??
       'http://learn:3002';
+    this.fsrsAiUpstreamUrl =
+      this.configService.get<string>('FSRS_AI_UPSTREAM_URL') ??
+      'http://fsrs-ai:8000';
     this.swaggerPath = `/${(this.configService.get<string>('SWAGGER_PATH') ?? 'api-docs').replace(/^\/+/, '')}`;
     this.swaggerEnabled =
       (this.configService.get<string>('SWAGGER_ENABLED') ?? 'true') === 'true';
@@ -146,9 +151,18 @@ export class GatewayProxyService {
       return this.learnUpstreamUrl;
     }
 
+    if (path.startsWith(this.fsrsAiDocsPrefix)) {
+      return this.fsrsAiUpstreamUrl;
+    }
+
     if (path.startsWith('/auth') || path.startsWith('/users')) {
       return this.authUpstreamUrl;
     }
+
+    if (path.startsWith('/fsrs-ai')) {
+      return this.fsrsAiUpstreamUrl;
+    }
+
     return this.learnUpstreamUrl;
   }
 
@@ -169,7 +183,8 @@ export class GatewayProxyService {
 
     if (
       path.startsWith(this.authDocsPrefix) ||
-      path.startsWith(this.learnDocsPrefix)
+      path.startsWith(this.learnDocsPrefix) ||
+      path.startsWith(this.fsrsAiDocsPrefix)
     ) {
       return false;
     }
@@ -321,6 +336,14 @@ export class GatewayProxyService {
 
     if (path.startsWith(this.learnDocsPrefix)) {
       return path.replace(this.learnDocsPrefix, '/api-docs');
+    }
+
+    if (path.startsWith(this.fsrsAiDocsPrefix)) {
+      return path.replace(this.fsrsAiDocsPrefix, '/api-docs');
+    }
+
+    if (path.startsWith('/fsrs-ai')) {
+      return path.replace('/fsrs-ai', '');
     }
 
     return path;

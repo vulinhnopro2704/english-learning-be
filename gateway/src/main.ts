@@ -77,6 +77,8 @@ async function bootstrap() {
       <li><a href="/auth/api-docs/swagger">Auth Swagger UI</a></li>
       <li><a href="/learn/api-docs">Learn Scalar UI</a></li>
       <li><a href="/learn/api-docs/swagger">Learn Swagger UI</a></li>
+      <li><a href="/fsrs-ai/api-docs">FSRS-AI Swagger UI</a></li>
+      <li><a href="/fsrs-ai/api-docs/redoc">FSRS-AI ReDoc</a></li>
     </ul>
   </body>
 </html>`);
