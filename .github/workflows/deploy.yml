@@ -182,10 +182,11 @@ jobs:
             API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT || '3000' }}
             AUTH_PORT=${{ secrets.AUTH_PORT }}
             LEARN_PORT=${{ secrets.LEARN_PORT }}
-            FSRS_AI_PORT=${{ secrets.FSRS_AI_PORT || '8000' }}
+            FSRS_AI_PORT=${{ secrets.FSRS_AI_PORT || '3003' }}
+            LEARN_DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
             AUTH_UPSTREAM_URL=http://auth:${{ secrets.AUTH_PORT }}
             LEARN_UPSTREAM_URL=http://learn:${{ secrets.LEARN_PORT }}
-            FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '8000' }}
+            FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3003' }}
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
             REDIS_PORT=${{ secrets.REDIS_PORT }}
@@ -226,13 +227,6 @@ jobs:
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
             PORT=${{ secrets.LEARN_PORT }}
-            ENVEOF
-
-            # ── Create fsrs-ai/.env ──
-            mkdir -p fsrs-ai
-            cat > fsrs-ai/.env << ENVEOF
-            DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
-            PORT=${{ secrets.FSRS_AI_PORT || '8000' }}
             ENVEOF
 
             # ── Pull images & deploy ──

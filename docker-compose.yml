@@ -30,7 +30,7 @@ services:
         condition: service_started
       fsrs-ai:
         condition: service_started
-    restart: unless-stopped
+    restart: no
     networks:
       - app-network
 
@@ -50,7 +50,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    restart: unless-stopped
+    restart: no
     networks:
       - app-network
 
@@ -67,7 +67,7 @@ services:
       - SWAGGER_ENABLED=${LEARN_SWAGGER_ENABLED:-true}
       - SWAGGER_PATH=${LEARN_SWAGGER_PATH:-api-docs}
       - SWAGGER_TITLE=${LEARN_SWAGGER_TITLE:-Learn API}
-    restart: unless-stopped
+    restart: no
     networks:
       - app-network
 
@@ -76,12 +76,11 @@ services:
     image: ${FSRS_AI_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/fsrs-ai:latest}
     container_name: fsrs-ai-service
     expose:
-      - '${FSRS_AI_PORT:-8000}'
-    env_file:
-      - ./fsrs-ai/.env
+      - '${FSRS_AI_PORT:-3003}'
     environment:
-      - PORT=${FSRS_AI_PORT:-8000}
-    restart: unless-stopped
+      - DATABASE_URL=${LEARN_DATABASE_URL}
+      - PORT=${FSRS_AI_PORT:-3003}
+    restart: no
     networks:
       - app-network
 
@@ -97,7 +96,7 @@ services:
       - '${REDIS_PORT:-6379}:6379'
     volumes:
       - redis-data:/data
-    restart: unless-stopped
+    restart: no
     healthcheck:
       test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-changeme}', 'ping']
       interval: 10s
