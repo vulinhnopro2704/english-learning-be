@@ -123,7 +123,7 @@ export class GatewayProxyService {
       return true;
     }
 
-    if (req.path === '/docs') {
+    if (req.path === '/') {
       return true;
     }
 

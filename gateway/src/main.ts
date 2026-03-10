@@ -52,7 +52,7 @@ async function bootstrap() {
       }),
     );
 
-    expressApp.get('/docs', (_req, res) => {
+    expressApp.get('/', (_req, res) => {
       res.type('html').send(`<!doctype html>
 <html>
   <head>
