@@ -9,6 +9,7 @@ services:
       - PORT=${API_GATEWAY_PORT:-3000}
       - AUTH_UPSTREAM_URL=${AUTH_UPSTREAM_URL:-http://auth:3001}
       - LEARN_UPSTREAM_URL=${LEARN_UPSTREAM_URL:-http://learn:3002}
+      - FSRS_AI_UPSTREAM_URL=${FSRS_AI_UPSTREAM_URL:-http://fsrs-ai:8000}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
@@ -26,6 +27,8 @@ services:
       auth:
         condition: service_started
       learn:
+        condition: service_started
+      fsrs-ai:
         condition: service_started
     restart: unless-stopped
     networks:
@@ -64,6 +67,20 @@ services:
       - SWAGGER_ENABLED=${LEARN_SWAGGER_ENABLED:-true}
       - SWAGGER_PATH=${LEARN_SWAGGER_PATH:-api-docs}
       - SWAGGER_TITLE=${LEARN_SWAGGER_TITLE:-Learn API}
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # ── FSRS-AI Service ───────────────────────────────
+  fsrs-ai:
+    image: ${FSRS_AI_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/fsrs-ai:latest}
+    container_name: fsrs-ai-service
+    expose:
+      - '${FSRS_AI_PORT:-8000}'
+    env_file:
+      - ./fsrs-ai/.env
+    environment:
+      - PORT=${FSRS_AI_PORT:-8000}
     restart: unless-stopped
     networks:
       - app-network

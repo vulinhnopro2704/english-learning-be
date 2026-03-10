@@ -7,6 +7,7 @@ on:
       - 'gateway/**'
       - 'auth/**'
       - 'learn/**'
+      - 'fsrs-ai/**'
       - 'docker-compose.yml'
       - '.github/workflows/deploy.yml'
 
@@ -88,9 +89,33 @@ jobs:
             ${{ env.IMAGE_PREFIX }}/learn:latest
             ${{ env.IMAGE_PREFIX }}/learn:${{ github.sha }}
 
+  build-fsrs-ai:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push FSRS-AI image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./fsrs-ai
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/fsrs-ai:latest
+            ${{ env.IMAGE_PREFIX }}/fsrs-ai:${{ github.sha }}
+
   # ── Deploy to VPS ──────────────────────────────────────
   deploy:
-    needs: [build-gateway, build-auth, build-learn]
+    needs: [build-gateway, build-auth, build-learn, build-fsrs-ai]
     runs-on: ubuntu-latest
     environment: Production
     steps:
@@ -148,11 +173,14 @@ jobs:
             GATEWAY_IMAGE=${{ env.IMAGE_PREFIX }}/gateway:latest
             AUTH_IMAGE=${{ env.IMAGE_PREFIX }}/auth:latest
             LEARN_IMAGE=${{ env.IMAGE_PREFIX }}/learn:latest
+            FSRS_AI_IMAGE=${{ env.IMAGE_PREFIX }}/fsrs-ai:latest
             API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT || '3000' }}
             AUTH_PORT=${{ secrets.AUTH_PORT }}
             LEARN_PORT=${{ secrets.LEARN_PORT }}
+            FSRS_AI_PORT=${{ secrets.FSRS_AI_PORT || '8000' }}
             AUTH_UPSTREAM_URL=http://auth:${{ secrets.AUTH_PORT }}
             LEARN_UPSTREAM_URL=http://learn:${{ secrets.LEARN_PORT }}
+            FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '8000' }}
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
             REDIS_PORT=${{ secrets.REDIS_PORT }}
@@ -193,6 +221,13 @@ jobs:
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
             PORT=${{ secrets.LEARN_PORT }}
+            ENVEOF
+
+            # ── Create fsrs-ai/.env ──
+            mkdir -p fsrs-ai
+            cat > fsrs-ai/.env << ENVEOF
+            DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
+            PORT=${{ secrets.FSRS_AI_PORT || '8000' }}
             ENVEOF
 
             # ── Pull images & deploy ──

@@ -34,6 +34,10 @@ app = FastAPI(
     lifespan=lifespan,
     # Serialize all responses with camelCase aliases
     response_model_by_alias=True,
+    # Use /api-docs for consistency with other services
+    docs_url="/api-docs",
+    redoc_url="/api-docs/redoc",
+    openapi_url="/api-docs/openapi.json",
 )
 
 # CORS — allow learn service and frontend
