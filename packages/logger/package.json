@@ -1,0 +1,28 @@
+{
+  "name": "@english-learning/logger",
+  "version": "0.1.0",
+  "description": "Shared logger and HTTP request/response middleware for English Learning platform services",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "chalk": "^5.6.2",
+    "dayjs": "^1.11.19",
+    "uuid": "^11.1.0",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.7",
+    "typescript": "^5.7.3"
+  }
+}

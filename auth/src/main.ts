@@ -1,19 +1,31 @@
 import { NestFactory } from '@nestjs/core';
 import { HttpStatus, ValidationPipe } from '@nestjs/common';
+import {
+  AppLogger,
+  createRequestLoggerMiddleware,
+} from '@english-learning/logger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { MyLogger } from './modules/logger/my.logger';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 
 async function bootstrap() {
+  const appLogger = new AppLogger();
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    logger: new MyLogger(),
+    logger: appLogger,
   });
+  app.useLogger(appLogger);
 
   // Cookie parser
   app.use(cookieParser());
+
+  app.use(
+    createRequestLoggerMiddleware({
+      logger: appLogger,
+      bodyMax: Number(process.env.LOGGER_BODY_MAX ?? '0'),
+    }),
+  );
 
   // Global validation pipe
   app.useGlobalPipes(

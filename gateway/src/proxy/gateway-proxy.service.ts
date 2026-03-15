@@ -283,6 +283,14 @@ export class GatewayProxyService {
     return req.ip ?? req.socket.remoteAddress ?? 'unknown';
   }
 
+  private getTraceId(req: Request): string {
+    return (
+      req.header('x-trace-id') ??
+      (req as Record<string, any>).traceId ??
+      'unknown'
+    );
+  }
+
   private async forwardRequest(
     req: Request,
     res: Response,
@@ -320,8 +328,9 @@ export class GatewayProxyService {
 
       res.send(responseText);
     } catch (error) {
+      const traceId = this.getTraceId(req);
       this.logger.error(
-        `Forward request failed for ${req.method} ${req.originalUrl}: ${(error as Error).message}`,
+        `Forward request failed for ${req.method} ${req.originalUrl} traceId=${traceId}: ${(error as Error).message}`,
       );
       res.status(HttpStatus.BAD_GATEWAY).json({
         message: 'Failed to reach upstream service',

@@ -1,15 +1,31 @@
 import { NestFactory } from '@nestjs/core';
 import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import {
+  AppLogger,
+  createRequestLoggerMiddleware,
+} from '@english-learning/logger';
 import { LearnModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 
 async function bootstrap() {
-  const app = await NestFactory.create(LearnModule, { bufferLogs: true });
+  const appLogger = new AppLogger();
+  const app = await NestFactory.create(LearnModule, {
+    bufferLogs: true,
+    logger: appLogger,
+  });
+  app.useLogger(appLogger);
 
   // Cookie parser (JWT tokens in HTTP-only cookies)
   app.use(cookieParser());
+
+  app.use(
+    createRequestLoggerMiddleware({
+      logger: appLogger,
+      bodyMax: Number(process.env.LOGGER_BODY_MAX ?? '0'),
+    }),
+  );
 
   // Global validation pipe
   app.useGlobalPipes(

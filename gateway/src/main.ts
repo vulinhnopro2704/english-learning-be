@@ -1,5 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { HttpStatus, ValidationPipe } from '@nestjs/common';
+import {
+  AppLogger,
+  createRequestLoggerMiddleware,
+} from '@english-learning/logger';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -8,12 +12,20 @@ import { AppModule } from './app.module';
 import { GatewayProxyService } from './proxy/gateway-proxy.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const appLogger = new AppLogger();
+  const app = await NestFactory.create(AppModule, { logger: appLogger });
+  app.useLogger(appLogger);
 
   app.use(cookieParser());
   // Ensure payloads survive the proxy by parsing JSON/urlencoded bodies up front
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(
+    createRequestLoggerMiddleware({
+      logger: appLogger,
+      bodyMax: Number(process.env.LOGGER_BODY_MAX ?? '0'),
+    }),
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({
