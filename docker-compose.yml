@@ -80,6 +80,7 @@ services:
     environment:
       - DATABASE_URL=${FSRS_AI_DATABASE_URL}
       - PORT=${FSRS_AI_PORT:-3003}
+      - ROOT_PATH=/fsrs-ai
     restart: no
     networks:
       - app-network
