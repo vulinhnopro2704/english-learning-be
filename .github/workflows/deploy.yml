@@ -184,6 +184,7 @@ jobs:
             LEARN_PORT=${{ secrets.LEARN_PORT }}
             FSRS_AI_PORT=${{ secrets.FSRS_AI_PORT || '3003' }}
             LEARN_DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
+            FSRS_AI_DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
             AUTH_UPSTREAM_URL=http://auth:${{ secrets.AUTH_PORT }}
             LEARN_UPSTREAM_URL=http://learn:${{ secrets.LEARN_PORT }}
             FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3003' }}

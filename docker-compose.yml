@@ -9,7 +9,7 @@ services:
       - PORT=${API_GATEWAY_PORT:-3000}
       - AUTH_UPSTREAM_URL=${AUTH_UPSTREAM_URL:-http://auth:3001}
       - LEARN_UPSTREAM_URL=${LEARN_UPSTREAM_URL:-http://learn:3002}
-      - FSRS_AI_UPSTREAM_URL=${FSRS_AI_UPSTREAM_URL:-http://fsrs-ai:8000}
+      - FSRS_AI_UPSTREAM_URL=${FSRS_AI_UPSTREAM_URL:-http://fsrs-ai:3003}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
@@ -78,7 +78,7 @@ services:
     expose:
       - '${FSRS_AI_PORT:-3003}'
     environment:
-      - DATABASE_URL=${LEARN_DATABASE_URL}
+      - DATABASE_URL=${FSRS_AI_DATABASE_URL}
       - PORT=${FSRS_AI_PORT:-3003}
     restart: no
     networks:

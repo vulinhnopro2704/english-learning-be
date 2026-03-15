@@ -56,6 +56,7 @@ Push to main ──► GitHub Actions
 | Gateway | 3000         |
 | Auth    | 3001         |
 | Learn   | 3002         |
+| FSRS-AI | 3003         |
 
 > Tất cả port đều cấu hình qua environment variables.
 
@@ -104,6 +105,13 @@ Push to main ──► GitHub Actions
 | -------------------- | ---------------------------- | ------------------------------------------------ |
 | `LEARN_DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host/db?sslmode=require` |
 | `LEARN_PORT`         | Port cho Learn service       | `3002`                                           |
+
+### 🤖 FSRS-AI Service
+
+| Secret                 | Mô tả                                                        | Ví dụ                                                |
+| ---------------------- | ------------------------------------------------------------ | ---------------------------------------------------- |
+| `FSRS_AI_DATABASE_URL` | PostgreSQL connection string (asyncpg format cho SQLAlchemy) | `postgresql+asyncpg://user:pass@host/db?ssl=require` |
+| `FSRS_AI_PORT`         | Port cho FSRS-AI service                                     | `3003`                                               |
 
 ### 🌐 Shared
 
