@@ -32,6 +32,7 @@ app = FastAPI(
     ),
     version="1.0.0",
     lifespan=lifespan,
+    root_path=settings.ROOT_PATH,
     # Serialize all responses with camelCase aliases
     response_model_by_alias=True,
     # Use /api-docs for consistency with other services
