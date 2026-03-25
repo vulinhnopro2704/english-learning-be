@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.database import engine
+from app.config import settings
 from app.models import Base
 from app.routers import helper, optimize, review
 

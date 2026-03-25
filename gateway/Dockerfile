@@ -15,7 +15,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 COPY --from=deps /app/gateway/node_modules ./gateway/node_modules
 COPY gateway ./gateway
-COPY packages/logger ./packages/logger
+COPY --from=deps /app/packages/logger ./packages/logger
 WORKDIR /app/gateway
 RUN pnpm build
 RUN pnpm prune --prod

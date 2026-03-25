@@ -17,7 +17,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 COPY --from=deps /app/learn/node_modules ./learn/node_modules
 COPY learn ./learn
-COPY packages/logger ./packages/logger
+COPY --from=deps /app/packages/logger ./packages/logger
 WORKDIR /app/learn
 RUN npx prisma generate
 RUN pnpm build
