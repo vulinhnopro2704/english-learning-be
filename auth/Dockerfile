@@ -2,8 +2,12 @@
 FROM node:22-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
-COPY auth/package.json auth/pnpm-lock.yaml ./auth/
 COPY packages/logger ./packages/logger
+WORKDIR /app/packages/logger
+RUN pnpm install --frozen-lockfile
+RUN pnpm build
+WORKDIR /app
+COPY auth/package.json auth/pnpm-lock.yaml ./auth/
 WORKDIR /app/auth
 RUN pnpm install --frozen-lockfile
 

@@ -42,6 +42,8 @@ jobs:
           tags: |
             ${{ env.IMAGE_PREFIX }}/gateway:latest
             ${{ env.IMAGE_PREFIX }}/gateway:${{ github.sha }}
+          cache-from: type=gha,scope=nest-shared
+          cache-to: type=gha,mode=max,scope=nest-shared
 
   build-auth:
     runs-on: ubuntu-latest
@@ -67,6 +69,8 @@ jobs:
           tags: |
             ${{ env.IMAGE_PREFIX }}/auth:latest
             ${{ env.IMAGE_PREFIX }}/auth:${{ github.sha }}
+          cache-from: type=gha,scope=nest-shared
+          cache-to: type=gha,mode=max,scope=nest-shared
 
   build-learn:
     runs-on: ubuntu-latest
@@ -92,6 +96,8 @@ jobs:
           tags: |
             ${{ env.IMAGE_PREFIX }}/learn:latest
             ${{ env.IMAGE_PREFIX }}/learn:${{ github.sha }}
+          cache-from: type=gha,scope=nest-shared
+          cache-to: type=gha,mode=max,scope=nest-shared
 
   build-fsrs-ai:
     runs-on: ubuntu-latest

@@ -2,8 +2,12 @@
 FROM node:22-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
-COPY learn/package.json learn/pnpm-lock.yaml ./learn/
 COPY packages/logger ./packages/logger
+WORKDIR /app/packages/logger
+RUN pnpm install --frozen-lockfile
+RUN pnpm build
+WORKDIR /app
+COPY learn/package.json learn/pnpm-lock.yaml ./learn/
 WORKDIR /app/learn
 RUN pnpm install --frozen-lockfile
 

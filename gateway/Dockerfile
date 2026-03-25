@@ -1,8 +1,12 @@
 FROM node:22-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
-COPY gateway/package.json gateway/pnpm-lock.yaml ./gateway/
 COPY packages/logger ./packages/logger
+WORKDIR /app/packages/logger
+RUN pnpm install --frozen-lockfile
+RUN pnpm build
+WORKDIR /app
+COPY gateway/package.json gateway/pnpm-lock.yaml ./gateway/
 WORKDIR /app/gateway
 RUN pnpm install --frozen-lockfile
 
