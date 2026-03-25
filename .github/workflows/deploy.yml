@@ -7,6 +7,7 @@ on:
       - 'gateway/**'
       - 'auth/**'
       - 'learn/**'
+      - 'packages/**'
       - 'fsrs-ai/**'
       - 'docker-compose.yml'
       - '.github/workflows/deploy.yml'
@@ -35,7 +36,8 @@ jobs:
       - name: Build and push Gateway image
         uses: docker/build-push-action@v6
         with:
-          context: ./gateway
+          context: .
+          file: gateway/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/gateway:latest
@@ -59,7 +61,8 @@ jobs:
       - name: Build and push Auth image
         uses: docker/build-push-action@v6
         with:
-          context: ./auth
+          context: .
+          file: auth/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/auth:latest
@@ -83,7 +86,8 @@ jobs:
       - name: Build and push Learn image
         uses: docker/build-push-action@v6
         with:
-          context: ./learn
+          context: .
+          file: learn/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/learn:latest

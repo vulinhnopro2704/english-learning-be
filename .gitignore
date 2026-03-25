@@ -1,6 +1,6 @@
 # compiled output
 /dist
-/node_modules
+node_modules
 /build
 
 # Logs
@@ -13,6 +13,7 @@ yarn-error.log*
 lerna-debug.log*
 */log-rotate/*
 **.log.*
+dist
 
 # OS
 .DS_Store
