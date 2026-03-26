@@ -9,6 +9,7 @@ services:
       - PORT=${API_GATEWAY_PORT:-3000}
       - AUTH_UPSTREAM_URL=${AUTH_UPSTREAM_URL:-http://auth:3001}
       - LEARN_UPSTREAM_URL=${LEARN_UPSTREAM_URL:-http://learn:3002}
+      - STORAGE_UPSTREAM_URL=${STORAGE_UPSTREAM_URL:-http://storage:3003}
       - FSRS_AI_UPSTREAM_URL=${FSRS_AI_UPSTREAM_URL:-http://fsrs-ai:3003}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379
@@ -28,6 +29,8 @@ services:
         condition: service_started
       learn:
         condition: service_started
+      storage:
+        condition: service_healthy
       fsrs-ai:
         condition: service_started
     restart: no
@@ -67,6 +70,30 @@ services:
       - SWAGGER_ENABLED=${LEARN_SWAGGER_ENABLED:-true}
       - SWAGGER_PATH=${LEARN_SWAGGER_PATH:-api-docs}
       - SWAGGER_TITLE=${LEARN_SWAGGER_TITLE:-Learn API}
+    restart: no
+    networks:
+      - app-network
+
+  # ── Storage Service ───────────────────────────────
+  storage:
+    image: ${STORAGE_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/storage:latest}
+    container_name: storage-service
+    expose:
+      - '${STORAGE_PORT:-3003}'
+    env_file:
+      - ./storage/.env
+    environment:
+      - PORT=${STORAGE_PORT:-3003}
+      - SWAGGER_ENABLED=${STORAGE_SWAGGER_ENABLED:-true}
+      - SWAGGER_PATH=${STORAGE_SWAGGER_PATH:-api-docs}
+      - SWAGGER_TITLE=${STORAGE_SWAGGER_TITLE:-Storage API}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -qO- "http://127.0.0.1:${STORAGE_PORT:-3003}/v1/health" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: no
     networks:
       - app-network

@@ -7,6 +7,7 @@ on:
       - 'gateway/**'
       - 'auth/**'
       - 'learn/**'
+      - 'storage/**'
       - 'packages/**'
       - 'fsrs-ai/**'
       - 'docker-compose.yml'
@@ -108,6 +109,36 @@ jobs:
           cache-from: type=gha,scope=nest-shared
           cache-to: type=gha,mode=max,scope=nest-shared
 
+  build-storage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Storage image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: storage/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/storage:latest
+            ${{ env.IMAGE_PREFIX }}/storage:${{ github.sha }}
+          cache-from: type=gha,scope=nest-shared
+          cache-to: type=gha,mode=max,scope=nest-shared
+
   build-fsrs-ai:
     runs-on: ubuntu-latest
     permissions:
@@ -139,7 +170,7 @@ jobs:
 
   # ── Deploy to VPS ──────────────────────────────────────
   deploy:
-    needs: [build-gateway, build-auth, build-learn, build-fsrs-ai]
+    needs: [build-gateway, build-auth, build-learn, build-storage, build-fsrs-ai]
     runs-on: ubuntu-latest
     environment: Production
     steps:
@@ -197,15 +228,19 @@ jobs:
             GATEWAY_IMAGE=${{ env.IMAGE_PREFIX }}/gateway:latest
             AUTH_IMAGE=${{ env.IMAGE_PREFIX }}/auth:latest
             LEARN_IMAGE=${{ env.IMAGE_PREFIX }}/learn:latest
+            STORAGE_IMAGE=${{ env.IMAGE_PREFIX }}/storage:latest
             FSRS_AI_IMAGE=${{ env.IMAGE_PREFIX }}/fsrs-ai:latest
             API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT || '3000' }}
             AUTH_PORT=${{ secrets.AUTH_PORT }}
             LEARN_PORT=${{ secrets.LEARN_PORT }}
+            STORAGE_PORT=${{ secrets.STORAGE_PORT || '3003' }}
             FSRS_AI_PORT=${{ secrets.FSRS_AI_PORT || '3003' }}
             LEARN_DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
+            STORAGE_DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
             FSRS_AI_DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
             AUTH_UPSTREAM_URL=http://auth:${{ secrets.AUTH_PORT }}
             LEARN_UPSTREAM_URL=http://learn:${{ secrets.LEARN_PORT }}
+            STORAGE_UPSTREAM_URL=http://storage:${{ secrets.STORAGE_PORT || '3003' }}
             FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3003' }}
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
@@ -225,6 +260,9 @@ jobs:
             LEARN_SWAGGER_ENABLED=${{ secrets.LEARN_SWAGGER_ENABLED || 'true' }}
             LEARN_SWAGGER_PATH=${{ secrets.LEARN_SWAGGER_PATH || 'api-docs' }}
             LEARN_SWAGGER_TITLE=${{ secrets.LEARN_SWAGGER_TITLE || 'Learn API' }}
+            STORAGE_SWAGGER_ENABLED=${{ secrets.STORAGE_SWAGGER_ENABLED || 'true' }}
+            STORAGE_SWAGGER_PATH=${{ secrets.STORAGE_SWAGGER_PATH || 'api-docs' }}
+            STORAGE_SWAGGER_TITLE=${{ secrets.STORAGE_SWAGGER_TITLE || 'Storage API' }}
             ENVEOF
 
             # ── Create auth/.env ──
@@ -247,6 +285,20 @@ jobs:
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
             PORT=${{ secrets.LEARN_PORT }}
+            ENVEOF
+
+            # ── Create storage/.env ──
+            mkdir -p storage
+            cat > storage/.env << ENVEOF
+            DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
+            CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+            CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+            CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+            SIGNED_URL_TTL_SECONDS=${{ secrets.SIGNED_URL_TTL_SECONDS || '300' }}
+            MAX_FILE_SIZE_MB=${{ secrets.MAX_FILE_SIZE_MB || '10' }}
+            ALLOWED_MIME_TYPES=${{ secrets.ALLOWED_MIME_TYPES || 'image/png,image/jpeg,image/webp,video/mp4,application/pdf' }}
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+            PORT=${{ secrets.STORAGE_PORT || '3003' }}
             ENVEOF
 
             # ── Pull images & deploy ──
