@@ -170,9 +170,16 @@ jobs:
 
   # ── Deploy to VPS ──────────────────────────────────────
   deploy:
+    if: ${{ always() }}
     needs: [build-gateway, build-auth, build-learn, build-storage, build-fsrs-ai]
     runs-on: ubuntu-latest
     environment: Production
+    env:
+      BUILD_GATEWAY_RESULT: ${{ needs.build-gateway.result }}
+      BUILD_AUTH_RESULT: ${{ needs.build-auth.result }}
+      BUILD_LEARN_RESULT: ${{ needs.build-learn.result }}
+      BUILD_STORAGE_RESULT: ${{ needs.build-storage.result }}
+      BUILD_FSRS_AI_RESULT: ${{ needs.build-fsrs-ai.result }}
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
@@ -184,8 +191,9 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           timeout: 80s
           command_timeout: 30m
+          envs: BUILD_GATEWAY_RESULT,BUILD_AUTH_RESULT,BUILD_LEARN_RESULT,BUILD_STORAGE_RESULT,BUILD_FSRS_AI_RESULT
           script: |
-            set -e
+            set -u
 
             export SUDO_PASSWORD='${{ secrets.VPS_PASSWORD }}'
             SUDO_ASKPASS_SCRIPT="$(mktemp)"
@@ -234,14 +242,14 @@ jobs:
             AUTH_PORT=${{ secrets.AUTH_PORT }}
             LEARN_PORT=${{ secrets.LEARN_PORT }}
             STORAGE_PORT=${{ secrets.STORAGE_PORT || '3003' }}
-            FSRS_AI_PORT=${{ secrets.FSRS_AI_PORT || '3003' }}
+            FSRS_AI_PORT=${{ secrets.FSRS_AI_PORT || '3004' }}
             LEARN_DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
             STORAGE_DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
             FSRS_AI_DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
             AUTH_UPSTREAM_URL=http://auth:${{ secrets.AUTH_PORT }}
             LEARN_UPSTREAM_URL=http://learn:${{ secrets.LEARN_PORT }}
             STORAGE_UPSTREAM_URL=http://storage:${{ secrets.STORAGE_PORT || '3003' }}
-            FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3003' }}
+            FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
             REDIS_PORT=${{ secrets.REDIS_PORT }}
@@ -301,9 +309,45 @@ jobs:
             PORT=${{ secrets.STORAGE_PORT || '3003' }}
             ENVEOF
 
-            # ── Pull images & deploy ──
-            sudo_run docker compose pull
-            sudo_run docker compose up -d --remove-orphans
+            # ── Pull images & deploy (partial success tolerant) ──
+            pull_if_built() {
+              local service="$1"
+              local build_result="$2"
+
+              if [ "$build_result" = "success" ]; then
+                echo "🔄 Pulling latest image for $service (build succeeded)"
+                sudo_run docker compose pull "$service" || echo "⚠️ Pull failed for $service, will keep current local image"
+              else
+                echo "⚠️ Build for $service = $build_result, skip forced pull and keep current local image"
+              fi
+            }
+
+            up_service() {
+              local service="$1"
+              echo "🚀 Starting $service"
+              sudo_run docker compose up -d --no-deps "$service" || echo "⚠️ Failed to start $service"
+            }
+
+            # Always ensure redis and gateway are up.
+            up_service redis
+            pull_if_built auth "$BUILD_AUTH_RESULT"
+            pull_if_built learn "$BUILD_LEARN_RESULT"
+            pull_if_built storage "$BUILD_STORAGE_RESULT"
+            pull_if_built fsrs-ai "$BUILD_FSRS_AI_RESULT"
+            pull_if_built api-gateway "$BUILD_GATEWAY_RESULT"
+
+            up_service auth
+            up_service learn
+            up_service storage
+            up_service fsrs-ai
+            up_service api-gateway
+
+            if ! sudo_run docker compose ps --status running --services | grep -qx 'api-gateway'; then
+              echo "❌ api-gateway is not running after deploy"
+              sudo_run docker compose logs --tail=100 api-gateway || true
+              exit 1
+            fi
+
             sudo_run docker image prune -f
 
             echo "✅ Deployment complete!"

@@ -7,12 +7,10 @@ Push to main ──► GitHub Actions
                      │
                ┌─────┴──────┐
                ▼             ▼
-        Build Gateway  Build Auth   Build Learn
-             Image        Image        Image
-                  │           │            │
-                  ▼           ▼            ▼
-           Push to GHCR Push to GHCR  Push to GHCR
-                  └───────────┬───────────┘
+   Build Gateway/Auth/Learn/Storage/FSRS-AI Images
+                         │
+                         ▼
+                    Push to GHCR
                      ▼
               SSH into VPS
                      │
@@ -26,14 +24,13 @@ Push to main ──► GitHub Actions
            api-gateway     redis
                 :3000        :6379
                      │
-      ┌────────┴────────┐
-      ▼                 ▼
- auth-service      learn-service
-  (internal)        (internal)
-      :3001             :3002
-      │                  │
-      └──────────┬───────┘
-                         ▼
+      ┌───────┬────────┬───────────┐
+      ▼       ▼        ▼           ▼
+   auth    learn    storage     fsrs-ai
+   :3001   :3002     :3003       :3004
+      │       │         │           │
+      └───────┴─────────┴───────────┘
+                     ▼
             Neon PostgreSQL (Cloud)
 ```
 
@@ -56,7 +53,8 @@ Push to main ──► GitHub Actions
 | Gateway | 3000         |
 | Auth    | 3001         |
 | Learn   | 3002         |
-| FSRS-AI | 3003         |
+| Storage | 3003         |
+| FSRS-AI | 3004         |
 
 > Tất cả port đều cấu hình qua environment variables.
 
@@ -106,12 +104,25 @@ Push to main ──► GitHub Actions
 | `LEARN_DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host/db?sslmode=require` |
 | `LEARN_PORT`         | Port cho Learn service       | `3002`                                           |
 
+### 🗂️ Storage Service
+
+| Secret                   | Mô tả                                    | Ví dụ                                            |
+| ------------------------ | ---------------------------------------- | ------------------------------------------------ |
+| `STORAGE_DATABASE_URL`   | PostgreSQL connection string             | `postgresql://user:pass@host/db?sslmode=require` |
+| `STORAGE_PORT`           | Port cho Storage service                 | `3003`                                           |
+| `CLOUDINARY_CLOUD_NAME`  | Cloudinary cloud name                    | `demo-cloud`                                     |
+| `CLOUDINARY_API_KEY`     | Cloudinary API key                       | `1234567890`                                     |
+| `CLOUDINARY_API_SECRET`  | Cloudinary API secret                    | `xxxxxxxxxxxx`                                   |
+| `SIGNED_URL_TTL_SECONDS` | TTL signed URL (giây, tuỳ chọn)         | `300`                                            |
+| `MAX_FILE_SIZE_MB`       | Giới hạn file upload (MB, tuỳ chọn)      | `10`                                             |
+| `ALLOWED_MIME_TYPES`     | Danh sách MIME cho phép, phân tách `,`   | `image/png,image/jpeg,application/pdf`           |
+
 ### 🤖 FSRS-AI Service
 
 | Secret                 | Mô tả                                                        | Ví dụ                                                |
 | ---------------------- | ------------------------------------------------------------ | ---------------------------------------------------- |
 | `FSRS_AI_DATABASE_URL` | PostgreSQL connection string (asyncpg format cho SQLAlchemy) | `postgresql+asyncpg://user:pass@host/db?ssl=require` |
-| `FSRS_AI_PORT`         | Port cho FSRS-AI service                                     | `3003`                                               |
+| `FSRS_AI_PORT`         | Port cho FSRS-AI service                                     | `3004`                                               |
 
 ### 🌐 Shared
 
@@ -121,7 +132,7 @@ Push to main ──► GitHub Actions
 | `REDIS_PASSWORD` | Redis password                     | `a-strong-password`         |
 | `REDIS_PORT`     | Redis port trên VPS                | `6379`                      |
 
-### 📘 Swagger cho Auth/Learn (tuỳ chọn, cho môi trường dev)
+### 📘 Swagger cho Gateway/Auth/Learn/Storage (tuỳ chọn, cho môi trường dev)
 
 | Secret                  | Mô tả                  | Mặc định    |
 | ----------------------- | ---------------------- | ----------- |
@@ -131,6 +142,9 @@ Push to main ──► GitHub Actions
 | `LEARN_SWAGGER_ENABLED` | Bật/tắt docs learn     | `true`      |
 | `LEARN_SWAGGER_PATH`    | Path docs learn nội bộ | `api-docs`  |
 | `LEARN_SWAGGER_TITLE`   | Tiêu đề docs learn     | `Learn API` |
+| `STORAGE_SWAGGER_ENABLED` | Bật/tắt docs storage   | `true`      |
+| `STORAGE_SWAGGER_PATH`    | Path docs storage nội bộ | `api-docs` |
+| `STORAGE_SWAGGER_TITLE`   | Tiêu đề docs storage   | `Storage API` |
 
 ---
 
@@ -172,9 +186,16 @@ echo "YOUR_GHCR_PAT" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-s
 
 Push code lên branch `main` → GitHub Actions tự động:
 
-1. Build Docker images cho gateway, auth và learn
+1. Build Docker images cho gateway, auth, learn, storage và fsrs-ai
 2. Push images lên GHCR
 3. SSH vào VPS → tạo `.env` files → pull images → `docker compose up`
+
+### 5. Chính sách deploy chịu lỗi từng service
+
+1. Workflow vẫn chạy `deploy` ngay cả khi một vài job build fail.
+2. Service nào build success sẽ được pull image mới và update.
+3. Service build fail giữ image cũ để không chặn các service khác.
+4. `api-gateway` luôn được start lại ở cuối deploy và được kiểm tra trạng thái running.
 
 ---
 
@@ -201,7 +222,7 @@ english-learning-be/
 │   └── package.json
 ├── gateway/
 ├── notification/                # (sẽ thêm sau)
-├── storage/                     # (sẽ thêm sau)
+├── storage/
 ├── docker-compose.yml           # Orchestrate all services
 ├── DEPLOYMENT.md                # Tài liệu này
 └── .gitignore
