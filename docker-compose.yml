@@ -87,13 +87,6 @@ services:
       - SWAGGER_ENABLED=${STORAGE_SWAGGER_ENABLED:-true}
       - SWAGGER_PATH=${STORAGE_SWAGGER_PATH:-api-docs}
       - SWAGGER_TITLE=${STORAGE_SWAGGER_TITLE:-Storage API}
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - wget -qO- "http://127.0.0.1:${STORAGE_PORT:-3003}/v1/health" || exit 1
-      interval: 10s
-      timeout: 5s
-      retries: 5
     restart: no
     networks:
       - app-network
