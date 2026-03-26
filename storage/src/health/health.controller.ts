@@ -9,6 +9,7 @@ export class HealthController {
     return {
       status: 'ok',
       service: 'storage',
+      version: '1.0.0',
     };
   }
 }
