@@ -44,6 +44,7 @@ services:
     expose:
       - '${AUTH_PORT:-3001}'
     env_file:
+      # Includes JWT/CORS and cookie settings (e.g. COOKIE_DOMAIN for production)
       - ./auth/.env
     environment:
       - PORT=${AUTH_PORT:-3001}

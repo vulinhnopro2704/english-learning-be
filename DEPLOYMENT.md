@@ -81,6 +81,7 @@ Push to main ──► GitHub Actions
 | `JWT_REFRESH_SECRET`     | JWT refresh token secret key   | `your-secret-key-here`                           |
 | `JWT_ACCESS_EXPIRATION`  | JWT access token time-to-live  | `1h`                                             |
 | `JWT_REFRESH_EXPIRATION` | JWT refresh token time-to-live | `7d`                                             |
+| `COOKIE_DOMAIN`          | Domain cho auth cookies (prod) | `api.your-domain.com`                            |
 | `AUTH_PORT`              | Port cho Auth service          | `3001`                                           |
 
 ### 🚪 API Gateway
@@ -294,4 +295,5 @@ Khi cần deploy thêm service (VD: `gateway`, `notification`):
 | Port bị chiếm             | Đổi port trong GitHub Secrets → redeploy                       |
 | Redis connection refused  | Kiểm tra `REDIS_PASSWORD` khớp giữa root `.env` và `auth/.env` |
 | Database connection error | Kiểm tra `DATABASE_URL` đúng và Neon cho phép IP của VPS       |
+| Login OK nhưng không có cookie | Kiểm tra `COOKIE_DOMAIN` đúng domain API thực tế và `CORS_ORIGIN` đúng origin FE |
 | PM2 memory limit          | Sửa `max_memory_restart` trong `ecosystem.config.cjs`          |

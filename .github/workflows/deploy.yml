@@ -281,6 +281,7 @@ jobs:
             JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
             JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
             JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
+            COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
             REDIS_URL=redis://:${{ secrets.REDIS_PASSWORD }}@redis:6379
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
             PORT=${{ secrets.AUTH_PORT }}
