@@ -2,9 +2,12 @@
   "name": "@english-learning/logger",
   "version": "0.1.0",
   "description": "Shared logger and HTTP request/response middleware for English Learning platform services",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist"
   ],

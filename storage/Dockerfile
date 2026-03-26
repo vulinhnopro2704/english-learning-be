@@ -3,12 +3,6 @@ FROM node:22-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
-COPY packages/logger ./packages/logger
-WORKDIR /app/packages/logger
-RUN pnpm install --frozen-lockfile
-RUN pnpm build
-
-WORKDIR /app
 COPY storage/package.json storage/pnpm-lock.yaml ./storage/
 WORKDIR /app/storage
 RUN pnpm install --frozen-lockfile
@@ -20,7 +14,6 @@ WORKDIR /app
 
 COPY --from=deps /app/storage/node_modules ./storage/node_modules
 COPY storage ./storage
-COPY --from=deps /app/packages/logger ./packages/logger
 
 WORKDIR /app/storage
 RUN npx prisma generate

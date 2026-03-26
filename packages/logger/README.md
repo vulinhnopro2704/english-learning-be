@@ -44,12 +44,14 @@ Body redaction: password/token/cookie fields are logged as `[redacted len=NN pre
 
 1. Build: `pnpm install` then `pnpm --dir packages/logger build`
 2. (Optional) Pack: `pnpm --dir packages/logger pack`
-3. Publish to registry: `npm publish --access public` (or set `publishConfig.registry` for a private registry)
+3. Publish to npm (public): `npm publish`
+4. Verify: `npm view @english-learning/logger version`
 
-## Local linking in this monorepo
+## Install from npm
 
-- Each service depends on `"@english-learning/logger": "file:../packages/logger"`.
-- After changes, run `pnpm install` inside each service folder so pnpm links the local package and pulls the built `dist` output.
+```bash
+pnpm add @english-learning/logger
+```
 
 ## Notes
 

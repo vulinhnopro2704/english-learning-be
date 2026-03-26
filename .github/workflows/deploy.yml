@@ -8,7 +8,6 @@ on:
       - 'auth/**'
       - 'learn/**'
       - 'storage/**'
-      - 'packages/**'
       - 'fsrs-ai/**'
       - 'docker-compose.yml'
       - '.github/workflows/deploy.yml'
@@ -17,9 +16,44 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      gateway: ${{ steps.filter.outputs.gateway }}
+      auth: ${{ steps.filter.outputs.auth }}
+      learn: ${{ steps.filter.outputs.learn }}
+      storage: ${{ steps.filter.outputs.storage }}
+      fsrs_ai: ${{ steps.filter.outputs.fsrs_ai }}
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            gateway:
+              - 'gateway/**'
+            auth:
+              - 'auth/**'
+            learn:
+              - 'learn/**'
+            storage:
+              - 'storage/**'
+            fsrs_ai:
+              - 'fsrs-ai/**'
+            infra:
+              - 'docker-compose.yml'
+              - '.github/workflows/deploy.yml'
+
   # ── Build & Push Docker Images ─────────────────────────
   build-gateway:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.gateway == 'true' || needs.detect-changes.outputs.infra == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -50,6 +84,8 @@ jobs:
           cache-to: type=gha,mode=max,scope=nest-shared
 
   build-auth:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.auth == 'true' || needs.detect-changes.outputs.infra == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -80,6 +116,8 @@ jobs:
           cache-to: type=gha,mode=max,scope=nest-shared
 
   build-learn:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.learn == 'true' || needs.detect-changes.outputs.infra == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -110,6 +148,8 @@ jobs:
           cache-to: type=gha,mode=max,scope=nest-shared
 
   build-storage:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.storage == 'true' || needs.detect-changes.outputs.infra == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -140,6 +180,8 @@ jobs:
           cache-to: type=gha,mode=max,scope=nest-shared
 
   build-fsrs-ai:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.fsrs_ai == 'true' || needs.detect-changes.outputs.infra == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -170,7 +212,7 @@ jobs:
 
   # ── Deploy to VPS ──────────────────────────────────────
   deploy:
-    if: ${{ always() }}
+    if: ${{ always() && (needs.build-gateway.result != 'skipped' || needs.build-auth.result != 'skipped' || needs.build-learn.result != 'skipped' || needs.build-storage.result != 'skipped' || needs.build-fsrs-ai.result != 'skipped') }}
     needs: [build-gateway, build-auth, build-learn, build-storage, build-fsrs-ai]
     runs-on: ubuntu-latest
     environment: Production
