@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
 import {
   UpsertVocabularyNoteDto,
@@ -81,7 +82,11 @@ export class VocabularyService {
       where: { id: dto.wordId },
     });
     if (!word)
-      throw new NotFoundException(`Word with ID ${dto.wordId} not found`);
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'WORD_NOT_FOUND',
+        message: `Word with ID ${dto.wordId} not found`,
+      });
 
     return this.prisma.userVocabularyNote.upsert({
       where: { userId_wordId: { userId, wordId: dto.wordId } },
@@ -109,7 +114,12 @@ export class VocabularyService {
     const note = await this.prisma.userVocabularyNote.findFirst({
       where: { id: noteId, userId },
     });
-    if (!note) throw new NotFoundException(`Note with ID ${noteId} not found`);
+    if (!note)
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'VOCABULARY_NOTE_NOT_FOUND',
+        message: `Note with ID ${noteId} not found`,
+      });
 
     return this.prisma.userVocabularyNote.update({
       where: { id: noteId },
@@ -122,7 +132,12 @@ export class VocabularyService {
     const note = await this.prisma.userVocabularyNote.findFirst({
       where: { id: noteId, userId },
     });
-    if (!note) throw new NotFoundException(`Note with ID ${noteId} not found`);
+    if (!note)
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'VOCABULARY_NOTE_NOT_FOUND',
+        message: `Note with ID ${noteId} not found`,
+      });
 
     await this.prisma.userVocabularyNote.delete({ where: { id: noteId } });
 
@@ -144,7 +159,12 @@ export class VocabularyService {
 
     // Auto-create note entry if toggle favorite on a word with no note
     const word = await this.prisma.word.findUnique({ where: { id: wordId } });
-    if (!word) throw new NotFoundException(`Word with ID ${wordId} not found`);
+    if (!word)
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'WORD_NOT_FOUND',
+        message: `Word with ID ${wordId} not found`,
+      });
 
     return this.prisma.userVocabularyNote.create({
       data: {

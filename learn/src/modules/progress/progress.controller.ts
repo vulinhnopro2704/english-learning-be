@@ -16,6 +16,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { ApiStandardErrorResponses } from '@english-learning/nest-api-docs';
 import { ProgressService } from './progress.service';
 import {
   CourseProgressFilterDto,
@@ -39,7 +40,7 @@ export class ProgressController {
   @ApiOperation({ summary: 'Start a course for the current user' })
   @ApiParam({ name: 'courseId', type: Number })
   @ApiResponse({ status: 201, description: 'Course started' })
-  @ApiResponse({ status: 404, description: 'Course not found' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   startCourse(
     @CurrentUser('id') userId: string,
     @Param('courseId', ParseIntPipe) courseId: number,
@@ -50,6 +51,7 @@ export class ProgressController {
   @Get('courses')
   @ApiOperation({ summary: 'Get current user enrolled courses' })
   @ApiResponse({ status: 200, description: 'List of enrolled courses' })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   getMyCourses(
     @CurrentUser('id') userId: string,
     @Query() filter: CourseProgressFilterDto,
@@ -63,7 +65,7 @@ export class ProgressController {
   @ApiOperation({ summary: 'Mark a lesson as completed' })
   @ApiParam({ name: 'lessonId', type: Number })
   @ApiResponse({ status: 201, description: 'Lesson completed' })
-  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   completeLesson(
     @CurrentUser('id') userId: string,
     @Param('lessonId', ParseIntPipe) lessonId: number,
@@ -75,6 +77,7 @@ export class ProgressController {
   @Get('lessons')
   @ApiOperation({ summary: 'Get current user lesson progress' })
   @ApiResponse({ status: 200, description: 'List of lesson progress' })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   getMyLessons(
     @CurrentUser('id') userId: string,
     @Query() filter: LessonProgressFilterDto,
@@ -93,6 +96,7 @@ export class ProgressController {
     description: 'Number of words to return (default: 20)',
   })
   @ApiResponse({ status: 200, description: 'List of words to review' })
+  @ApiStandardErrorResponses({ statuses: [401, 500] })
   getWordsToReview(
     @CurrentUser('id') userId: string,
     @Query('take') take?: string,
@@ -106,7 +110,7 @@ export class ProgressController {
   @Post('review')
   @ApiOperation({ summary: 'Submit a word review result' })
   @ApiResponse({ status: 201, description: 'Review recorded' })
-  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   reviewWord(@CurrentUser('id') userId: string, @Body() dto: ReviewWordDto) {
     return this.progressService.reviewWord(userId, dto);
   }
@@ -114,6 +118,7 @@ export class ProgressController {
   @Get('words')
   @ApiOperation({ summary: 'Get current user word progress' })
   @ApiResponse({ status: 200, description: 'List of word progress' })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   getMyWords(
     @CurrentUser('id') userId: string,
     @Query() filter: WordProgressFilterDto,
@@ -126,6 +131,7 @@ export class ProgressController {
   @Get('stats')
   @ApiOperation({ summary: 'Get overall learning statistics' })
   @ApiResponse({ status: 200, description: 'User learning statistics' })
+  @ApiStandardErrorResponses({ statuses: [401, 500] })
   getStats(@CurrentUser('id') userId: string) {
     return this.progressService.getProgressStats(userId);
   }

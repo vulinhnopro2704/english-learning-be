@@ -1,8 +1,5 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -80,7 +77,11 @@ export class UsersService {
       select: USER_SELECT,
     });
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'USER_NOT_FOUND',
+        message: `User with ID ${id} not found`,
+      });
     }
     return user;
   }
@@ -90,7 +91,11 @@ export class UsersService {
       where: { email: dto.email },
     });
     if (existingUser) {
-      throw new ConflictException('Email already registered');
+      throw new ApiException({
+        statusCode: HttpStatus.CONFLICT,
+        errorCode: 'EMAIL_ALREADY_REGISTERED',
+        message: 'Email already registered',
+      });
     }
 
     const hashedPassword = await hash(dto.password, 12);

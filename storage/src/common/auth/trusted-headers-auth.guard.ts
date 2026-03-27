@@ -1,9 +1,10 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpStatus,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import type { Request } from 'express';
 import type { CurrentUser } from './current-user.interface';
 
@@ -16,7 +17,11 @@ export class TrustedHeadersAuthGuard implements CanActivate {
 
     const userIdHeader = request.header('x-user-id');
     if (!userIdHeader) {
-      throw new UnauthorizedException('Missing trusted user headers');
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'MISSING_TRUSTED_USER_HEADERS',
+        message: 'Missing trusted user headers',
+      });
     }
 
     request.user = {

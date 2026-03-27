@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
 import { CreateWordDto } from './dtos/create-word.dto';
 import { UpdateWordDto } from './dtos/update-word.dto';
@@ -97,7 +98,11 @@ export class WordsService {
     });
 
     if (!word) {
-      throw new NotFoundException(`Word with ID ${id} not found`);
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'WORD_NOT_FOUND',
+        message: `Word with ID ${id} not found`,
+      });
     }
 
     return word;

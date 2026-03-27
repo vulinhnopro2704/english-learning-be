@@ -1,10 +1,9 @@
 import {
-  BadRequestException,
-  ConflictException,
+  HttpStatus,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import type { CurrentUser } from '../common/auth/current-user.interface';
 import { FileType, Prisma } from '../generated/prisma/client';
@@ -30,14 +29,20 @@ export class FilesService {
     );
     const maxSizeBytes = maxSizeMb * 1024 * 1024;
     if (dto.size > maxSizeBytes) {
-      throw new BadRequestException(
-        `File size exceeds MAX_FILE_SIZE_MB (${maxSizeMb}MB)`,
-      );
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'FILE_SIZE_LIMIT_EXCEEDED',
+        message: `File size exceeds MAX_FILE_SIZE_MB (${maxSizeMb}MB)`,
+      });
     }
 
     const allowedMimeTypes = this.parseAllowedMimeTypes();
     if (!allowedMimeTypes.includes(dto.contentType)) {
-      throw new BadRequestException('MIME type is not allowed');
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'MIME_TYPE_NOT_ALLOWED',
+        message: 'MIME type is not allowed',
+      });
     }
 
     const signed = this.cloudinaryService.generateUploadSignature({
@@ -72,7 +77,11 @@ export class FilesService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new ConflictException('publicId already exists');
+        throw new ApiException({
+          statusCode: HttpStatus.CONFLICT,
+          errorCode: 'FILE_PUBLIC_ID_ALREADY_EXISTS',
+          message: 'publicId already exists',
+        });
       }
       throw error;
     }
@@ -81,7 +90,11 @@ export class FilesService {
   async getFileById(id: string) {
     const file = await this.prisma.file.findUnique({ where: { id } });
     if (!file) {
-      throw new NotFoundException('File not found');
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'FILE_NOT_FOUND',
+        message: 'File not found',
+      });
     }
     return file;
   }

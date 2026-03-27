@@ -1,13 +1,12 @@
-import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { apiReference } from '@scalar/nestjs-api-reference';
 import cookieParser from 'cookie-parser';
 import {
   AppLogger,
   createRequestLoggerMiddleware,
 } from '@english-learning/logger';
+import { setupApiDocs } from '@english-learning/nest-api-docs';
+import { setupApiErrorHandling } from '@english-learning/nest-error-handler';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -27,15 +26,7 @@ async function bootstrap() {
   );
 
   app.setGlobalPrefix('v1');
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      errorHttpStatusCode: HttpStatus.BAD_REQUEST,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    }),
-  );
+  setupApiErrorHandling(app);
 
   const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3001')
     .split(',')
@@ -49,27 +40,14 @@ async function bootstrap() {
 
   const swaggerEnabled = (process.env.SWAGGER_ENABLED ?? 'true') === 'true';
   const swaggerPath = process.env.SWAGGER_PATH ?? 'api-docs';
-
-  if (swaggerEnabled) {
-    const config = new DocumentBuilder()
-      .setTitle(process.env.SWAGGER_TITLE ?? 'Storage API')
-      .setDescription('English Learning Platform — Storage Service')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .addTag('files', 'File upload and retrieval endpoints')
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-
-    SwaggerModule.setup(`${swaggerPath}/swagger`, app, document);
-    app.use(
-      `/${swaggerPath}`,
-      apiReference({
-        content: document,
-        theme: 'kepler',
-      }),
-    );
-  }
+  setupApiDocs(app, {
+    title: 'Storage API',
+    description: 'English Learning Platform — Storage Service',
+    tags: [{ name: 'files', description: 'File upload and retrieval endpoints' }],
+    enableBearerAuth: true,
+    enabled: swaggerEnabled,
+    swaggerPath,
+  });
 
   const port = process.env.PORT ?? 3003;
   await app.listen(port);

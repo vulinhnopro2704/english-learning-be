@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
 import { CreateCourseDto } from './dtos/create-course.dto';
 import { UpdateCourseDto } from './dtos/update-course.dto';
@@ -96,7 +97,11 @@ export class CoursesService {
     });
 
     if (!course) {
-      throw new NotFoundException(`Course with ID ${id} not found`);
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'COURSE_NOT_FOUND',
+        message: `Course with ID ${id} not found`,
+      });
     }
 
     return course;

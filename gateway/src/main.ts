@@ -1,13 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import {
   AppLogger,
   createRequestLoggerMiddleware,
 } from '@english-learning/logger';
+import { setupApiDocs } from '@english-learning/nest-api-docs';
+import { setupApiErrorHandling } from '@english-learning/nest-error-handler';
 import cookieParser from 'cookie-parser';
 import express from 'express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { apiReference } from '@scalar/nestjs-api-reference';
 import { AppModule } from './app.module';
 import { GatewayProxyService } from './proxy/gateway-proxy.service';
 
@@ -27,17 +26,7 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+  setupApiErrorHandling(app);
 
   const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
     .split(',')
@@ -56,24 +45,15 @@ async function bootstrap() {
   const swaggerEnabled = (process.env.SWAGGER_ENABLED ?? 'true') === 'true';
   const swaggerPath = process.env.SWAGGER_PATH ?? 'api-docs';
 
+  setupApiDocs(app, {
+    title: 'API Gateway',
+    description: 'English Learning Platform — API Gateway',
+    enableBearerAuth: true,
+    enabled: swaggerEnabled,
+    swaggerPath,
+  });
+
   if (swaggerEnabled) {
-    const config = new DocumentBuilder()
-      .setTitle(process.env.SWAGGER_TITLE ?? 'API Gateway')
-      .setDescription('English Learning Platform — API Gateway')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup(`${swaggerPath}/swagger`, app, document);
-    app.use(
-      `/${swaggerPath}`,
-      apiReference({
-        content: document,
-        theme: 'kepler',
-      }),
-    );
-
     expressApp.get('/', (_req, res) => {
       res.type('html').send(`<!doctype html>
 <html>

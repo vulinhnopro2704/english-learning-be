@@ -10,18 +10,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
-  ApiConflictResponse,
   ApiCreatedResponse,
-  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { ApiStandardErrorResponses } from '@english-learning/nest-api-docs';
 import { CurrentUserDecorator } from '../common/auth/current-user.decorator';
 import { TrustedHeadersAuthGuard } from '../common/auth/trusted-headers-auth.guard';
 import type { CurrentUser } from '../common/auth/current-user.interface';
@@ -51,7 +49,7 @@ export class FilesController {
   @ApiOperation({ summary: 'Create Cloudinary upload signature for direct upload' })
   @ApiBody({ type: UploadSignatureDto })
   @ApiOkResponse({ type: UploadSignatureResponseDto })
-  @ApiBadRequestResponse({ description: 'Invalid payload or MIME/size not allowed' })
+  @ApiStandardErrorResponses({ statuses: [400, 401, 422, 500] })
   createUploadSignature(@Body() dto: UploadSignatureDto) {
     return this.filesService.createUploadSignature(dto);
   }
@@ -60,8 +58,7 @@ export class FilesController {
   @ApiOperation({ summary: 'Persist uploaded file metadata' })
   @ApiBody({ type: CreateFileDto })
   @ApiCreatedResponse({ type: FileResponseDto })
-  @ApiConflictResponse({ description: 'publicId already exists' })
-  @ApiBadRequestResponse({ description: 'Validation failed' })
+  @ApiStandardErrorResponses({ statuses: [401, 409, 422, 500] })
   createFile(
     @Body() dto: CreateFileDto,
     @CurrentUserDecorator() user: CurrentUser,
@@ -78,7 +75,7 @@ export class FilesController {
     description: 'Optional signed URL ttl in seconds (60..3600)',
   })
   @ApiOkResponse({ type: DownloadUrlResponseDto })
-  @ApiNotFoundResponse({ description: 'File not found' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   getDownloadUrl(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Query() query: DownloadUrlQueryDto,
@@ -90,7 +87,7 @@ export class FilesController {
   @ApiOperation({ summary: 'Get file metadata by id' })
   @ApiParam({ name: 'id', description: 'File id (UUID)' })
   @ApiOkResponse({ type: FileResponseDto })
-  @ApiNotFoundResponse({ description: 'File not found' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   getFileById(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.filesService.getFileById(id);
   }
@@ -98,6 +95,7 @@ export class FilesController {
   @Get()
   @ApiOperation({ summary: 'List file metadata with cursor pagination' })
   @ApiOkResponse({ type: FileListResponseDto })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   listFiles(@Query() query: ListFilesQueryDto) {
     return this.filesService.listFiles(query);
   }

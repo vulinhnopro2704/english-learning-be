@@ -1,10 +1,9 @@
 import {
   Injectable,
-  NotFoundException,
-  HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
 import { ProgressService } from '../progress/progress.service';
 import { StreakService } from '../streak/streak.service';
@@ -25,8 +24,15 @@ export class PracticeService {
     private readonly streakService: StreakService,
     private readonly configService: ConfigService,
   ) {
-    this.fsrsBaseUrl =
-      this.configService.get<string>('FSRS_AI_URL') || 'http://localhost:8000';
+    const fsrsUrl = this.configService.get<string>('FSRS_AI_URL');
+    if (!fsrsUrl) {
+      throw new ApiException({
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        errorCode: 'FSRS_SERVICE_NOT_CONFIGURED',
+        message: 'FSRS_AI_URL is not configured',
+      });
+    }
+    this.fsrsBaseUrl = fsrsUrl;
   }
 
   // ═══ FSRS PRACTICE (Review / Ôn tập) ══════════════════════════════════════
@@ -57,20 +63,21 @@ export class PracticeService {
       );
 
       if (!response.ok) {
-        const errorBody = await response.text();
-        throw new HttpException(
-          `FSRS-AI service error: ${errorBody}`,
-          HttpStatus.BAD_GATEWAY,
-        );
+        throw new ApiException({
+          statusCode: HttpStatus.BAD_GATEWAY,
+          errorCode: 'FSRS_UPSTREAM_ERROR',
+          message: 'FSRS-AI service returned an error',
+        });
       }
 
       fsrsResult = await response.json();
     } catch (error) {
-      if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        'Failed to connect to FSRS-AI service',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
+      if (error instanceof ApiException) throw error;
+      throw new ApiException({
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        errorCode: 'FSRS_SERVICE_UNAVAILABLE',
+        message: 'Failed to connect to FSRS-AI service',
+      });
     }
 
     // 2. Calculate totals
@@ -113,7 +120,11 @@ export class PracticeService {
     });
 
     if (!lesson) {
-      throw new NotFoundException(`Lesson with ID ${dto.lessonId} not found`);
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'LESSON_NOT_FOUND',
+        message: `Lesson with ID ${dto.lessonId} not found`,
+      });
     }
 
     // 2. Delegate to existing ProgressService
@@ -127,20 +138,12 @@ export class PracticeService {
     if (lesson.words.length > 0) {
       try {
         const wordIds = lesson.words.map((w) => w.id);
-        const params = new URLSearchParams({
-          user_id: userId,
-          ...Object.fromEntries(
-            wordIds.map((id, i) => [`word_ids`, String(id)]),
-          ),
-        });
-
         // Build URL with repeated query params
         const url = new URL(`${this.fsrsBaseUrl}/api/v1/fsrs/init-cards`);
         url.searchParams.set('user_id', userId);
         wordIds.forEach((id) =>
           url.searchParams.append('word_ids', String(id)),
         );
-
         await fetch(url.toString(), { method: 'POST' });
       } catch {
         // Non-critical: FSRS card init can happen later

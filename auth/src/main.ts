@@ -1,14 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import {
   AppLogger,
   createRequestLoggerMiddleware,
 } from '@english-learning/logger';
+import { setupApiDocs } from '@english-learning/nest-api-docs';
+import { setupApiErrorHandling } from '@english-learning/nest-error-handler';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { apiReference } from '@scalar/nestjs-api-reference';
 
 async function bootstrap() {
   const appLogger = new AppLogger();
@@ -27,18 +26,7 @@ async function bootstrap() {
     }),
   );
 
-  // Global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+  setupApiErrorHandling(app);
 
   // CORS with credentials
   const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3001')
@@ -53,32 +41,18 @@ async function bootstrap() {
 
   const swaggerEnabled = (process.env.SWAGGER_ENABLED ?? 'true') === 'true';
   const swaggerPath = process.env.SWAGGER_PATH ?? 'api-docs';
-
-  if (swaggerEnabled) {
-    const config = new DocumentBuilder()
-      .setTitle(process.env.SWAGGER_TITLE ?? 'Auth API')
-      .setDescription(
-        'English Learning Platform — Authentication & User Management',
-      )
-      .setVersion('1.0')
-      .addBearerAuth()
-      .addCookieAuth('access_token')
-      .addTag('auth', 'Authentication endpoints')
-      .addTag('users', 'User management endpoints')
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-
-    SwaggerModule.setup(`${swaggerPath}/swagger`, app, document);
-
-    app.use(
-      `/${swaggerPath}`,
-      apiReference({
-        content: document,
-        theme: 'kepler',
-      }),
-    );
-  }
+  setupApiDocs(app, {
+    title: 'Auth API',
+    description: 'English Learning Platform — Authentication & User Management',
+    tags: [
+      { name: 'auth', description: 'Authentication endpoints' },
+      { name: 'users', description: 'User management endpoints' },
+    ],
+    enableBearerAuth: true,
+    enableCookieAuth: true,
+    enabled: swaggerEnabled,
+    swaggerPath,
+  });
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

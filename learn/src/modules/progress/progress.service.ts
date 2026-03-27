@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
 import {
   CourseProgressFilterDto,
@@ -60,7 +61,11 @@ export class ProgressService {
       where: { id: courseId },
     });
     if (!course)
-      throw new NotFoundException(`Course with ID ${courseId} not found`);
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'COURSE_NOT_FOUND',
+        message: `Course with ID ${courseId} not found`,
+      });
 
     // Upsert — idempotent
     return this.prisma.userCourseProgress.upsert({
@@ -128,7 +133,11 @@ export class ProgressService {
       include: { words: { select: { id: true } } },
     });
     if (!lesson)
-      throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'LESSON_NOT_FOUND',
+        message: `Lesson with ID ${lessonId} not found`,
+      });
 
     // Mark lesson as completed
     const lessonProgress = await this.prisma.userLessonProgress.upsert({
@@ -295,9 +304,12 @@ export class ProgressService {
     });
 
     if (!progress) {
-      throw new NotFoundException(
-        `Word progress not found. Complete the lesson first to unlock this word.`,
-      );
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'WORD_PROGRESS_NOT_FOUND',
+        message:
+          'Word progress not found. Complete the lesson first to unlock this word.',
+      });
     }
 
     const currentLevel = progress.status as MasteryLevel;
