@@ -68,6 +68,7 @@ services:
       - ./learn/.env
     environment:
       - PORT=${LEARN_PORT:-3002}
+      - FSRS_AI_URL=${FSRS_AI_URL:-http://fsrs-ai:3004}
       - SWAGGER_ENABLED=${LEARN_SWAGGER_ENABLED:-true}
       - SWAGGER_PATH=${LEARN_SWAGGER_PATH:-api-docs}
       - SWAGGER_TITLE=${LEARN_SWAGGER_TITLE:-Learn API}

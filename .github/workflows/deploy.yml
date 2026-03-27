@@ -291,6 +291,7 @@ jobs:
             AUTH_UPSTREAM_URL=http://auth:${{ secrets.AUTH_PORT }}
             LEARN_UPSTREAM_URL=http://learn:${{ secrets.LEARN_PORT }}
             STORAGE_UPSTREAM_URL=http://storage:${{ secrets.STORAGE_PORT || '3003' }}
+            FSRS_AI_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
             FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
@@ -335,6 +336,7 @@ jobs:
             DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+            FSRS_AI_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
             PORT=${{ secrets.LEARN_PORT }}
             ENVEOF
 
