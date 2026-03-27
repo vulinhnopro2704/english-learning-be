@@ -13,14 +13,21 @@ import {
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import {
+  ApiCreatedEntityResponse,
+  ApiCursorPaginatedResponse,
+  ApiMessageResponse,
+  ApiOkEntityResponse,
+  ApiStandardErrorResponses,
+} from '@english-learning/nest-api-docs';
 import { WordsService } from './words.service';
 import { CreateWordDto } from './dtos/create-word.dto';
 import { UpdateWordDto } from './dtos/update-word.dto';
 import { WordFilterDto } from './dtos/word-filter.dto';
+import { WordResponseDto } from './dtos/word-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('words')
@@ -32,7 +39,12 @@ export class WordsController {
 
   @Get()
   @ApiOperation({ summary: 'List words with optional filters' })
-  @ApiResponse({ status: 200, description: 'Paginated list of words' })
+  @ApiCursorPaginatedResponse({
+    description: 'Paginated list of words',
+    itemType: WordResponseDto,
+    includeTotal: true,
+  })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   findAll(@Query() filter: WordFilterDto) {
     return this.wordsService.findAll(filter);
   }
@@ -40,16 +52,19 @@ export class WordsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a single word by ID' })
   @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({ status: 200, description: 'Word found' })
-  @ApiResponse({ status: 404, description: 'Word not found' })
+  @ApiOkEntityResponse({ type: WordResponseDto, description: 'Word found' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.wordsService.findOne(id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new word' })
-  @ApiResponse({ status: 201, description: 'Word created' })
-  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiCreatedEntityResponse({
+    type: WordResponseDto,
+    description: 'Word created',
+  })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   create(@Body() dto: CreateWordDto) {
     return this.wordsService.create(dto);
   }
@@ -57,8 +72,11 @@ export class WordsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a word by ID' })
   @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({ status: 200, description: 'Word updated' })
-  @ApiResponse({ status: 404, description: 'Word not found' })
+  @ApiOkEntityResponse({
+    type: WordResponseDto,
+    description: 'Word updated',
+  })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateWordDto) {
     return this.wordsService.update(id, dto);
   }
@@ -66,8 +84,8 @@ export class WordsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a word by ID' })
   @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({ status: 200, description: 'Word deleted' })
-  @ApiResponse({ status: 404, description: 'Word not found' })
+  @ApiMessageResponse('Word deleted')
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.wordsService.remove(id);
   }

@@ -1,11 +1,11 @@
 import {
   Injectable,
-  ConflictException,
-  UnauthorizedException,
+  HttpStatus,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { RegisterDto } from './dtos/register.dto';
@@ -54,7 +54,11 @@ export class AuthService {
       where: { email: dto.email },
     });
     if (existingUser) {
-      throw new ConflictException('Email already registered');
+      throw new ApiException({
+        statusCode: HttpStatus.CONFLICT,
+        errorCode: 'EMAIL_ALREADY_REGISTERED',
+        message: 'Email already registered',
+      });
     }
 
     const hashedPassword = await hash(dto.password, 12);
@@ -81,12 +85,20 @@ export class AuthService {
       where: { email: dto.email },
     });
     if (!user || !user.password) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'INVALID_CREDENTIALS',
+        message: 'Invalid credentials',
+      });
     }
 
     const isPasswordValid = await compare(dto.password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'INVALID_CREDENTIALS',
+        message: 'Invalid credentials',
+      });
     }
 
     await this.prisma.user.update({
@@ -124,7 +136,11 @@ export class AuthService {
       where: { id: userId },
     });
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'AUTH_USER_NOT_FOUND',
+        message: 'User not found',
+      });
     }
 
     // Blacklist the old refresh token
@@ -145,7 +161,11 @@ export class AuthService {
       where: { id: userId },
     });
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'AUTH_USER_NOT_FOUND',
+        message: 'User not found',
+      });
     }
     return this.sanitizeUser(user);
   }

@@ -16,6 +16,7 @@ import {
   ApiBearerAuth,
   ApiCookieAuth,
 } from '@nestjs/swagger';
+import { ApiStandardErrorResponses } from '@english-learning/nest-api-docs';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
@@ -39,8 +40,7 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
-  @ApiResponse({ status: 400, description: 'Validation error' })
-  @ApiResponse({ status: 409, description: 'Email already exists' })
+  @ApiStandardErrorResponses({ statuses: [409, 422, 500] })
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -58,7 +58,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: 200, description: 'Login successful' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -79,7 +79,7 @@ export class AuthController {
   @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Logout current user' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiStandardErrorResponses({ statuses: [401, 500] })
   async logout(
     @CurrentUser() user: CurrentUserPayload,
     @Req() req: Request,
@@ -110,7 +110,7 @@ export class AuthController {
   @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({ status: 200, description: 'Tokens refreshed successfully' })
-  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
+  @ApiStandardErrorResponses({ statuses: [401, 500] })
   async refresh(
     @CurrentUser() user: CurrentUserPayload,
     @Res({ passthrough: true }) res: Response,
@@ -130,7 +130,7 @@ export class AuthController {
   @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Get current authenticated user profile' })
   @ApiResponse({ status: 200, description: 'Current user profile' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiStandardErrorResponses({ statuses: [401, 500] })
   async me(@CurrentUser() user: CurrentUserPayload) {
     return this.authService.getMe(user.id);
   }

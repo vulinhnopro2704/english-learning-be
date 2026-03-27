@@ -1,13 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import {
   AppLogger,
   createRequestLoggerMiddleware,
 } from '@english-learning/logger';
+import { setupApiDocs } from '@english-learning/nest-api-docs';
+import { setupApiErrorHandling } from '@english-learning/nest-error-handler';
 import { LearnModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { apiReference } from '@scalar/nestjs-api-reference';
 
 async function bootstrap() {
   const appLogger = new AppLogger();
@@ -27,18 +26,7 @@ async function bootstrap() {
     }),
   );
 
-  // Global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+  setupApiErrorHandling(app);
 
   // CORS with credentials
   const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3001')
@@ -53,34 +41,22 @@ async function bootstrap() {
 
   const swaggerEnabled = (process.env.SWAGGER_ENABLED ?? 'true') === 'true';
   const swaggerPath = process.env.SWAGGER_PATH ?? 'api-docs';
-
-  if (swaggerEnabled) {
-    const config = new DocumentBuilder()
-      .setTitle(process.env.SWAGGER_TITLE ?? 'Learn API')
-      .setDescription('English Learning Platform — Learning & Progress')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .addCookieAuth('access_token')
-      .addTag('courses', 'Course management endpoints')
-      .addTag('lessons', 'Lesson management endpoints')
-      .addTag('progress', 'Progress tracking endpoints')
-      .addTag('streak', 'Streak tracking endpoints')
-      .addTag('vocabulary', 'Vocabulary management endpoints')
-      .addTag('words', 'Word management endpoints')
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-
-    SwaggerModule.setup(`${swaggerPath}/swagger`, app, document);
-
-    app.use(
-      `/${swaggerPath}`,
-      apiReference({
-        content: document,
-        theme: 'kepler',
-      }),
-    );
-  }
+  setupApiDocs(app, {
+    title: 'Learn API',
+    description: 'English Learning Platform — Learning & Progress',
+    tags: [
+      { name: 'courses', description: 'Course management endpoints' },
+      { name: 'lessons', description: 'Lesson management endpoints' },
+      { name: 'progress', description: 'Progress tracking endpoints' },
+      { name: 'streak', description: 'Streak tracking endpoints' },
+      { name: 'vocabulary', description: 'Vocabulary management endpoints' },
+      { name: 'words', description: 'Word management endpoints' },
+    ],
+    enableBearerAuth: true,
+    enableCookieAuth: true,
+    enabled: swaggerEnabled,
+    swaggerPath,
+  });
 
   const port = process.env.PORT ?? 3002;
   await app.listen(port);

@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
+import { ApiStandardErrorResponses } from '@english-learning/nest-api-docs';
 import { VocabularyService } from './vocabulary.service';
 import {
   UpsertVocabularyNoteDto,
@@ -36,6 +37,7 @@ export class VocabularyController {
   @Get()
   @ApiOperation({ summary: 'Get user vocabulary notes' })
   @ApiResponse({ status: 200, description: 'List of vocabulary notes' })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   getMyNotes(
     @CurrentUser('id') userId: string,
     @Query() filter: VocabularyFilterDto,
@@ -46,7 +48,7 @@ export class VocabularyController {
   @Post()
   @ApiOperation({ summary: 'Create or update a vocabulary note' })
   @ApiResponse({ status: 201, description: 'Note created or updated' })
-  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   upsertNote(
     @CurrentUser('id') userId: string,
     @Body() dto: UpsertVocabularyNoteDto,
@@ -58,7 +60,7 @@ export class VocabularyController {
   @ApiOperation({ summary: 'Update a vocabulary note by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({ status: 200, description: 'Note updated' })
-  @ApiResponse({ status: 404, description: 'Note not found' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   updateNote(
     @CurrentUser('id') userId: string,
     @Param('id', ParseIntPipe) id: number,
@@ -71,7 +73,7 @@ export class VocabularyController {
   @ApiOperation({ summary: 'Remove a vocabulary note by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({ status: 200, description: 'Note removed' })
-  @ApiResponse({ status: 404, description: 'Note not found' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   removeNote(
     @CurrentUser('id') userId: string,
     @Param('id', ParseIntPipe) id: number,
@@ -83,7 +85,7 @@ export class VocabularyController {
   @ApiOperation({ summary: 'Toggle favorite status for a word' })
   @ApiParam({ name: 'wordId', type: Number })
   @ApiResponse({ status: 201, description: 'Favorite status toggled' })
-  @ApiResponse({ status: 404, description: 'Word not found' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   toggleFavorite(
     @CurrentUser('id') userId: string,
     @Param('wordId', ParseIntPipe) wordId: number,

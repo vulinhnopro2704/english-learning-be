@@ -2,11 +2,12 @@ import {
   HttpStatus,
   Injectable,
   Logger,
-  UnauthorizedException,
 } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { NextFunction, Request, Response } from 'express';
+import { createApiErrorResponse } from '@english-learning/api-error-types';
 import { RedisService } from '../redis/redis.service';
 
 interface AccessTokenPayload {
@@ -84,18 +85,28 @@ export class GatewayProxyService {
     const clientIp = this.getClientIp(req);
 
     if (await this.isBlockedIp(clientIp)) {
-      res.status(HttpStatus.FORBIDDEN).json({
-        message: 'IP address is blocked',
-      });
+      res.status(HttpStatus.FORBIDDEN).json(
+        createApiErrorResponse({
+          statusCode: HttpStatus.FORBIDDEN,
+          errorCode: 'FORBIDDEN',
+          message: 'IP address is blocked',
+          traceId: this.getTraceId(req),
+        }),
+      );
       return;
     }
 
     const isLimited = await this.isRateLimited(clientIp);
     if (isLimited) {
       res.setHeader('Retry-After', `${this.rateLimitWindowSec}`);
-      res.status(HttpStatus.TOO_MANY_REQUESTS).json({
-        message: 'Too many requests',
-      });
+      res.status(HttpStatus.TOO_MANY_REQUESTS).json(
+        createApiErrorResponse({
+          statusCode: HttpStatus.TOO_MANY_REQUESTS,
+          errorCode: 'TOO_MANY_REQUESTS',
+          message: 'Too many requests',
+          traceId: this.getTraceId(req),
+        }),
+      );
       return;
     }
 
@@ -106,11 +117,29 @@ export class GatewayProxyService {
       try {
         forwardedIdentity = await this.verifyAccessToken(req);
       } catch (error) {
+        const errorResponse =
+          error instanceof ApiException ? error.getResponse() : undefined;
+        const errorCode =
+          typeof errorResponse === 'object' &&
+          errorResponse !== null &&
+          typeof (errorResponse as { errorCode?: unknown }).errorCode ===
+            'string'
+            ? (errorResponse as { errorCode: string }).errorCode
+            : 'UNAUTHORIZED';
         const message =
-          error instanceof UnauthorizedException
-            ? error.message
+          typeof errorResponse === 'object' &&
+          errorResponse !== null &&
+          typeof (errorResponse as { message?: unknown }).message === 'string'
+            ? (errorResponse as { message: string }).message
             : 'Unauthorized';
-        res.status(HttpStatus.UNAUTHORIZED).json({ message });
+        res.status(HttpStatus.UNAUTHORIZED).json(
+          createApiErrorResponse({
+            statusCode: HttpStatus.UNAUTHORIZED,
+            errorCode,
+            message,
+            traceId: this.getTraceId(req),
+          }),
+        );
         return;
       }
     }
@@ -209,7 +238,11 @@ export class GatewayProxyService {
   private async verifyAccessToken(req: Request): Promise<AccessTokenPayload> {
     const token = this.extractAccessToken(req);
     if (!token) {
-      throw new UnauthorizedException('Missing access token');
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'MISSING_ACCESS_TOKEN',
+        message: 'Missing access token',
+      });
     }
 
     let payload: AccessTokenPayload;
@@ -218,15 +251,27 @@ export class GatewayProxyService {
         secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
       });
     } catch {
-      throw new UnauthorizedException('Invalid or expired access token');
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'INVALID_ACCESS_TOKEN',
+        message: 'Invalid or expired access token',
+      });
     }
 
     if (payload.type !== 'access') {
-      throw new UnauthorizedException('Invalid token type');
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'INVALID_TOKEN_TYPE',
+        message: 'Invalid token type',
+      });
     }
 
     if (!payload.sub || !payload.jti) {
-      throw new UnauthorizedException('Malformed token payload');
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'MALFORMED_TOKEN_PAYLOAD',
+        message: 'Malformed token payload',
+      });
     }
 
     const revoked = await this.redisService.isTokenBlacklisted(
@@ -234,7 +279,11 @@ export class GatewayProxyService {
       payload.jti,
     );
     if (revoked) {
-      throw new UnauthorizedException('Access token has been revoked');
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'ACCESS_TOKEN_REVOKED',
+        message: 'Access token has been revoked',
+      });
     }
 
     return payload;
@@ -346,9 +395,14 @@ export class GatewayProxyService {
       this.logger.error(
         `Forward request failed for ${req.method} ${req.originalUrl} traceId=${traceId}: ${(error as Error).message}`,
       );
-      res.status(HttpStatus.BAD_GATEWAY).json({
-        message: 'Failed to reach upstream service',
-      });
+      res.status(HttpStatus.BAD_GATEWAY).json(
+        createApiErrorResponse({
+          statusCode: HttpStatus.BAD_GATEWAY,
+          errorCode: 'BAD_GATEWAY',
+          message: 'Failed to reach upstream service',
+          traceId,
+        }),
+      );
     }
   }
 

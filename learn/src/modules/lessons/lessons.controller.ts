@@ -13,12 +13,19 @@ import {
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import {
+  ApiCreatedEntityResponse,
+  ApiCursorPaginatedResponse,
+  ApiMessageResponse,
+  ApiOkEntityResponse,
+  ApiStandardErrorResponses,
+} from '@english-learning/nest-api-docs';
 import { LessonsService } from './lessons.service';
 import { CreateLessonDto } from './dtos/create-lesson.dto';
+import { LessonResponseDto } from './dtos/lesson-response.dto';
 import { UpdateLessonDto } from './dtos/update-lesson.dto';
 import { LessonFilterDto } from './dtos/lesson-filter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -32,7 +39,12 @@ export class LessonsController {
 
   @Get()
   @ApiOperation({ summary: 'List lessons with optional filters' })
-  @ApiResponse({ status: 200, description: 'Paginated list of lessons' })
+  @ApiCursorPaginatedResponse({
+    description: 'Paginated list of lessons',
+    itemType: LessonResponseDto,
+    includeTotal: true,
+  })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   findAll(@Query() filter: LessonFilterDto) {
     return this.lessonsService.findAll(filter);
   }
@@ -40,16 +52,19 @@ export class LessonsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a single lesson by ID' })
   @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({ status: 200, description: 'Lesson found' })
-  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiOkEntityResponse({ type: LessonResponseDto, description: 'Lesson found' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.lessonsService.findOne(id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new lesson' })
-  @ApiResponse({ status: 201, description: 'Lesson created' })
-  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiCreatedEntityResponse({
+    type: LessonResponseDto,
+    description: 'Lesson created',
+  })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   create(@Body() dto: CreateLessonDto) {
     return this.lessonsService.create(dto);
   }
@@ -57,8 +72,11 @@ export class LessonsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a lesson by ID' })
   @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({ status: 200, description: 'Lesson updated' })
-  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiOkEntityResponse({
+    type: LessonResponseDto,
+    description: 'Lesson updated',
+  })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateLessonDto) {
     return this.lessonsService.update(id, dto);
   }
@@ -66,8 +84,8 @@ export class LessonsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a lesson by ID' })
   @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({ status: 200, description: 'Lesson deleted' })
-  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiMessageResponse('Lesson deleted')
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.lessonsService.remove(id);
   }

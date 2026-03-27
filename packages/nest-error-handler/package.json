@@ -1,0 +1,29 @@
+{
+  "name": "@english-learning/nest-error-handler",
+  "version": "0.1.0",
+  "description": "Reusable NestJS exception filter and validation pipe for English Learning platform",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@english-learning/api-error-types": "^0.1.0",
+    "@english-learning/logger": "^0.1.0",
+    "@nestjs/common": "^11.0.1",
+    "class-validator": "^0.15.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.7",
+    "typescript": "^5.7.3"
+  }
+}

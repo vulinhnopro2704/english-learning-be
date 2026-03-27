@@ -5,6 +5,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
+import { ApiStandardErrorResponses } from '@english-learning/nest-api-docs';
 import { PracticeService } from './practice.service';
 import {
   SubmitFSRSPracticeDto,
@@ -30,8 +31,7 @@ export class PracticeController {
       'Auto-grading converts these into FSRS grade (1-4).',
   })
   @ApiResponse({ status: 201, description: 'Review processed & session saved' })
-  @ApiResponse({ status: 502, description: 'FSRS-AI service error' })
-  @ApiResponse({ status: 503, description: 'FSRS-AI service unavailable' })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500, 502, 503] })
   submitFSRS(
     @CurrentUser('id') userId: string,
     @Body() dto: SubmitFSRSPracticeDto,
@@ -47,7 +47,7 @@ export class PracticeController {
       'unlocks word progress, and initializes FSRS cards.',
   })
   @ApiResponse({ status: 201, description: 'Lesson completed & session saved' })
-  @ApiResponse({ status: 404, description: 'Lesson not found' })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
   submitLesson(
     @CurrentUser('id') userId: string,
     @Body() dto: SubmitLessonPracticeDto,
@@ -58,6 +58,7 @@ export class PracticeController {
   @Get('history')
   @ApiOperation({ summary: 'Get practice session history' })
   @ApiResponse({ status: 200, description: 'Paginated practice sessions' })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   getHistory(
     @CurrentUser('id') userId: string,
     @Query() filter: PracticeHistoryFilterDto,

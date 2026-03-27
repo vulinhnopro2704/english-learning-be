@@ -5,6 +5,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
+import { ApiStandardErrorResponses } from '@english-learning/nest-api-docs';
 import { StreakService } from './streak.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -19,6 +20,7 @@ export class StreakController {
   @Get()
   @ApiOperation({ summary: 'Get current user streak info' })
   @ApiResponse({ status: 200, description: 'Current streak data' })
+  @ApiStandardErrorResponses({ statuses: [401, 500] })
   getStreak(@CurrentUser('id') userId: string) {
     return this.streakService.getStreak(userId);
   }
@@ -26,6 +28,7 @@ export class StreakController {
   @Post('activity')
   @ApiOperation({ summary: 'Record a learning activity for streak' })
   @ApiResponse({ status: 201, description: 'Activity recorded' })
+  @ApiStandardErrorResponses({ statuses: [401, 500] })
   recordActivity(@CurrentUser('id') userId: string) {
     return this.streakService.recordActivity(userId);
   }

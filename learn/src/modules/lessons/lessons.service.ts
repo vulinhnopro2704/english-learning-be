@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
 import { CreateLessonDto } from './dtos/create-lesson.dto';
 import { UpdateLessonDto } from './dtos/update-lesson.dto';
@@ -100,7 +101,11 @@ export class LessonsService {
     });
 
     if (!lesson) {
-      throw new NotFoundException(`Lesson with ID ${id} not found`);
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'LESSON_NOT_FOUND',
+        message: `Lesson with ID ${id} not found`,
+      });
     }
 
     return lesson;
