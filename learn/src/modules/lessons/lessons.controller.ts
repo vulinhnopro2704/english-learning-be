@@ -32,6 +32,7 @@ import { UpdateLessonDto } from './dtos/update-lesson.dto';
 import { LessonFilterDto } from './dtos/lesson-filter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('lessons')
 @ApiBearerAuth()
@@ -48,8 +49,11 @@ export class LessonsController {
     includeTotal: true,
   })
   @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
-  findAll(@Query() filter: LessonFilterDto) {
-    return this.lessonsService.findAll(filter);
+  findAll(
+    @Query() filter: LessonFilterDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.lessonsService.findAll(filter, user);
   }
 
   @Get(':id')
@@ -57,8 +61,11 @@ export class LessonsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkEntityResponse({ type: LessonResponseDto, description: 'Lesson found' })
   @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.lessonsService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.lessonsService.findOne(id, user);
   }
 
   @Post()

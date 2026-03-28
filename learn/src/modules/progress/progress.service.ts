@@ -47,6 +47,16 @@ function calculateNextReview(level: MasteryLevel): Date {
   return next;
 }
 
+function normalizeCompletionScore(score: number): number {
+  if (!Number.isFinite(score)) {
+    return 0;
+  }
+
+  const nonNegative = Math.max(0, score);
+  const normalizedPercent = nonNegative <= 1 ? nonNegative * 100 : nonNegative;
+  return Math.min(100, Math.round(normalizedPercent));
+}
+
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 @Injectable()
@@ -101,6 +111,7 @@ export class ProgressService {
             enTitle: true,
             icon: true,
             image: true,
+            _count: { select: { lessons: true } },
           },
         },
       },
@@ -118,10 +129,87 @@ export class ProgressService {
 
     const hasMore = items.length > take;
     const data = hasMore ? items.slice(0, take) : items;
-    const nextCursor =
-      hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
 
-    return { data, pagination: { nextCursor, hasMore, total } };
+    const courseIds = data.map((item) => item.courseId);
+    const lessonTotalRows =
+      courseIds.length > 0
+        ? await this.prisma.lesson.groupBy({
+            by: ['courseId'],
+            where: { courseId: { in: courseIds } },
+            _count: { _all: true },
+          })
+        : [];
+    const lessonTotalMap = new Map<number, number>();
+    for (const row of lessonTotalRows) {
+      if (row.courseId == null) {
+        continue;
+      }
+      lessonTotalMap.set(row.courseId, row._count._all);
+    }
+
+    const completedLessons =
+      courseIds.length > 0
+        ? await this.prisma.userLessonProgress.findMany({
+            where: {
+              userId,
+              status: 'COMPLETED',
+              lesson: { courseId: { in: courseIds } },
+            },
+            select: {
+              completedAt: true,
+              lesson: { select: { courseId: true } },
+            },
+          })
+        : [];
+
+    const completedCountMap = new Map<number, number>();
+    const lastCompletedAtMap = new Map<number, Date>();
+    for (const item of completedLessons) {
+      const courseId = item.lesson.courseId;
+      if (courseId == null) {
+        continue;
+      }
+
+      completedCountMap.set(
+        courseId,
+        (completedCountMap.get(courseId) ?? 0) + 1,
+      );
+      if (item.completedAt) {
+        const last = lastCompletedAtMap.get(courseId);
+        if (!last || item.completedAt > last) {
+          lastCompletedAtMap.set(courseId, item.completedAt);
+        }
+      }
+    }
+
+    const enrichedData = data.map((item) => {
+      const totalLessons = lessonTotalMap.get(item.courseId) ?? 0;
+      const completedLessons = completedCountMap.get(item.courseId) ?? 0;
+      const lastCompletedLessonAt =
+        lastCompletedAtMap.get(item.courseId) ?? null;
+
+      return {
+        ...item,
+        completedLessons,
+        totalLessons,
+        progress: {
+          isStarted: true,
+          isCompleted: item.isCompleted,
+          startedAt: item.startedAt,
+          lastAccessedAt: item.lastAccessedAt,
+          completedLessons,
+          totalLessons,
+          lastCompletedLessonAt,
+        },
+      };
+    });
+
+    const nextCursor =
+      hasMore && enrichedData.length > 0
+        ? (enrichedData[enrichedData.length - 1]?.id ?? null)
+        : null;
+
+    return { data: enrichedData, pagination: { nextCursor, hasMore, total } };
   }
 
   // ═══ LESSON PROGRESS ═══════════════════════════════════════════════════════
@@ -139,6 +227,21 @@ export class ProgressService {
         message: `Lesson with ID ${lessonId} not found`,
       });
 
+    const existingProgress = await this.prisma.userLessonProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId } },
+      select: { status: true },
+    });
+
+    if (existingProgress?.status === 'COMPLETED') {
+      throw new ApiException({
+        statusCode: HttpStatus.CONFLICT,
+        errorCode: 'LESSON_ALREADY_COMPLETED',
+        message: `Lesson with ID ${lessonId} is already completed`,
+      });
+    }
+
+    const normalizedScore = normalizeCompletionScore(score);
+
     // Mark lesson as completed
     const lessonProgress = await this.prisma.userLessonProgress.upsert({
       where: { userId_lessonId: { userId, lessonId } },
@@ -146,23 +249,25 @@ export class ProgressService {
         userId,
         lessonId,
         status: 'COMPLETED',
-        score,
+        score: normalizedScore,
         completedAt: new Date(),
       },
       update: {
         status: 'COMPLETED',
-        score,
+        score: normalizedScore,
         completedAt: new Date(),
       },
     });
 
     // Unlock all words in the lesson → create UserWordProgress entries with status = NEW
     if (lesson.words.length > 0) {
+      const now = new Date();
       const wordProgressData = lesson.words.map((w) => ({
         userId,
         wordId: w.id,
         status: 'NEW' as const,
         proficiency: 0,
+        nextReview: now,
         reviewCount: 0,
         correctCount: 0,
       }));
@@ -171,6 +276,17 @@ export class ProgressService {
       await this.prisma.userWordProgress.createMany({
         data: wordProgressData,
         skipDuplicates: true,
+      });
+
+      await this.prisma.userWordProgress.updateMany({
+        where: {
+          userId,
+          wordId: { in: lesson.words.map((w) => w.id) },
+          nextReview: null,
+        },
+        data: {
+          nextReview: now,
+        },
       });
     }
 
@@ -256,16 +372,44 @@ export class ProgressService {
 
     const hasMore = items.length > take;
     const data = hasMore ? items.slice(0, take) : items;
+    const enrichedData = data.map((item) => {
+      const isLearned = item.status === 'COMPLETED';
+      return {
+        ...item,
+        isLearned,
+        learnedAt: item.completedAt,
+        progress: {
+          status: item.status,
+          score: item.score,
+          completedAt: item.completedAt,
+          isLearned,
+          learnedAt: item.completedAt,
+        },
+      };
+    });
     const nextCursor =
-      hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
+      hasMore && enrichedData.length > 0
+        ? (enrichedData[enrichedData.length - 1]?.id ?? null)
+        : null;
 
-    return { data, pagination: { nextCursor, hasMore, total } };
+    return { data: enrichedData, pagination: { nextCursor, hasMore, total } };
   }
 
   // ═══ WORD PROGRESS & FSRS ═════════════════════════════════════════════════
 
   async getWordsToReview(userId: string, take: number = 20) {
     const now = new Date();
+
+    await this.prisma.userWordProgress.updateMany({
+      where: {
+        userId,
+        status: 'NEW',
+        nextReview: null,
+      },
+      data: {
+        nextReview: now,
+      },
+    });
 
     const words = await this.prisma.userWordProgress.findMany({
       where: {
@@ -353,6 +497,17 @@ export class ProgressService {
 
   async getMyWords(userId: string, filter: WordProgressFilterDto) {
     const take = filter.take ?? 20;
+
+    await this.prisma.userWordProgress.updateMany({
+      where: {
+        userId,
+        status: 'NEW',
+        nextReview: null,
+      },
+      data: {
+        nextReview: new Date(),
+      },
+    });
 
     const where: Prisma.UserWordProgressWhereInput = { userId };
 

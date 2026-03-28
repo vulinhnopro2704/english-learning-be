@@ -65,16 +65,34 @@ def _card_from_db(state: CardMemoryState | None) -> Card:
     return Card()
 
 
-def _extract_card_fields(card: Card) -> dict:
-    """Extract fields from a py-fsrs Card for DB persistence."""
+def _extract_card_fields(
+    card: Card,
+    previous_reps: int = 0,
+    previous_lapses: int = 0,
+    reviewed: bool = False,
+    was_lapse: bool = False,
+) -> dict:
+    """Extract fields from a py-fsrs Card for DB persistence.
+
+    Newer py-fsrs versions dropped ``reps``/``lapses`` from ``Card``.
+    Keep DB counters stable by deriving values when those attrs are absent.
+    """
+    card_reps = getattr(card, "reps", None)
+    if card_reps is None:
+        card_reps = previous_reps + (1 if reviewed else 0)
+
+    card_lapses = getattr(card, "lapses", None)
+    if card_lapses is None:
+        card_lapses = previous_lapses + (1 if was_lapse else 0)
+
     return {
         "state": card.state.value if hasattr(card.state, "value") else int(card.state),
         "difficulty": card.difficulty,
         "stability": card.stability,
         "next_review": card.due,
         "last_reviewed_at": datetime.now(timezone.utc),
-        "reps": card.reps,
-        "lapses": card.lapses,
+        "reps": card_reps,
+        "lapses": card_lapses,
         "card_data": card.to_json(),
     }
 
@@ -153,14 +171,20 @@ async def review_card(
     retrievability = scheduler.get_card_retrievability(new_card)
 
     # 8. Upsert card_memory_state
-    card_fields = _extract_card_fields(new_card)
+    previous_reps = card_state.reps if card_state else 0
+    previous_lapses = card_state.lapses if card_state else 0
+    card_fields = _extract_card_fields(
+        new_card,
+        previous_reps=previous_reps,
+        previous_lapses=previous_lapses,
+        reviewed=True,
+        was_lapse=(grade == Rating.Again),
+    )
     card_fields["retrievability"] = retrievability
 
     if card_state:
         for key, value in card_fields.items():
             setattr(card_state, key, value)
-        card_state.reps = new_card.reps
-        card_state.lapses = new_card.lapses
     else:
         card_state = CardMemoryState(
             user_id=user_id,

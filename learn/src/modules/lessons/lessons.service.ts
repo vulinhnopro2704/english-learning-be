@@ -8,6 +8,7 @@ import { LessonFilterDto } from './dtos/lesson-filter.dto';
 import { ProgressService } from '../progress/progress.service';
 import { StreakService } from '../streak/streak.service';
 import type { Prisma } from '../../generated/prisma/client';
+import type { CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 
 const LESSON_SELECT = {
   id: true,
@@ -31,6 +32,10 @@ export class LessonsService {
     private readonly streakService: StreakService,
     private readonly configService: ConfigService,
   ) {}
+
+  private isUserRole(user?: CurrentUserPayload): boolean {
+    return (user?.role ?? '').toUpperCase() === 'USER';
+  }
 
   async completeLesson(userId: string, lessonId: number, score: number) {
     const progressResult = await this.progressService.completeLesson(
@@ -61,17 +66,37 @@ export class LessonsService {
       }
     }
 
-    const session = await this.prisma.practiceSession.create({
-      data: {
-        userId,
-        type: 'LEARN_LESSON',
-        lessonId,
-        totalWords: words.length,
-        completedAt: new Date(),
-      },
-    });
+    const now = new Date();
+    let session;
+    try {
+      session = await this.prisma.practiceSession.create({
+        data: {
+          userId,
+          type: 'LEARN_LESSON',
+          lessonId,
+          totalWords: words.length,
+          correctCount: 0,
+          totalDurationMs: 0,
+          startedAt: now,
+          completedAt: now,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed creating LEARN_LESSON practice session for user ${userId}, lesson ${lessonId}`,
+        error instanceof Error ? error.message : String(error),
+      );
+      session = null;
+    }
 
-    await this.streakService.recordActivity(userId);
+    try {
+      await this.streakService.recordActivity(userId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed recording streak for user ${userId} after lesson ${lessonId}`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
 
     return {
       lessonProgress: progressResult.lessonProgress,
@@ -80,7 +105,7 @@ export class LessonsService {
     };
   }
 
-  async findAll(filter: LessonFilterDto) {
+  async findAll(filter: LessonFilterDto, user?: CurrentUserPayload) {
     const take = filter.take ?? 20;
 
     const where: Prisma.LessonWhereInput = {};
@@ -123,11 +148,60 @@ export class LessonsService {
 
     const hasMore = lessons.length > take;
     const data = hasMore ? lessons.slice(0, take) : lessons;
+    const lessonIds = data.map((lesson) => lesson.id);
+
+    const progressMap = new Map<
+      number,
+      { status: string; score: number; completedAt: Date | null }
+    >();
+    if (this.isUserRole(user) && lessonIds.length > 0) {
+      const progressRows = await this.prisma.userLessonProgress.findMany({
+        where: {
+          userId: user!.id,
+          lessonId: { in: lessonIds },
+        },
+        select: {
+          lessonId: true,
+          status: true,
+          score: true,
+          completedAt: true,
+        },
+      });
+
+      for (const row of progressRows) {
+        progressMap.set(row.lessonId, {
+          status: row.status,
+          score: row.score,
+          completedAt: row.completedAt,
+        });
+      }
+    }
+
+    const enrichedData = data.map((lesson) => {
+      const progress = progressMap.get(lesson.id) ?? null;
+      const isLearned = progress?.status === 'COMPLETED';
+
+      return {
+        ...lesson,
+        isLearned,
+        learnedAt: progress?.completedAt ?? null,
+        progress: progress
+          ? {
+              ...progress,
+              isLearned,
+              learnedAt: progress.completedAt,
+            }
+          : null,
+      };
+    });
+
     const nextCursor =
-      hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
+      hasMore && enrichedData.length > 0
+        ? (enrichedData[enrichedData.length - 1]?.id ?? null)
+        : null;
 
     return {
-      data,
+      data: enrichedData,
       pagination: {
         nextCursor,
         hasMore,
@@ -136,7 +210,7 @@ export class LessonsService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, user?: CurrentUserPayload) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { id },
       select: {
@@ -166,7 +240,38 @@ export class LessonsService {
       });
     }
 
-    return lesson;
+    if (!this.isUserRole(user)) {
+      return lesson;
+    }
+
+    const progress = await this.prisma.userLessonProgress.findUnique({
+      where: {
+        userId_lessonId: {
+          userId: user!.id,
+          lessonId: id,
+        },
+      },
+      select: {
+        status: true,
+        score: true,
+        completedAt: true,
+      },
+    });
+
+    const isLearned = progress?.status === 'COMPLETED';
+
+    return {
+      ...lesson,
+      isLearned,
+      learnedAt: progress?.completedAt ?? null,
+      progress: progress
+        ? {
+            ...progress,
+            isLearned,
+            learnedAt: progress.completedAt,
+          }
+        : null,
+    };
   }
 
   async create(dto: CreateLessonDto) {

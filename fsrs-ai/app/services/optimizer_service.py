@@ -164,6 +164,9 @@ async def reschedule_cards(db: AsyncSession, user_id: UUID) -> int:
         try:
             card = Card()
             rescheduled_card = scheduler.reschedule_card(card, fsrs_logs)
+            # py-fsrs may not expose reps/lapses on Card in newer versions.
+            derived_reps = len(logs)
+            derived_lapses = sum(1 for log in logs if log.grade == 1)
 
             # Update DB
             card_state.state = (
@@ -174,8 +177,8 @@ async def reschedule_cards(db: AsyncSession, user_id: UUID) -> int:
             card_state.difficulty = rescheduled_card.difficulty
             card_state.stability = rescheduled_card.stability
             card_state.next_review = rescheduled_card.due
-            card_state.reps = rescheduled_card.reps
-            card_state.lapses = rescheduled_card.lapses
+            card_state.reps = getattr(rescheduled_card, "reps", derived_reps)
+            card_state.lapses = getattr(rescheduled_card, "lapses", derived_lapses)
             card_state.card_data = rescheduled_card.to_json()
             card_state.retrievability = scheduler.get_card_retrievability(
                 rescheduled_card

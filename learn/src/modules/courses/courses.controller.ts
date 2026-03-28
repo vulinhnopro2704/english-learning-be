@@ -29,6 +29,8 @@ import { CourseResponseDto } from './dtos/course-response.dto';
 import { UpdateCourseDto } from './dtos/update-course.dto';
 import { CourseFilterDto } from './dtos/course-filter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('courses')
 @ApiBearerAuth()
@@ -45,8 +47,11 @@ export class CoursesController {
     includeTotal: true,
   })
   @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
-  findAll(@Query() filter: CourseFilterDto) {
-    return this.coursesService.findAll(filter);
+  findAll(
+    @Query() filter: CourseFilterDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.coursesService.findAll(filter, user);
   }
 
   @Get(':id')
@@ -54,8 +59,11 @@ export class CoursesController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkEntityResponse({ type: CourseResponseDto, description: 'Course found' })
   @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.coursesService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.coursesService.findOne(id, user);
   }
 
   @Post()
