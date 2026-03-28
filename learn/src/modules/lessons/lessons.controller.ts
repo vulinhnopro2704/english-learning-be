@@ -15,6 +15,7 @@ import {
   ApiOperation,
   ApiParam,
   ApiBearerAuth,
+  ApiResponse,
 } from '@nestjs/swagger';
 import {
   ApiCreatedEntityResponse,
@@ -25,10 +26,12 @@ import {
 } from '@english-learning/nest-api-docs';
 import { LessonsService } from './lessons.service';
 import { CreateLessonDto } from './dtos/create-lesson.dto';
+import { CompleteLessonDto } from './dtos/complete-lesson.dto';
 import { LessonResponseDto } from './dtos/lesson-response.dto';
 import { UpdateLessonDto } from './dtos/update-lesson.dto';
 import { LessonFilterDto } from './dtos/lesson-filter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('lessons')
 @ApiBearerAuth()
@@ -67,6 +70,28 @@ export class LessonsController {
   @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
   create(@Body() dto: CreateLessonDto) {
     return this.lessonsService.create(dto);
+  }
+
+  @Post(':id/complete')
+  @ApiOperation({
+    summary:
+      'Complete a lesson and trigger side effects (unlock words, streak, FSRS init, history)',
+    description:
+      'Single write endpoint for lesson completion. This marks lesson progress as COMPLETED, unlocks lesson words, updates streak activity, initializes FSRS cards (best-effort), and creates a LEARN_LESSON practice session.',
+  })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 201,
+    description:
+      'Lesson completion pipeline executed. Returns lesson progress, unlocked word count, and created practice session.',
+  })
+  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
+  complete(
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CompleteLessonDto,
+  ) {
+    return this.lessonsService.completeLesson(userId, id, dto.score ?? 0);
   }
 
   @Patch(':id')

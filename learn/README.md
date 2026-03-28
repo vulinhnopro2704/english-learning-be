@@ -25,6 +25,58 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## API Migration Note (Lesson Completion)
+
+Lesson completion now has a single command endpoint under Lessons module.
+
+- New endpoint: `POST /lessons/:id/complete`
+- Old endpoints removed:
+  - `POST /progress/lessons/:lessonId/complete`
+  - `POST /practice/lesson`
+
+### Request
+
+```json
+{
+  "score": 80
+}
+```
+
+`score` is optional and defaults to `0`.
+
+### Response
+
+```json
+{
+  "lessonProgress": {
+    "id": 1,
+    "lessonId": 10,
+    "userId": "uuid",
+    "status": "COMPLETED",
+    "score": 80,
+    "completedAt": "2026-03-28T08:00:00.000Z"
+  },
+  "wordsUnlocked": 12,
+  "session": {
+    "id": 99,
+    "type": "LEARN_LESSON",
+    "lessonId": 10,
+    "totalWords": 12,
+    "completedAt": "2026-03-28T08:00:00.000Z"
+  }
+}
+```
+
+### Side Effects
+
+Calling `POST /lessons/:id/complete` performs the full lesson completion pipeline:
+
+1. Marks lesson progress as `COMPLETED`
+2. Unlocks words for the lesson
+3. Updates user streak activity
+4. Initializes FSRS cards (best-effort)
+5. Creates a `LEARN_LESSON` practice session for history
+
 ## Project setup
 
 ```bash

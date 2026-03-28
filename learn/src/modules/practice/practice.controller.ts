@@ -9,7 +9,6 @@ import { ApiStandardErrorResponses } from '@english-learning/nest-api-docs';
 import { PracticeService } from './practice.service';
 import {
   SubmitFSRSPracticeDto,
-  SubmitLessonPracticeDto,
   PracticeHistoryFilterDto,
 } from './dtos/practice.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -37,22 +36,6 @@ export class PracticeController {
     @Body() dto: SubmitFSRSPracticeDto,
   ) {
     return this.practiceService.submitFSRS(userId, dto);
-  }
-
-  @Post('lesson')
-  @ApiOperation({
-    summary: 'Submit lesson practice (Học mới)',
-    description:
-      'Submit lesson completion. Marks the lesson as completed, ' +
-      'unlocks word progress, and initializes FSRS cards.',
-  })
-  @ApiResponse({ status: 201, description: 'Lesson completed & session saved' })
-  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  submitLesson(
-    @CurrentUser('id') userId: string,
-    @Body() dto: SubmitLessonPracticeDto,
-  ) {
-    return this.practiceService.submitLesson(userId, dto);
   }
 
   @Get('history')

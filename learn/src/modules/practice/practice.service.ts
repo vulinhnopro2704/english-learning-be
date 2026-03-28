@@ -1,15 +1,10 @@
-import {
-  Injectable,
-  HttpStatus,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
-import { ProgressService } from '../progress/progress.service';
 import { StreakService } from '../streak/streak.service';
 import {
   SubmitFSRSPracticeDto,
-  SubmitLessonPracticeDto,
   PracticeHistoryFilterDto,
 } from './dtos/practice.dto';
 import type { Prisma } from '../../generated/prisma/client';
@@ -20,7 +15,6 @@ export class PracticeService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly progressService: ProgressService,
     private readonly streakService: StreakService,
     private readonly configService: ConfigService,
   ) {
@@ -107,66 +101,6 @@ export class PracticeService {
     return {
       session,
       fsrsResult,
-    };
-  }
-
-  // ═══ LESSON PRACTICE (Learn / Học mới) ════════════════════════════════════
-
-  async submitLesson(userId: string, dto: SubmitLessonPracticeDto) {
-    // 1. Verify lesson exists
-    const lesson = await this.prisma.lesson.findUnique({
-      where: { id: dto.lessonId },
-      include: { words: { select: { id: true } } },
-    });
-
-    if (!lesson) {
-      throw new ApiException({
-        statusCode: HttpStatus.NOT_FOUND,
-        errorCode: 'LESSON_NOT_FOUND',
-        message: `Lesson with ID ${dto.lessonId} not found`,
-      });
-    }
-
-    // 2. Delegate to existing ProgressService
-    const progressResult = await this.progressService.completeLesson(
-      userId,
-      dto.lessonId,
-      dto.score ?? 0,
-    );
-
-    // 3. Init FSRS cards for newly unlocked words (call FSRS-AI service)
-    if (lesson.words.length > 0) {
-      try {
-        const wordIds = lesson.words.map((w) => w.id);
-        // Build URL with repeated query params
-        const url = new URL(`${this.fsrsBaseUrl}/api/v1/fsrs/init-cards`);
-        url.searchParams.set('user_id', userId);
-        wordIds.forEach((id) =>
-          url.searchParams.append('word_ids', String(id)),
-        );
-        await fetch(url.toString(), { method: 'POST' });
-      } catch {
-        // Non-critical: FSRS card init can happen later
-      }
-    }
-
-    // 4. Create PracticeSession
-    const session = await this.prisma.practiceSession.create({
-      data: {
-        userId,
-        type: 'LEARN_LESSON',
-        lessonId: dto.lessonId,
-        totalWords: lesson.words.length,
-        completedAt: new Date(),
-      },
-    });
-
-    // 5. Record streak activity
-    await this.streakService.recordActivity(userId);
-
-    return {
-      session,
-      progressResult,
     };
   }
 

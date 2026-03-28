@@ -61,19 +61,6 @@ export class ProgressController {
 
   // ═══ LESSON PROGRESS ═══════════════════════════════════════════════════════
 
-  @Post('lessons/:lessonId/complete')
-  @ApiOperation({ summary: 'Mark a lesson as completed' })
-  @ApiParam({ name: 'lessonId', type: Number })
-  @ApiResponse({ status: 201, description: 'Lesson completed' })
-  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  completeLesson(
-    @CurrentUser('id') userId: string,
-    @Param('lessonId', ParseIntPipe) lessonId: number,
-    @Body('score', ParseIntPipe) score: number,
-  ) {
-    return this.progressService.completeLesson(userId, lessonId, score);
-  }
-
   @Get('lessons')
   @ApiOperation({ summary: 'Get current user lesson progress' })
   @ApiResponse({ status: 200, description: 'List of lesson progress' })

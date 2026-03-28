@@ -1,9 +1,12 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
 import { CreateLessonDto } from './dtos/create-lesson.dto';
 import { UpdateLessonDto } from './dtos/update-lesson.dto';
 import { LessonFilterDto } from './dtos/lesson-filter.dto';
+import { ProgressService } from '../progress/progress.service';
+import { StreakService } from '../streak/streak.service';
 import type { Prisma } from '../../generated/prisma/client';
 
 const LESSON_SELECT = {
@@ -20,7 +23,62 @@ const LESSON_SELECT = {
 
 @Injectable()
 export class LessonsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(LessonsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly progressService: ProgressService,
+    private readonly streakService: StreakService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  async completeLesson(userId: string, lessonId: number, score: number) {
+    const progressResult = await this.progressService.completeLesson(
+      userId,
+      lessonId,
+      score,
+    );
+
+    const words = await this.prisma.word.findMany({
+      where: { lessonId },
+      select: { id: true },
+    });
+
+    const fsrsBaseUrl = this.configService.get<string>('FSRS_AI_URL');
+    if (fsrsBaseUrl && words.length > 0) {
+      try {
+        const url = new URL(`${fsrsBaseUrl}/api/v1/fsrs/init-cards`);
+        url.searchParams.set('user_id', userId);
+        words.forEach((word) => {
+          url.searchParams.append('word_ids', String(word.id));
+        });
+
+        await fetch(url.toString(), { method: 'POST' });
+      } catch (error) {
+        this.logger.warn(
+          `FSRS card init failed for lesson ${lessonId}: ${(error as Error).message}`,
+        );
+      }
+    }
+
+    const session = await this.prisma.practiceSession.create({
+      data: {
+        userId,
+        type: 'LEARN_LESSON',
+        lessonId,
+        totalWords: words.length,
+        completedAt: new Date(),
+      },
+    });
+
+    await this.streakService.recordActivity(userId);
+
+    return {
+      lessonProgress: progressResult.lessonProgress,
+      wordsUnlocked: progressResult.wordsUnlocked,
+      session,
+    };
+  }
 
   async findAll(filter: LessonFilterDto) {
     const take = filter.take ?? 20;

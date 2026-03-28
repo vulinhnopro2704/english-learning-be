@@ -57,21 +57,6 @@ export class SubmitFSRSPracticeDto {
   items!: FSRSReviewItemDto[];
 }
 
-// ─── Submit Lesson Practice ──────────────────────────────────────────────────
-
-export class SubmitLessonPracticeDto {
-  @ApiProperty({ example: 1, description: 'Lesson ID' })
-  @IsInt()
-  lessonId!: number;
-
-  @ApiPropertyOptional({ example: 80, description: 'Score (0-100)' })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(100)
-  score?: number = 0;
-}
-
 // ─── Practice History Filter ─────────────────────────────────────────────────
 
 export class PracticeHistoryFilterDto {
