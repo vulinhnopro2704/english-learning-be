@@ -41,6 +41,23 @@ export class FSRSReviewItemDto {
   @IsOptional()
   @IsString()
   exerciseType?: string = 'flashcard';
+
+  @ApiPropertyOptional({
+    example: 2,
+    description: 'Number of attempts for this word',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  attempts?: number;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Was the word ever answered incorrectly?',
+  })
+  @IsOptional()
+  @IsBoolean()
+  hadWrong?: boolean;
 }
 
 // ─── Submit FSRS Practice ────────────────────────────────────────────────────
@@ -94,5 +111,17 @@ export class PracticeHistoryFilterDto {
   @IsInt()
   @Min(1)
   @Max(100)
+  take?: number = 20;
+}
+
+// ─── FSRS Due Filter ───────────────────────────────────────────────────────
+
+export class FSRSDueFilterDto {
+  @ApiPropertyOptional({ example: 20, minimum: 1, maximum: 200, default: 20 })
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value as string, 10))
+  @IsInt()
+  @Min(1)
+  @Max(200)
   take?: number = 20;
 }

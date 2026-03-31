@@ -5,47 +5,8 @@ import {
   CourseProgressFilterDto,
   LessonProgressFilterDto,
   WordProgressFilterDto,
-  ReviewWordDto,
 } from './dtos/progress.dto';
 import type { Prisma } from '../../generated/prisma/client';
-
-// ─── FSRS Interval Map (in days) ────────────────────────────────────────────
-const FSRS_INTERVALS: Record<string, number> = {
-  NEW: 0,
-  LEVEL_1: 1,
-  LEVEL_2: 3,
-  LEVEL_3: 7,
-  LEVEL_4: 14,
-  LEVEL_5: 30,
-};
-
-const LEVEL_ORDER = [
-  'NEW',
-  'LEVEL_1',
-  'LEVEL_2',
-  'LEVEL_3',
-  'LEVEL_4',
-  'LEVEL_5',
-] as const;
-
-type MasteryLevel = (typeof LEVEL_ORDER)[number];
-
-function getNextLevel(current: MasteryLevel): MasteryLevel {
-  const idx = LEVEL_ORDER.indexOf(current);
-  return idx < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[idx + 1] : current;
-}
-
-function getPrevLevel(current: MasteryLevel): MasteryLevel {
-  const idx = LEVEL_ORDER.indexOf(current);
-  return idx > 1 ? LEVEL_ORDER[idx - 1] : LEVEL_ORDER[1]; // min = LEVEL_1 (not NEW)
-}
-
-function calculateNextReview(level: MasteryLevel): Date {
-  const days = FSRS_INTERVALS[level] ?? 1;
-  const next = new Date();
-  next.setDate(next.getDate() + days);
-  return next;
-}
 
 function normalizeCompletionScore(score: number): number {
   if (!Number.isFinite(score)) {
@@ -395,105 +356,7 @@ export class ProgressService {
     return { data: enrichedData, pagination: { nextCursor, hasMore, total } };
   }
 
-  // ═══ WORD PROGRESS & FSRS ═════════════════════════════════════════════════
-
-  async getWordsToReview(userId: string, take: number = 20) {
-    const now = new Date();
-
-    await this.prisma.userWordProgress.updateMany({
-      where: {
-        userId,
-        status: 'NEW',
-        nextReview: null,
-      },
-      data: {
-        nextReview: now,
-      },
-    });
-
-    const words = await this.prisma.userWordProgress.findMany({
-      where: {
-        userId,
-        OR: [{ nextReview: { lte: now } }, { nextReview: null, status: 'NEW' }],
-      },
-      take,
-      orderBy: [{ nextReview: 'asc' }],
-      include: {
-        word: {
-          select: {
-            id: true,
-            word: true,
-            pronunciation: true,
-            meaning: true,
-            example: true,
-            exampleVi: true,
-            image: true,
-            audio: true,
-            pos: true,
-            cefr: true,
-          },
-        },
-      },
-    });
-
-    return {
-      data: words,
-      total: words.length,
-    };
-  }
-
-  async reviewWord(userId: string, dto: ReviewWordDto) {
-    const progress = await this.prisma.userWordProgress.findUnique({
-      where: { userId_wordId: { userId, wordId: dto.wordId } },
-    });
-
-    if (!progress) {
-      throw new ApiException({
-        statusCode: HttpStatus.NOT_FOUND,
-        errorCode: 'WORD_PROGRESS_NOT_FOUND',
-        message:
-          'Word progress not found. Complete the lesson first to unlock this word.',
-      });
-    }
-
-    const currentLevel = progress.status as MasteryLevel;
-    const isCorrect = dto.result === 'correct';
-
-    let newLevel: MasteryLevel;
-    if (isCorrect) {
-      newLevel = getNextLevel(currentLevel);
-    } else {
-      newLevel = currentLevel === 'NEW' ? 'NEW' : getPrevLevel(currentLevel);
-    }
-
-    const nextReview = calculateNextReview(newLevel);
-    const newProficiency = Math.min(
-      100,
-      Math.max(0, progress.proficiency + (isCorrect ? 10 : -15)),
-    );
-
-    const updated = await this.prisma.userWordProgress.update({
-      where: { id: progress.id },
-      data: {
-        status: newLevel,
-        proficiency: newProficiency,
-        nextReview,
-        lastReviewedAt: new Date(),
-        reviewCount: { increment: 1 },
-        correctCount: isCorrect ? { increment: 1 } : undefined,
-      },
-      include: {
-        word: { select: { id: true, word: true, meaning: true } },
-      },
-    });
-
-    return {
-      ...updated,
-      previousLevel: currentLevel,
-      levelChanged: currentLevel !== newLevel,
-      isCorrect,
-    };
-  }
+  // ═══ WORD PROGRESS ════════════════════════════════════════════════════════
 
   async getMyWords(userId: string, filter: WordProgressFilterDto) {
     const take = filter.take ?? 20;

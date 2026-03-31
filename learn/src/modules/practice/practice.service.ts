@@ -6,6 +6,7 @@ import { StreakService } from '../streak/streak.service';
 import {
   SubmitFSRSPracticeDto,
   PracticeHistoryFilterDto,
+  FSRSDueFilterDto,
 } from './dtos/practice.dto';
 import type { Prisma } from '../../generated/prisma/client';
 
@@ -30,6 +31,73 @@ export class PracticeService {
   }
 
   // ═══ FSRS PRACTICE (Review / Ôn tập) ══════════════════════════════════════
+
+  async getDueWords(userId: string, filter: FSRSDueFilterDto) {
+    const limit = filter.take ?? 20;
+    const dueUrl = new URL(`${this.fsrsBaseUrl}/api/v1/fsrs/due`);
+    dueUrl.searchParams.set('user_id', userId);
+    dueUrl.searchParams.set('limit', String(limit));
+
+    let duePayload: any;
+    try {
+      const response = await fetch(dueUrl.toString(), { method: 'GET' });
+
+      if (!response.ok) {
+        throw new ApiException({
+          statusCode: HttpStatus.BAD_GATEWAY,
+          errorCode: 'FSRS_UPSTREAM_ERROR',
+          message: 'FSRS-AI service returned an error',
+        });
+      }
+
+      duePayload = await response.json();
+    } catch (error) {
+      if (error instanceof ApiException) throw error;
+      throw new ApiException({
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        errorCode: 'FSRS_SERVICE_UNAVAILABLE',
+        message: 'Failed to connect to FSRS-AI service',
+      });
+    }
+
+    const wordIds: number[] = Array.isArray(duePayload?.word_ids)
+      ? duePayload.word_ids
+      : [];
+
+    if (wordIds.length === 0) {
+      return { data: [], total: 0 };
+    }
+
+    const progresses = await this.prisma.userWordProgress.findMany({
+      where: {
+        userId,
+        wordId: { in: wordIds },
+      },
+      include: {
+        word: {
+          select: {
+            id: true,
+            word: true,
+            pronunciation: true,
+            meaning: true,
+            example: true,
+            exampleVi: true,
+            image: true,
+            audio: true,
+            pos: true,
+            cefr: true,
+          },
+        },
+      },
+    });
+
+    const byId = new Map(progresses.map((p) => [p.wordId, p]));
+    const ordered = wordIds
+      .map((id) => byId.get(id))
+      .filter((item): item is (typeof progresses)[number] => Boolean(item));
+
+    return { data: ordered, total: duePayload?.total ?? ordered.length };
+  }
 
   async submitFSRS(userId: string, dto: SubmitFSRSPracticeDto) {
     const startedAt = new Date();

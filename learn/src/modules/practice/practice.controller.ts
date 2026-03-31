@@ -10,6 +10,7 @@ import { PracticeService } from './practice.service';
 import {
   SubmitFSRSPracticeDto,
   PracticeHistoryFilterDto,
+  FSRSDueFilterDto,
 } from './dtos/practice.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -47,5 +48,20 @@ export class PracticeController {
     @Query() filter: PracticeHistoryFilterDto,
   ) {
     return this.practiceService.getHistory(userId, filter);
+  }
+
+  @Get('fsrs/due')
+  @ApiOperation({
+    summary: 'Get words due for FSRS practice',
+    description:
+      'Proxy FSRS-AI /fsrs/due to fetch word IDs due for review, then hydrate with word details.',
+  })
+  @ApiResponse({ status: 200, description: 'List of words due for review' })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500, 502, 503] })
+  getDueWords(
+    @CurrentUser('id') userId: string,
+    @Query() filter: FSRSDueFilterDto,
+  ) {
+    return this.practiceService.getDueWords(userId, filter);
   }
 }

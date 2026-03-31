@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Body,
   Param,
   Query,
   ParseIntPipe,
@@ -14,7 +13,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { ApiStandardErrorResponses } from '@english-learning/nest-api-docs';
 import { ProgressService } from './progress.service';
@@ -22,7 +20,6 @@ import {
   CourseProgressFilterDto,
   LessonProgressFilterDto,
   WordProgressFilterDto,
-  ReviewWordDto,
 } from './dtos/progress.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -72,35 +69,7 @@ export class ProgressController {
     return this.progressService.getMyLessons(userId, filter);
   }
 
-  // ═══ WORD PRACTICE (FSRS) ═════════════════════════════════════════════════
-
-  @Get('review')
-  @ApiOperation({ summary: 'Get words due for review (spaced repetition)' })
-  @ApiQuery({
-    name: 'take',
-    required: false,
-    type: Number,
-    description: 'Number of words to return (default: 20)',
-  })
-  @ApiResponse({ status: 200, description: 'List of words to review' })
-  @ApiStandardErrorResponses({ statuses: [401, 500] })
-  getWordsToReview(
-    @CurrentUser('id') userId: string,
-    @Query('take') take?: string,
-  ) {
-    return this.progressService.getWordsToReview(
-      userId,
-      take ? parseInt(take, 10) : 20,
-    );
-  }
-
-  @Post('review')
-  @ApiOperation({ summary: 'Submit a word review result' })
-  @ApiResponse({ status: 201, description: 'Review recorded' })
-  @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  reviewWord(@CurrentUser('id') userId: string, @Body() dto: ReviewWordDto) {
-    return this.progressService.reviewWord(userId, dto);
-  }
+  // ═══ WORD PROGRESS ════════════════════════════════════════════════════════
 
   @Get('words')
   @ApiOperation({ summary: 'Get current user word progress' })

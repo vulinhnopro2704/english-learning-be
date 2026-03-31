@@ -1,6 +1,6 @@
 import { IsInt, IsIn, IsOptional, IsString, Min, Max } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CourseProgressFilterDto {
   /** Filter by completion status */
@@ -133,16 +133,4 @@ export class WordProgressFilterDto {
   @Min(1)
   @Max(100)
   take?: number = 20;
-}
-
-export class ReviewWordDto {
-  /** Word ID to review */
-  @ApiProperty({ example: 42 })
-  @IsInt()
-  wordId!: number;
-
-  /** Review result */
-  @ApiProperty({ enum: ['correct', 'incorrect'], example: 'correct' })
-  @IsIn(['correct', 'incorrect'])
-  result!: 'correct' | 'incorrect';
 }

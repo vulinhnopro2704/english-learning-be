@@ -170,25 +170,6 @@ export class UserWordProgressResponseDto {
   word?: ProgressWordSummaryDto;
 }
 
-export class ReviewWordResponseDto extends UserWordProgressResponseDto {
-  @ApiProperty({ example: 'LEVEL_1' })
-  previousLevel!: string;
-
-  @ApiProperty({ example: true })
-  levelChanged!: boolean;
-
-  @ApiProperty({ example: true })
-  isCorrect!: boolean;
-}
-
-export class WordsToReviewResponseDto {
-  @ApiProperty({ type: [UserWordProgressResponseDto] })
-  data!: UserWordProgressResponseDto[];
-
-  @ApiProperty({ example: 20 })
-  total!: number;
-}
-
 export class ProgressStatsResponseDto {
   @ApiProperty({ example: 120 })
   totalWords!: number;
