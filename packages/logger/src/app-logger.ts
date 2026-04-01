@@ -18,6 +18,10 @@ const toMessage = (payload: unknown): string => {
   }
 };
 
+const toContextLabel = (context?: string): string => {
+  return context?.trim() ? context : 'App';
+};
+
 const resolveOptions = (options?: LoggerOptions) => {
   const dir = options?.dir ?? process.env.LOGGER_DIR ?? 'logs';
   const filename = options?.filename ?? process.env.LOGGER_FILENAME ?? 'app-%DATE%.log';
@@ -43,9 +47,11 @@ export class AppLogger implements LoggerService {
           format: format.combine(
             format.colorize(),
             format.printf(({ context, message, level: lvl }) => {
-              const app = chalk.green('[Nest]');
-              const ctx = context ? chalk.yellow(`[${context}]`) : '';
-              return `${app} - ${timestamp()} ${lvl} ${ctx} ${message}`;
+              const ctx = chalk.cyan(
+                `[${toContextLabel(typeof context === 'string' ? context : undefined)}]`,
+              );
+              const level = chalk.bold(lvl.toUpperCase());
+              return `${timestamp()} ${ctx} ${level} ${message}`;
             }),
           ),
         }),

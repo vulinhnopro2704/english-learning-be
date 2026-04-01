@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@english-learning/api-error-types": "^0.1.0",
-    "@english-learning/logger": "^0.1.0",
+    "@english-learning/logger": "^0.1.1",
     "@english-learning/nest-api-docs": "^0.1.0",
     "@english-learning/nest-error-handler": "^0.1.0",
     "@prisma/adapter-pg": "^7.5.0",

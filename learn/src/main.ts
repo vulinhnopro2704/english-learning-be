@@ -22,7 +22,6 @@ async function bootstrap() {
   app.use(
     createRequestLoggerMiddleware({
       logger: appLogger,
-      bodyMax: Number(process.env.LOGGER_BODY_MAX ?? '0'),
     }),
   );
 
@@ -60,13 +59,15 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3002;
   await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
+  appLogger.log(`Application is running on: http://localhost:${port}`, 'Bootstrap');
   if (swaggerEnabled) {
-    console.log(
-      `📚 API Docs (Scalar):  http://localhost:${port}/${swaggerPath}`,
+    appLogger.log(
+      `API Docs (Scalar): http://localhost:${port}/${swaggerPath}`,
+      'Bootstrap',
     );
-    console.log(
-      `📋 Swagger UI:         http://localhost:${port}/${swaggerPath}/swagger`,
+    appLogger.log(
+      `Swagger UI: http://localhost:${port}/${swaggerPath}/swagger`,
+      'Bootstrap',
     );
   }
 }

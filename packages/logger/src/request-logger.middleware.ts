@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { DEFAULT_BODY_MAX, DEFAULT_REDACT_KEYS, TRACE_ID_HEADER } from './constants';
-import { sanitizeBody } from './redactor';
+import { TRACE_ID_HEADER } from './constants';
 import type { RequestLoggerOptions } from './types';
 import { AppLogger } from './app-logger';
 
@@ -30,14 +29,10 @@ const ensureTraceId = (req: Request, res: Response, headerKey: string): string =
   return traceId;
 };
 
-const sanitizeMaybe = (body: unknown, opts: RequestLoggerOptions) => {
-  const redactionKeys = opts.redactKeys ?? DEFAULT_REDACT_KEYS;
-  const bodyMax = opts.bodyMax ?? DEFAULT_BODY_MAX;
-  return sanitizeBody(body, {
-    redactKeys: redactionKeys,
-    previewLength: 3,
-    bodyMax,
-  });
+const getPathWithoutQuery = (req: Request): string => {
+  const path = req.originalUrl || req.url || '/';
+  const [pathname] = path.split('?');
+  return pathname || '/';
 };
 
 export const createRequestLoggerMiddleware = (options: RequestLoggerOptions = {}) => {
@@ -48,64 +43,25 @@ export const createRequestLoggerMiddleware = (options: RequestLoggerOptions = {}
     const traceId = ensureTraceId(req, res, headerKey);
     const start = process.hrtime.bigint();
 
-    const requestBody =
-      options.logRequestBody === false ? undefined : sanitizeMaybe(req.body, options);
-
-    let responseBody: unknown;
-    const originalSend = res.send.bind(res);
-    res.send = ((body?: any) => {
-      responseBody = body;
-      return originalSend(body);
-    }) as Response['send'];
-
     res.on('finish', () => {
       const durationNs = process.hrtime.bigint() - start;
       const durationMs = Number(durationNs) / 1_000_000;
       const status = res.statusCode;
+      const duration = Number(durationMs.toFixed(2));
+      const method = req.method;
+      const path = getPathWithoutQuery(req);
+      const userId = req.header('x-user-id') || 'anonymous';
+      const ip = getClientIp(req);
 
-      const sanitizedResponse =
-        options.logResponseBody === false ? undefined : sanitizeMaybe(responseBody, options);
-
-      const payload = {
-        traceId,
-        method: req.method,
-        path: req.originalUrl || req.url,
-        status,
-        durationMs: Number(durationMs.toFixed(2)),
-        ip: getClientIp(req),
-        user: {
-          id: req.header('x-user-id'),
-          email: req.header('x-user-email'),
-          role: req.header('x-user-role'),
-          jti: req.header('x-user-jti'),
-        },
-        userAgent: req.header('user-agent'),
-        referer: req.header('referer'),
-        request: requestBody
-          ? {
-              body: requestBody.value,
-              length: requestBody.length,
-              truncated: requestBody.truncated,
-              contentType: req.header('content-type'),
-            }
-          : undefined,
-        response: sanitizedResponse
-          ? {
-              body: sanitizedResponse.value,
-              length: sanitizedResponse.length,
-              truncated: sanitizedResponse.truncated,
-              contentType: res.getHeader('content-type'),
-            }
-          : undefined,
-      };
+      const payload = `${method} ${path} -> ${status} (${duration}ms) trace=${traceId} user=${userId} ip=${ip}`;
 
       const level = levelForStatus(status);
       if (level === 'error' && (logger as any).error) {
-        (logger as any).error(payload, undefined, 'RequestLogger');
+        (logger as any).error(payload, undefined, 'HTTP');
       } else if (level === 'warn' && (logger as any).warn) {
-        (logger as any).warn(payload, 'RequestLogger');
+        (logger as any).warn(payload, 'HTTP');
       } else if ((logger as any).log) {
-        (logger as any).log(payload, 'RequestLogger');
+        (logger as any).log(payload, 'HTTP');
       }
     });
 

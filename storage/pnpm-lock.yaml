@@ -12,8 +12,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       '@english-learning/logger':
-        specifier: ^0.1.0
-        version: 0.1.0(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        specifier: ^0.1.1
+        version: 0.1.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@english-learning/nest-api-docs':
         specifier: ^0.1.0
         version: 0.1.0(@nestjs/core@11.1.17)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -387,8 +387,8 @@ packages:
   '@english-learning/api-error-types@0.1.0':
     resolution: {integrity: sha512-rV3WpT4nx8qYDJ2IEIgYZyiIMLEdy7LwltuQh3ItYBClirYWkyfhhWaE/K+a6cS9eOBv2G3lyc7hnITn7LgUzw==}
 
-  '@english-learning/logger@0.1.0':
-    resolution: {integrity: sha512-3Fwt7A740FRBv129RC9SbnCWUiRrubqLlXjS7jq5csCzmZT80akMCgU5oOfI0FiJ5r3eXIPqQfP1ruXJwf7ojQ==}
+  '@english-learning/logger@0.1.1':
+    resolution: {integrity: sha512-25FXESECKwflKs0aqs0iQOoWnWROnHVb0BjjoITN3021ty28VvySIXK3jiJjhhFdcH3B2bquBUmnkYby7RYh5A==}
 
   '@english-learning/nest-api-docs@0.1.0':
     resolution: {integrity: sha512-26WJj2namd6du2T4tod2SplxfZ9U5um8i9FT+BKqVFJjLtSQ0KV2UTYVNFBAJDuC+xgIFAvzAzYaEDy9mWEQfQ==}
@@ -3999,7 +3999,7 @@ snapshots:
 
   '@english-learning/api-error-types@0.1.0': {}
 
-  '@english-learning/logger@0.1.0(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@english-learning/logger@0.1.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       chalk: 5.6.2
@@ -4032,7 +4032,7 @@ snapshots:
   '@english-learning/nest-error-handler@0.1.0(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@english-learning/api-error-types': 0.1.0
-      '@english-learning/logger': 0.1.0(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@english-learning/logger': 0.1.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/common': 11.1.17(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       class-validator: 0.15.1
     transitivePeerDependencies:

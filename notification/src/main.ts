@@ -18,18 +18,31 @@ async function bootstrap() {
   app.use(
     createRequestLoggerMiddleware({
       logger: appLogger,
-      bodyMax: Number(process.env.LOGGER_BODY_MAX ?? '0'),
     }),
   );
 
   setupApiErrorHandling(app);
+  const swaggerEnabled = (process.env.SWAGGER_ENABLED ?? 'true') === 'true';
+  const swaggerPath = process.env.SWAGGER_PATH ?? 'api-docs';
   setupApiDocs(app, {
     title: 'Notification API',
     description: 'English Learning Platform — Notification Service',
     tags: [{ name: 'notification', description: 'Notification endpoints' }],
-    enabled: (process.env.SWAGGER_ENABLED ?? 'true') === 'true',
-    swaggerPath: process.env.SWAGGER_PATH ?? 'api-docs',
+    enabled: swaggerEnabled,
+    swaggerPath,
   });
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+  appLogger.log(`Application is running on: http://localhost:${port}`, 'Bootstrap');
+  if (swaggerEnabled) {
+    appLogger.log(
+      `API Docs (Scalar): http://localhost:${port}/${swaggerPath}`,
+      'Bootstrap',
+    );
+    appLogger.log(
+      `Swagger UI: http://localhost:${port}/${swaggerPath}/swagger`,
+      'Bootstrap',
+    );
+  }
 }
 bootstrap();

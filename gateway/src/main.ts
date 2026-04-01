@@ -22,7 +22,6 @@ async function bootstrap() {
   app.use(
     createRequestLoggerMiddleware({
       logger: appLogger,
-      bodyMax: Number(process.env.LOGGER_BODY_MAX ?? '0'),
     }),
   );
 
@@ -92,6 +91,18 @@ async function bootstrap() {
     gatewayProxyService.handle(req, res, next),
   );
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+  appLogger.log(`Application is running on: http://localhost:${port}`, 'Bootstrap');
+  if (swaggerEnabled) {
+    appLogger.log(
+      `API Docs (Scalar): http://localhost:${port}/${swaggerPath}`,
+      'Bootstrap',
+    );
+    appLogger.log(
+      `Swagger UI: http://localhost:${port}/${swaggerPath}/swagger`,
+      'Bootstrap',
+    );
+  }
 }
 bootstrap();

@@ -1,4 +1,4 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
@@ -12,6 +12,7 @@ import type { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class PracticeService {
+  private readonly logger = new Logger(PracticeService.name);
   private readonly fsrsBaseUrl: string;
 
   constructor(
@@ -33,10 +34,11 @@ export class PracticeService {
   // ═══ FSRS PRACTICE (Review / Ôn tập) ══════════════════════════════════════
 
   async getDueWords(userId: string, filter: FSRSDueFilterDto) {
-    const limit = filter.take ?? 20;
     const dueUrl = new URL(`${this.fsrsBaseUrl}/api/v1/fsrs/due`);
     dueUrl.searchParams.set('user_id', userId);
-    dueUrl.searchParams.set('limit', String(limit));
+    if (typeof filter.take === 'number') {
+      dueUrl.searchParams.set('limit', String(filter.take));
+    }
 
     let duePayload: any;
     try {
@@ -60,8 +62,15 @@ export class PracticeService {
       });
     }
 
-    const wordIds: number[] = Array.isArray(duePayload?.word_ids)
-      ? duePayload.word_ids
+    const upstreamWordIds =
+      duePayload?.word_ids ??
+      duePayload?.wordIds ??
+      duePayload?.data?.word_ids ??
+      duePayload?.data?.wordIds;
+    const wordIds: number[] = Array.isArray(upstreamWordIds)
+      ? upstreamWordIds
+          .map((value: unknown) => Number(value))
+          .filter((value) => Number.isInteger(value) && value > 0)
       : [];
 
     if (wordIds.length === 0) {
@@ -151,20 +160,39 @@ export class PracticeService {
     );
 
     // 3. Create PracticeSession
-    const session = await this.prisma.practiceSession.create({
-      data: {
-        userId,
-        type: 'FSRS',
-        totalWords,
-        correctCount,
-        totalDurationMs,
-        startedAt,
-        completedAt: new Date(),
-      },
-    });
+    let session: Awaited<
+      ReturnType<typeof this.prisma.practiceSession.create>
+    > | null = null;
+    try {
+      session = await this.prisma.practiceSession.create({
+        data: {
+          userId,
+          type: 'FSRS',
+          totalWords,
+          correctCount,
+          totalDurationMs,
+          startedAt,
+          completedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed creating FSRS practice session for user ${userId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
 
     // 4. Record streak activity
-    await this.streakService.recordActivity(userId);
+    try {
+      await this.streakService.recordActivity(userId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed recording streak for user ${userId} after FSRS session: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
 
     return {
       session,

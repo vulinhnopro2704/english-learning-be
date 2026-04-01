@@ -117,11 +117,15 @@ export class PracticeHistoryFilterDto {
 // ─── FSRS Due Filter ───────────────────────────────────────────────────────
 
 export class FSRSDueFilterDto {
-  @ApiPropertyOptional({ example: 20, minimum: 1, maximum: 200, default: 20 })
+  @ApiPropertyOptional({ example: 200, minimum: 1, maximum: 200 })
   @IsOptional()
-  @Transform(({ value }) => parseInt(value as string, 10))
+  @Transform(({ value }) =>
+    value === undefined || value === null || value === ''
+      ? undefined
+      : parseInt(value as string, 10),
+  )
   @IsInt()
   @Min(1)
   @Max(200)
-  take?: number = 20;
+  take?: number;
 }
