@@ -1,8 +1,4 @@
-import {
-  HttpStatus,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ApiException } from '@english-learning/nest-error-handler';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -53,7 +49,7 @@ export class GatewayProxyService {
       'http://storage:3003';
     this.fsrsAiUpstreamUrl =
       this.configService.get<string>('FSRS_AI_UPSTREAM_URL') ??
-      'http://fsrs-ai:8000';
+      'http://fsrs-ai:3004';
     this.swaggerPath = `/${(this.configService.get<string>('SWAGGER_PATH') ?? 'api-docs').replace(/^\/+/, '')}`;
     this.swaggerEnabled =
       (this.configService.get<string>('SWAGGER_ENABLED') ?? 'true') === 'true';

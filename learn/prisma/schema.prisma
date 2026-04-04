@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
 
@@ -55,7 +55,6 @@ model Word {
   lessonId        Int?
   pos             String?              @db.VarChar(255)
   cefr            String?              @db.VarChar(10)
-  reviewLogs      ReviewLog[]
   vocabularyNotes UserVocabularyNote[]
   progress        UserWordProgress[]
   lesson          Lesson?              @relation(fields: [lessonId], references: [id])
@@ -112,7 +111,6 @@ model UserWordProgress {
   interval       Int              @default(0)
   reps           Int              @default(0)
   lapses         Int              @default(0)
-  reviewLogs     ReviewLog[]
   word           Word             @relation(fields: [wordId], references: [id], onDelete: Cascade)
 
   @@unique([userId, wordId])
@@ -136,35 +134,6 @@ model UserVocabularyNote {
   @@index([userId])
 }
 
-model ReviewLog {
-  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId        String           @db.Uuid
-  wordId        Int
-  grade         Int
-  state         Int
-  elapsedDays   Int
-  scheduledDays Int
-  difficulty    Float
-  stability     Float
-  durationMs    Int              @default(0)
-  reviewedAt    DateTime         @db.Timestamptz(6)
-  userProgress  UserWordProgress @relation(fields: [userId, wordId], references: [userId, wordId], onDelete: Cascade)
-  word          Word             @relation(fields: [wordId], references: [id], onDelete: Cascade)
-
-  @@index([userId, wordId])
-  @@index([reviewedAt])
-}
-
-model UserFSRSSetting {
-  id               Int      @id @default(autoincrement())
-  userId           String   @unique @db.Uuid
-  weights          Json     @default("[]")
-  easyDays         Int[]    @default([])
-  maxReviewsPerDay Int      @default(100)
-  requestRetention Float    @default(0.9)
-  updatedAt        DateTime @updatedAt @db.Timestamptz(6)
-}
-
 enum LessonStatus {
   LOCKED
   UNLOCKED
@@ -182,21 +151,21 @@ enum WordMasteryLevel {
 }
 
 enum PracticeType {
-  FSRS         // Ôn tập (Review) — spaced repetition
+  FSRS // Ôn tập (Review) — spaced repetition
   LEARN_LESSON // Học mới (Learn) — lesson-based
 }
 
 model PracticeSession {
-  id              Int           @id @default(autoincrement())
-  userId          String        @db.Uuid
+  id              Int          @id @default(autoincrement())
+  userId          String       @db.Uuid
   type            PracticeType
   lessonId        Int?
-  totalWords      Int           @default(0)
-  correctCount    Int           @default(0)
-  totalDurationMs Int           @default(0)
-  startedAt       DateTime      @default(now()) @db.Timestamptz(6)
-  completedAt     DateTime?     @db.Timestamptz(6)
-  lesson          Lesson?       @relation(fields: [lessonId], references: [id])
+  totalWords      Int          @default(0)
+  correctCount    Int          @default(0)
+  totalDurationMs Int          @default(0)
+  startedAt       DateTime     @default(now()) @db.Timestamptz(6)
+  completedAt     DateTime?    @db.Timestamptz(6)
+  lesson          Lesson?      @relation(fields: [lessonId], references: [id])
 
   @@index([userId])
   @@index([userId, type])

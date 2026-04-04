@@ -24,23 +24,25 @@ export class FSRSReviewItemDto {
   @IsBoolean()
   isCorrect!: boolean;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 5500,
-    description: 'Time spent answering (ms)',
+    description: 'Time spent answering (ms), required and must be > 0',
   })
-  @IsOptional()
   @IsInt()
-  @Min(0)
-  durationMs?: number = 0;
+  @Min(1)
+  durationMs!: number;
 
-  @ApiPropertyOptional({
-    example: 'flashcard',
+  @ApiProperty({
+    example: 'FLASHCARD',
     description:
-      'Exercise type: flashcard, multi_choice, listen_fill, dictation',
+      'Exercise type: FLASHCARD, MULTI_CHOICE, LISTEN_FILL, DICTATION',
   })
-  @IsOptional()
   @IsString()
-  exerciseType?: string = 'flashcard';
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.toUpperCase() : value,
+  )
+  @IsIn(['FLASHCARD', 'MULTI_CHOICE', 'LISTEN_FILL', 'DICTATION'])
+  exerciseType!: string;
 
   @ApiPropertyOptional({
     example: 2,
@@ -49,7 +51,7 @@ export class FSRSReviewItemDto {
   @IsOptional()
   @IsInt()
   @Min(1)
-  attempts?: number;
+  attempts?: number = 1;
 
   @ApiPropertyOptional({
     example: true,
@@ -57,7 +59,7 @@ export class FSRSReviewItemDto {
   })
   @IsOptional()
   @IsBoolean()
-  hadWrong?: boolean;
+  hadWrong?: boolean = false;
 }
 
 // ─── Submit FSRS Practice ────────────────────────────────────────────────────
