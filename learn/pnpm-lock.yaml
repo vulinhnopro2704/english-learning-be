@@ -9,17 +9,17 @@ importers:
   .:
     dependencies:
       '@english-learning/api-error-types':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.5
+        version: 0.1.5
       '@english-learning/logger':
-        specifier: ^0.1.3
-        version: 0.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        specifier: ^0.1.5
+        version: 0.1.5(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@english-learning/nest-api-docs':
-        specifier: ^0.1.0
-        version: 0.1.0(@nestjs/core@11.1.18)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        specifier: ^0.1.5
+        version: 0.1.5(@nestjs/core@11.1.18)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@english-learning/nest-error-handler':
-        specifier: ^0.1.1
-        version: 0.1.1(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        specifier: ^0.1.5
+        version: 0.1.5(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/common':
         specifier: ^11.1.18
         version: 11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -390,17 +390,17 @@ packages:
   '@emnapi/wasi-threads@1.1.0':
     resolution: {integrity: sha512-WI0DdZ8xFSbgMjR1sFsKABJ/C5OnRrjT06JXbZKexJGrDuPTzZdDYfFlsgcCXCyf+suG5QU2e/y1Wo2V/OapLQ==}
 
-  '@english-learning/api-error-types@0.1.0':
-    resolution: {integrity: sha512-rV3WpT4nx8qYDJ2IEIgYZyiIMLEdy7LwltuQh3ItYBClirYWkyfhhWaE/K+a6cS9eOBv2G3lyc7hnITn7LgUzw==}
+  '@english-learning/api-error-types@0.1.5':
+    resolution: {integrity: sha512-U/ud48Hl7rhYQwD3RXrhwd4woX5XrlPZI9fKL35GZUgPyMMHG9xue/u3/so3nBd4Ylg4w2lx6V31kHfO4xJANA==}
 
-  '@english-learning/logger@0.1.3':
-    resolution: {integrity: sha512-22Nb2ClniXhbdf6HrATdR+y4bZFkOr3pO4+J2UG8bWPYNDhK01FSFTdpEnlqJc+veaCAB3TCu7kvtZMrjegyEA==}
+  '@english-learning/logger@0.1.5':
+    resolution: {integrity: sha512-bRqotqjNF2RRKJqdC94DEhUCrG6uciOgW5KuSN1NXyeY98XSeXiaC0oK3HVAHC+LYvKZK6HCroHSPK7JjaT4Hg==}
 
-  '@english-learning/nest-api-docs@0.1.0':
-    resolution: {integrity: sha512-26WJj2namd6du2T4tod2SplxfZ9U5um8i9FT+BKqVFJjLtSQ0KV2UTYVNFBAJDuC+xgIFAvzAzYaEDy9mWEQfQ==}
+  '@english-learning/nest-api-docs@0.1.5':
+    resolution: {integrity: sha512-xg2RLFVi8X7FOURUzvyzdPE3bj5wVXdkSVPMpOcDzJeOYu3hxQhXjS5QoJvdApE1/YqOHYC5T1alrkEJhgnMAg==}
 
-  '@english-learning/nest-error-handler@0.1.1':
-    resolution: {integrity: sha512-oUfYErBJBYTys98ftAQDhHViJNi79lAA/QFe5w9qp2UkKAPNcDmiOqhcoVZawyOYaFlSJ9gSpom5QQ1LOL4EuQ==}
+  '@english-learning/nest-error-handler@0.1.5':
+    resolution: {integrity: sha512-W17Giu2Y1Yd/xqocporbaW7nUUn8MGMVRnmZUyv8NUDf7stjXFH7T2igDjtE7zIktT8NZ0eJZkwLrDFZG6oltw==}
 
   '@eslint-community/eslint-utils@4.9.1':
     resolution: {integrity: sha512-phrYmNiYppR7znFEdqgfWHXR6NCkZEK7hwWDHZUjit/2/U0r6XvkDl0SYnoM51Hq7FhCGdLDT6zxCCOY1hexsQ==}
@@ -4102,9 +4102,9 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
-  '@english-learning/api-error-types@0.1.0': {}
+  '@english-learning/api-error-types@0.1.5': {}
 
-  '@english-learning/logger@0.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@english-learning/logger@0.1.5(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       chalk: 5.6.2
@@ -4119,9 +4119,9 @@ snapshots:
       - rxjs
       - supports-color
 
-  '@english-learning/nest-api-docs@0.1.0(@nestjs/core@11.1.18)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@english-learning/nest-api-docs@0.1.5(@nestjs/core@11.1.18)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
-      '@english-learning/api-error-types': 0.1.0
+      '@english-learning/api-error-types': 0.1.5
       '@nestjs/common': 11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/swagger': 11.2.6(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@scalar/nestjs-api-reference': 1.1.6
@@ -4134,10 +4134,10 @@ snapshots:
       - rxjs
       - supports-color
 
-  '@english-learning/nest-error-handler@0.1.1(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@english-learning/nest-error-handler@0.1.5(class-transformer@0.5.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
-      '@english-learning/api-error-types': 0.1.0
-      '@english-learning/logger': 0.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@english-learning/api-error-types': 0.1.5
+      '@english-learning/logger': 0.1.5(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/common': 11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       class-validator: 0.15.1
     transitivePeerDependencies:
