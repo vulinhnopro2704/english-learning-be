@@ -1,6 +1,6 @@
 {
   "name": "@english-learning/api-error-types",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared API error response types for English Learning platform",
   "license": "MIT",
   "main": "dist/index.js",

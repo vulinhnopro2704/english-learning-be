@@ -1,6 +1,6 @@
 {
   "name": "@english-learning/logger",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Shared logger and HTTP request/response middleware for English Learning platform services",
   "license": "MIT",
   "main": "dist/index.js",
