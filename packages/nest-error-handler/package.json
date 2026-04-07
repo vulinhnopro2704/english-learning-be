@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@english-learning/api-error-types": "^0.1.0",
-    "@english-learning/logger": "^0.1.0",
+    "@english-learning/logger": "^0.1.2",
     "@nestjs/common": "^11.0.1",
     "class-validator": "^0.15.1"
   },

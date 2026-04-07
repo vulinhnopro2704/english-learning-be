@@ -16,16 +16,16 @@
     "prepare": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@nestjs/common": "^11.0.1",
+    "@nestjs/common": "^11.1.18",
     "chalk": "^5.6.2",
-    "dayjs": "^1.11.19",
-    "uuid": "^11.1.0",
+    "dayjs": "^1.11.20",
+    "uuid": "^13.0.0",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.0",
-    "@types/node": "^22.10.7",
-    "typescript": "^5.7.3"
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.2",
+    "typescript": "^6.0.2"
   }
 }
