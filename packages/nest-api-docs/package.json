@@ -17,12 +17,12 @@
   },
   "dependencies": {
     "@english-learning/api-error-types": "^0.1.0",
-    "@nestjs/common": "^11.0.1",
+    "@nestjs/common": "^11.1.18",
     "@nestjs/swagger": "^11.2.6",
-    "@scalar/nestjs-api-reference": "^1.1.0"
+    "@scalar/nestjs-api-reference": "^1.1.6"
   },
   "devDependencies": {
-    "@types/node": "^22.10.7",
-    "typescript": "^5.7.3"
+    "@types/node": "^25.5.2",
+    "typescript": "^6.0.2"
   }
 }
