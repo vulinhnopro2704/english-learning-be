@@ -35,13 +35,27 @@ export class FSRSReviewItemDto {
   @ApiProperty({
     example: 'FLASHCARD',
     description:
-      'Exercise type: FLASHCARD, MULTI_CHOICE, LISTEN_FILL, DICTATION',
+      'Exercise type: FLASHCARD, MULTI_CHOICE, LISTEN_FILL, DICTATION, FLIP, MULTIPLE_CHOICE, FILL_BLANK, MEANING_LOOKUP, SPEED_CHALLENGE, WORD_PUZZLE, MATCHING_PAIRS, STREAK_CHALLENGE, PRONUNCIATION',
   })
   @IsString()
   @Transform(({ value }) =>
-    typeof value === 'string' ? value.toUpperCase() : value,
+    typeof value === 'string' ? value.toUpperCase().replace(/-/g, '_') : value,
   )
-  @IsIn(['FLASHCARD', 'MULTI_CHOICE', 'LISTEN_FILL', 'DICTATION'])
+  @IsIn([
+    'FLASHCARD',
+    'MULTI_CHOICE',
+    'LISTEN_FILL',
+    'DICTATION',
+    'FLIP',
+    'MULTIPLE_CHOICE',
+    'FILL_BLANK',
+    'MEANING_LOOKUP',
+    'SPEED_CHALLENGE',
+    'WORD_PUZZLE',
+    'MATCHING_PAIRS',
+    'STREAK_CHALLENGE',
+    'PRONUNCIATION',
+  ])
   exerciseType!: string;
 
   @ApiPropertyOptional({
@@ -52,14 +66,6 @@ export class FSRSReviewItemDto {
   @IsInt()
   @Min(1)
   attempts?: number = 1;
-
-  @ApiPropertyOptional({
-    example: true,
-    description: 'Was the word ever answered incorrectly?',
-  })
-  @IsOptional()
-  @IsBoolean()
-  hadWrong?: boolean = false;
 }
 
 // ─── Submit FSRS Practice ────────────────────────────────────────────────────

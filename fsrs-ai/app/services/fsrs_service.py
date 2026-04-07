@@ -19,9 +19,18 @@ from app.models import CardMemoryState, FSRSConfig, ReviewLog
 # Adjustable per exercise type
 GRADE_THRESHOLDS: dict[str, dict[str, int]] = {
     "FLASHCARD": {"easy_max_ms": 3000, "hard_min_ms": 10000},
+    "FLIP": {"easy_max_ms": 3000, "hard_min_ms": 10000},
     "MULTI_CHOICE": {"easy_max_ms": 3000, "hard_min_ms": 8000},
+    "MULTIPLE_CHOICE": {"easy_max_ms": 3000, "hard_min_ms": 8000},
     "LISTEN_FILL": {"easy_max_ms": 5000, "hard_min_ms": 15000},
     "DICTATION": {"easy_max_ms": 8000, "hard_min_ms": 20000},
+    "FILL_BLANK": {"easy_max_ms": 5000, "hard_min_ms": 15000},
+    "MEANING_LOOKUP": {"easy_max_ms": 4000, "hard_min_ms": 12000},
+    "SPEED_CHALLENGE": {"easy_max_ms": 2000, "hard_min_ms": 6000},
+    "WORD_PUZZLE": {"easy_max_ms": 5000, "hard_min_ms": 15000},
+    "MATCHING_PAIRS": {"easy_max_ms": 6000, "hard_min_ms": 18000},
+    "STREAK_CHALLENGE": {"easy_max_ms": 2000, "hard_min_ms": 5000},
+    "PRONUNCIATION": {"easy_max_ms": 5000, "hard_min_ms": 15000},
 }
 
 DEFAULT_THRESHOLD = {"easy_max_ms": 3000, "hard_min_ms": 10000}
@@ -36,16 +45,25 @@ def normalize_exercise_type(exercise_type: str | None) -> str:
     return normalized
 
 
-def auto_grade(is_correct: bool, duration_ms: int, exercise_type: str) -> Rating:
+def auto_grade(
+    is_correct: bool,
+    duration_ms: int,
+    exercise_type: str,
+    attempts: int = 1,
+) -> Rating:
     """Convert exercise result into FSRS Rating (1-4).
 
-    - Incorrect -> Again (1)
+    - Incorrect or attempts > 2 -> Again (1)
+    - attempts == 2 -> Hard (2)
     - Correct + slow -> Hard (2)
     - Correct + normal -> Good (3)
     - Correct + fast -> Easy (4)
     """
-    if not is_correct:
+    if not is_correct or attempts > 2:
         return Rating.Again
+        
+    if attempts == 2:
+        return Rating.Hard
 
     if duration_ms <= 0:
         raise ValueError("duration_ms must be greater than 0")
@@ -159,7 +177,6 @@ async def review_card(
     duration_ms: int,
     exercise_type: str,
     attempts: int = 1,
-    had_wrong: bool = False,
     autocommit: bool = True,
 ) -> tuple[CardMemoryState, int]:
     """Process a single review and return updated state + grade used."""
@@ -185,7 +202,12 @@ async def review_card(
     card = _card_from_db(card_state)
 
     # 4. Auto-grade
-    grade = auto_grade(is_correct, duration_ms, normalized_exercise_type)
+    grade = auto_grade(
+        is_correct,
+        duration_ms,
+        normalized_exercise_type,
+        attempts,
+    )
 
     # 5. Capture state BEFORE review for logging
     old_state = card.state.value if hasattr(card.state, "value") else int(card.state)
@@ -234,7 +256,6 @@ async def review_card(
         review_log.to_json(),
         {
             "attempts": attempts,
-            "hadWrong": had_wrong,
             "exerciseType": normalized_exercise_type,
             "durationMsValid": duration_ms > 0,
         },
@@ -283,7 +304,6 @@ async def bulk_review(
             duration_ms=item["duration_ms"],
             exercise_type=exercise_type or "FLASHCARD",
             attempts=item.get("attempts", 1),
-            had_wrong=item.get("had_wrong", False),
             autocommit=False,
         )
         results.append((card_state, grade))

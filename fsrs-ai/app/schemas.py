@@ -22,9 +22,18 @@ class CamelModel(BaseModel):
 
 class ExerciseType(str, Enum):
     FLASHCARD = "FLASHCARD"
+    FLIP = "FLIP"
     MULTI_CHOICE = "MULTI_CHOICE"
+    MULTIPLE_CHOICE = "MULTIPLE_CHOICE"
     LISTEN_FILL = "LISTEN_FILL"
     DICTATION = "DICTATION"
+    FILL_BLANK = "FILL_BLANK"
+    MEANING_LOOKUP = "MEANING_LOOKUP"
+    SPEED_CHALLENGE = "SPEED_CHALLENGE"
+    WORD_PUZZLE = "WORD_PUZZLE"
+    MATCHING_PAIRS = "MATCHING_PAIRS"
+    STREAK_CHALLENGE = "STREAK_CHALLENGE"
+    PRONUNCIATION = "PRONUNCIATION"
 
 
 # ─── Request Schemas ──────────────────────────────────────────────────────────
@@ -39,7 +48,6 @@ class ReviewRequest(CamelModel):
     duration_ms: int = Field(gt=0)
     exercise_type: ExerciseType = ExerciseType.FLASHCARD
     attempts: int = Field(ge=1, default=1)
-    had_wrong: bool = False
 
     @field_validator("exercise_type", mode="before")
     @classmethod
@@ -47,7 +55,7 @@ class ReviewRequest(CamelModel):
         if isinstance(value, ExerciseType):
             return value
         if isinstance(value, str):
-            return value.upper()
+            return value.upper().replace("-", "_")
         return value
 
 
@@ -59,7 +67,6 @@ class ReviewItem(CamelModel):
     duration_ms: int = Field(gt=0)
     exercise_type: ExerciseType = ExerciseType.FLASHCARD
     attempts: int = Field(ge=1, default=1)
-    had_wrong: bool = False
 
     @field_validator("exercise_type", mode="before")
     @classmethod
@@ -67,7 +74,7 @@ class ReviewItem(CamelModel):
         if isinstance(value, ExerciseType):
             return value
         if isinstance(value, str):
-            return value.upper()
+            return value.upper().replace("-", "_")
         return value
 
 
