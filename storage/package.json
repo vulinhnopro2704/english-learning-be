@@ -23,10 +23,10 @@
     "prisma:migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
-    "@english-learning/api-error-types": "^0.1.1",
-    "@english-learning/logger": "^0.1.3",
-    "@english-learning/nest-api-docs": "^0.1.1",
-    "@english-learning/nest-error-handler": "^0.1.2",
+    "@english-learning/api-error-types": "^0.1.5",
+    "@english-learning/logger": "^0.1.5",
+    "@english-learning/nest-api-docs": "^0.1.5",
+    "@english-learning/nest-error-handler": "^0.1.5",
     "@nestjs/common": "^11.1.18",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.18",

@@ -10,10 +10,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
-import type {
-  ApiErrorResponse,
-  ApiFieldError,
-} from '@english-learning/api-error-types';
+import type { ApiErrorResponse, ApiFieldError } from '@english-learning/api-error-types';
 
 export interface ApiDocsTag {
   name: string;
@@ -160,14 +157,12 @@ export function createApiDocsConfig(options: ApiDocsOptions) {
 }
 
 export function setupApiDocs(app: NestAppLike, options: ApiDocsOptions): void {
-  const enabled =
-    options.enabled ?? (process.env.SWAGGER_ENABLED ?? 'true') === 'true';
+  const enabled = options.enabled ?? (process.env.SWAGGER_ENABLED ?? 'true') === 'true';
   if (!enabled) {
     return;
   }
 
-  const swaggerPath =
-    options.swaggerPath ?? process.env.SWAGGER_PATH ?? DEFAULT_SWAGGER_PATH;
+  const swaggerPath = options.swaggerPath ?? process.env.SWAGGER_PATH ?? DEFAULT_SWAGGER_PATH;
   const scalarTheme = options.scalarTheme ?? DEFAULT_SCALAR_THEME;
   const config = createApiDocsConfig(options);
   const document = SwaggerModule.createDocument(app as never, config, {
@@ -179,14 +174,12 @@ export function setupApiDocs(app: NestAppLike, options: ApiDocsOptions): void {
     `/${swaggerPath}`,
     apiReference({
       content: document,
-      theme: scalarTheme,
+      theme: scalarTheme as any,
     }),
   );
 }
 
-export function ApiStandardErrorResponses(
-  options: ApiStandardErrorResponsesOptions = {},
-) {
+export function ApiStandardErrorResponses(options: ApiStandardErrorResponsesOptions = {}) {
   const statuses = options.statuses ?? [400, 401, 403, 404, 409, 422, 500];
 
   return applyDecorators(
@@ -234,9 +227,7 @@ export function ApiMessageResponse(description: string) {
   );
 }
 
-export function ApiCursorPaginatedResponse(
-  options: ApiCursorPaginatedResponseOptions,
-) {
+export function ApiCursorPaginatedResponse(options: ApiCursorPaginatedResponseOptions) {
   return applyDecorators(
     ApiExtraModels(options.itemType, CursorPaginationMetaDto),
     ApiOkResponse({
@@ -252,20 +243,12 @@ export function ApiCursorPaginatedResponse(
             type: 'object',
             properties: {
               nextCursor: {
-                anyOf: [
-                  { type: 'string' },
-                  { type: 'number' },
-                  { type: 'null' },
-                ],
+                anyOf: [{ type: 'string' }, { type: 'number' }, { type: 'null' }],
                 example: 'cursor_123',
               },
               hasMore: { type: 'boolean', example: true },
-              ...(options.includeTotal
-                ? { total: { type: 'number', example: 42 } }
-                : {}),
-              ...(options.includeLimit
-                ? { limit: { type: 'number', example: 20 } }
-                : {}),
+              ...(options.includeTotal ? { total: { type: 'number', example: 42 } } : {}),
+              ...(options.includeLimit ? { limit: { type: 'number', example: 20 } } : {}),
             },
             required: [
               'nextCursor',
