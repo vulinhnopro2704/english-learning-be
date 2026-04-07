@@ -325,6 +325,7 @@ async def get_risk_cards(db: AsyncSession, user_id: UUID, take: int = 20) -> dic
                 "wordId": card.word_id,
                 "riskScore": risk_score,
                 "retrievability": round(retrievability, 4),
+                "stability": round(float(card.stability or 0.0), 2),
                 "daysOverdue": days_overdue,
             }
         )
