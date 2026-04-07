@@ -11,6 +11,7 @@ import {
   SubmitFSRSPracticeDto,
   PracticeHistoryFilterDto,
   FSRSDueFilterDto,
+  FSRSRiskFilterDto,
 } from './dtos/practice.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -63,5 +64,20 @@ export class PracticeController {
     @Query() filter: FSRSDueFilterDto,
   ) {
     return this.practiceService.getDueWords(userId, filter);
+  }
+
+  @Get('fsrs/risk')
+  @ApiOperation({
+    summary: 'Get high risk cards for review priority',
+    description:
+      'Proxy FSRS-AI /fsrs/cards/risk to fetch high risk cards, then hydrate with word details.',
+  })
+  @ApiResponse({ status: 200, description: 'List of words with high risk to forget' })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500, 502, 503] })
+  getRiskCards(
+    @CurrentUser('id') userId: string,
+    @Query() filter: FSRSRiskFilterDto,
+  ) {
+    return this.practiceService.getRiskCards(userId, filter);
   }
 }

@@ -335,6 +335,6 @@ async def get_risk_cards(db: AsyncSession, user_id: UUID, take: int = 20) -> dic
     return {
         "metrics": {"items": top_items},
         "narrative": [
-            "Danh sach gom cac the co rui ro quen cao nhat de uu tien on tap.",
+            "Danh sách gồm các thẻ có rủi ro quên cao nhất để ưu tiên ôn tập.",
         ],
     }

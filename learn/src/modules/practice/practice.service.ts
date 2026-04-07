@@ -7,6 +7,7 @@ import {
   SubmitFSRSPracticeDto,
   PracticeHistoryFilterDto,
   FSRSDueFilterDto,
+  FSRSRiskFilterDto,
 } from './dtos/practice.dto';
 import type { Prisma } from '../../generated/prisma/client';
 
@@ -120,7 +121,6 @@ export class PracticeService {
         durationMs: item.durationMs,
         exerciseType: item.exerciseType.toUpperCase(),
         attempts: item.attempts ?? 1,
-        hadWrong: item.hadWrong ?? false,
       })),
     };
 
@@ -248,5 +248,78 @@ export class PracticeService {
       hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
 
     return { data, pagination: { nextCursor, hasMore, total } };
+  }
+
+  // ═══ FSRS RISK CARDS ══════════════════════════════════════════════════════
+  
+  async getRiskCards(userId: string, filter: FSRSRiskFilterDto) {
+    const riskUrl = new URL(`${this.fsrsBaseUrl}/api/v1/fsrs/cards/risk`);
+    riskUrl.searchParams.set('user_id', userId);
+    if (typeof filter.take === 'number') {
+      riskUrl.searchParams.set('take', String(filter.take));
+    }
+
+    let riskPayload: any;
+    try {
+      const response = await fetch(riskUrl.toString(), { method: 'GET' });
+
+      if (!response.ok) {
+        throw new ApiException({
+          statusCode: HttpStatus.BAD_GATEWAY,
+          errorCode: 'FSRS_UPSTREAM_ERROR',
+          message: 'FSRS-AI service returned an error',
+        });
+      }
+
+      riskPayload = await response.json();
+    } catch (error) {
+      if (error instanceof ApiException) throw error;
+      throw new ApiException({
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        errorCode: 'FSRS_SERVICE_UNAVAILABLE',
+        message: 'Failed to connect to FSRS-AI service',
+      });
+    }
+
+    const items = riskPayload?.metrics?.items ?? [];
+    if (!items || items.length === 0) {
+      return riskPayload;
+    }
+
+    const wordIds: number[] = items
+      .map((i: any) => Number(i.wordId))
+      .filter((value: number) => Number.isInteger(value) && value > 0);
+
+    let words: Record<string, any>[] = [];
+    if (wordIds.length > 0) {
+      words = await this.prisma.word.findMany({
+        where: { id: { in: wordIds } },
+        select: {
+          id: true,
+          word: true,
+          pronunciation: true,
+          meaning: true,
+          example: true,
+          exampleVi: true,
+          image: true,
+          audio: true,
+          pos: true,
+          cefr: true,
+        },
+      });
+    }
+
+    const byId = new Map(words.map((w) => [w.id, w]));
+
+    return {
+      ...riskPayload,
+      metrics: {
+        ...riskPayload.metrics,
+        items: items.map((item: any) => ({
+          ...item,
+          word: byId.get(item.wordId) ?? null,
+        })),
+      },
+    };
   }
 }

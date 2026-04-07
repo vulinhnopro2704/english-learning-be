@@ -53,7 +53,7 @@ async def get_due_cards(
         "Nhan ket qua on tap 1 the va cap nhat trang thai FSRS.\n\n"
         "- Bat buoc `durationMs > 0`.\n"
         "- Auto-grade tu `isCorrect + durationMs + exerciseType`.\n"
-        "- Luu log train voi metadata `attempts`, `hadWrong`."
+        "- Luu log train voi metadata `attempts`."
     ),
 )
 async def review_card(

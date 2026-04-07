@@ -137,3 +137,19 @@ export class FSRSDueFilterDto {
   @Max(200)
   take?: number;
 }
+
+// ─── FSRS Risk Filter ───────────────────────────────────────────────────────
+
+export class FSRSRiskFilterDto {
+  @ApiPropertyOptional({ example: 20, minimum: 1, maximum: 100, default: 20 })
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === undefined || value === null || value === ''
+      ? 20
+      : parseInt(value as string, 10),
+  )
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  take?: number = 20;
+}

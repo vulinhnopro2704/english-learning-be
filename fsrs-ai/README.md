@@ -67,8 +67,7 @@ Request:
   "isCorrect": true,
   "durationMs": 4200,
   "exerciseType": "DICTATION",
-  "attempts": 2,
-  "hadWrong": true
+  "attempts": 2
 }
 ```
 
@@ -85,8 +84,7 @@ Request:
       "isCorrect": true,
       "durationMs": 4200,
       "exerciseType": "FLASHCARD",
-      "attempts": 1,
-      "hadWrong": false
+      "attempts": 1
     }
   ]
 }
