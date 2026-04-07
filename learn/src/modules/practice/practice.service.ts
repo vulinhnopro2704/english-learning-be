@@ -117,8 +117,10 @@ export class PracticeService {
       items: dto.items.map((item) => ({
         wordId: item.wordId,
         isCorrect: item.isCorrect,
-        durationMs: item.durationMs ?? 0,
-        exerciseType: item.exerciseType ?? 'flashcard',
+        durationMs: item.durationMs,
+        exerciseType: item.exerciseType.toUpperCase(),
+        attempts: item.attempts ?? 1,
+        hadWrong: item.hadWrong ?? false,
       })),
     };
 

@@ -288,6 +288,13 @@ jobs:
             LEARN_DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
             STORAGE_DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
             FSRS_AI_DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
+            FSRS_AI_ROOT_PATH=${{ secrets.FSRS_AI_ROOT_PATH || '/fsrs-ai' }}
+            FSRS_TRAIN_MIN_VALID_LOGS=${{ secrets.FSRS_TRAIN_MIN_VALID_LOGS || '50' }}
+            FSRS_TRAIN_MIN_DAYS_SINCE_LAST=${{ secrets.FSRS_TRAIN_MIN_DAYS_SINCE_LAST || '3' }}
+            FSRS_TRAIN_MIN_IMPROVEMENT_PCT=${{ secrets.FSRS_TRAIN_MIN_IMPROVEMENT_PCT || '0.02' }}
+            FSRS_TRAIN_METRIC=${{ secrets.FSRS_TRAIN_METRIC || 'log_loss' }}
+            FSRS_RESCHEDULE_MAX_SHIFT_RATIO=${{ secrets.FSRS_RESCHEDULE_MAX_SHIFT_RATIO || '0.3' }}
+            FSRS_ASYNC_RESCHEDULE_ENABLED=${{ secrets.FSRS_ASYNC_RESCHEDULE_ENABLED || 'true' }}
             AUTH_UPSTREAM_URL=http://auth:${{ secrets.AUTH_PORT }}
             LEARN_UPSTREAM_URL=http://learn:${{ secrets.LEARN_PORT }}
             STORAGE_UPSTREAM_URL=http://storage:${{ secrets.STORAGE_PORT || '3003' }}
@@ -352,6 +359,20 @@ jobs:
             ALLOWED_MIME_TYPES=${{ secrets.ALLOWED_MIME_TYPES || 'image/png,image/jpeg,image/webp,video/mp4,application/pdf' }}
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
             PORT=${{ secrets.STORAGE_PORT || '3003' }}
+            ENVEOF
+
+            # ── Create fsrs-ai/.env (for ops debugging parity) ──
+            mkdir -p fsrs-ai
+            cat > fsrs-ai/.env << ENVEOF
+            DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
+            PORT=${{ secrets.FSRS_AI_PORT || '3004' }}
+            ROOT_PATH=${{ secrets.FSRS_AI_ROOT_PATH || '/fsrs-ai' }}
+            FSRS_TRAIN_MIN_VALID_LOGS=${{ secrets.FSRS_TRAIN_MIN_VALID_LOGS || '50' }}
+            FSRS_TRAIN_MIN_DAYS_SINCE_LAST=${{ secrets.FSRS_TRAIN_MIN_DAYS_SINCE_LAST || '3' }}
+            FSRS_TRAIN_MIN_IMPROVEMENT_PCT=${{ secrets.FSRS_TRAIN_MIN_IMPROVEMENT_PCT || '0.02' }}
+            FSRS_TRAIN_METRIC=${{ secrets.FSRS_TRAIN_METRIC || 'log_loss' }}
+            FSRS_RESCHEDULE_MAX_SHIFT_RATIO=${{ secrets.FSRS_RESCHEDULE_MAX_SHIFT_RATIO || '0.3' }}
+            FSRS_ASYNC_RESCHEDULE_ENABLED=${{ secrets.FSRS_ASYNC_RESCHEDULE_ENABLED || 'true' }}
             ENVEOF
 
             # ── Pull images & deploy (partial success tolerant) ──

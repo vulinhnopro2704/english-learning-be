@@ -1,0 +1,86 @@
+# English Learning BE - Working Memory
+
+## 1) Quick map
+- Monorepo services: `auth/`, `learn/`, `storage/`, `gateway/`, `fsrs-ai/`.
+- Public entry: `gateway` (routes `/fsrs-ai/*` to FSRS-AI upstream).
+- FSRS integration lives mainly in `learn` + `fsrs-ai`.
+
+## 2) FSRS-AI quick context (high priority)
+- Service dir: `fsrs-ai/` (FastAPI + SQLAlchemy + `fsrs[optimizer]`).
+- App entry: `fsrs-ai/app/main.py`.
+- Routers:
+  - `fsrs-ai/app/routers/review.py`
+  - `fsrs-ai/app/routers/optimize.py`
+  - `fsrs-ai/app/routers/helper.py`
+- Core logic:
+  - Scheduler/review flow: `fsrs-ai/app/services/fsrs_service.py`
+  - Optimizer/reschedule flow: `fsrs-ai/app/services/optimizer_service.py`
+- DB models: `fsrs-ai/app/models.py` (schema `fsrs`):
+  - `card_memory_state`
+  - `review_log`
+  - `fsrs_config`
+
+## 3) Current API surface (implemented)
+- `GET /api/v1/fsrs/due?user_id=<uuid>&limit=<1..200>`
+- `POST /api/v1/fsrs/review`
+- `POST /api/v1/fsrs/review/bulk`
+- `POST /api/v1/fsrs/init-cards?user_id=<uuid>&word_ids=1&word_ids=2`
+- `GET /api/v1/fsrs/stats?user_id=<uuid>`
+- `POST /api/v1/fsrs/optimize`
+- `POST /api/v1/fsrs/optimize/rollback`
+- `POST /api/v1/fsrs/helper/reschedule`
+- `GET /api/v1/fsrs/insights`
+- `GET /api/v1/fsrs/report/daily`
+- `GET /api/v1/fsrs/recommendations`
+- `GET /api/v1/fsrs/cards/risk`
+- Health: `GET /health`
+- Docs (inside service): `/api-docs`
+- Docs via gateway (default): `/fsrs-ai/api-docs`
+- Gateway forwards `x-user-id` after JWT validation. FSRS query endpoints can resolve user from header, so FE can omit `user_id`.
+
+## 4) Learn service integration points
+- Due words proxy + hydrate word data:
+  - `learn/src/modules/practice/practice.service.ts` -> `getDueWords()`
+- Submit FSRS practice:
+  - `learn/src/modules/practice/practice.service.ts` -> `submitFSRS()`
+  - Calls `POST /api/v1/fsrs/review/bulk`
+- Init cards when completing lesson:
+  - `learn/src/modules/lessons/lessons.service.ts` -> `completeLesson()`
+  - Calls `POST /api/v1/fsrs/init-cards`
+
+## 5) Important docs to read first next time
+- FSRS service guide (API + env + runbook): `fsrs-ai/README.md`
+- Main plan (authoritative): `fsrs-ai/PLAN.md`
+- Feature spec (implementation detail): `fsrs-ai/SPEC_FSRS_V6_OPTIMIZATION.md`
+- Dashboard integration plan: `learn/docs/dashboard-fsrs/PLAN.md`
+- Dashboard integration spec: `learn/docs/dashboard-fsrs/SPEC.md`
+- FE reference code snippet pack: `learn/docs/dashboard-fsrs/fe-reference/INTEGRATION_CODE.md`
+- Legacy design ideas: `fsrs-ai/Idea.md`
+- Math notes/background: `fsrs-ai/MathTheory.md`
+- Library notes (`fsrs`, optimizer): `fsrs-ai/Library.md`
+- Deployment wiring: `docker-compose.yml`
+- Learn service contract notes: `learn/README.md`
+
+## 6) Run/debug checklist
+- FSRS deps: `fsrs-ai/requirements.txt`
+- Ensure env:
+  - `FSRS_AI_URL` in `learn`
+  - `FSRS_AI_UPSTREAM_URL` in `gateway`
+  - `FSRS_AI_DATABASE_URL` in compose for container
+- Root path in compose: `ROOT_PATH=/fsrs-ai` (important for proxied docs/routes).
+- If touching API schema/fields, verify both:
+  - FSRS Pydantic models in `fsrs-ai/app/schemas.py`
+  - Learn payload mapping in `learn/src/modules/practice/practice.service.ts`
+
+## 7) Known caveats
+- `fsrs-ai/.env` currently contains DB URL; avoid leaking real secrets in commits/logs.
+- Bulk review currently loops item-by-item and commits per item via `review_card()`.
+- Optimizer requires enough logs (`>= 10`) and valid `log_data` JSON from py-fsrs.
+- New optimizer policy defaults now env-driven (`min logs`, `cooldown days`, `improvement threshold`).
+
+## 8) Default workflow for future FSRS work
+1. Read `fsrs-ai/PLAN.md`.
+2. Read `fsrs-ai/SPEC_FSRS_V6_OPTIMIZATION.md` for API and policy contract.
+3. Check contract impact in `learn/src/modules/practice/practice.service.ts`.
+4. Run/verify endpoint behavior via `/fsrs-ai/api-docs`.
+5. Validate migrations/data shape if model fields changed.

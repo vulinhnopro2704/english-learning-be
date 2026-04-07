@@ -12,7 +12,7 @@ from sqlalchemy import text
 from app.database import engine
 from app.config import settings
 from app.models import Base
-from app.routers import helper, optimize, review
+from app.routers import helper, optimize, report, review
 
 
 @asynccontextmanager
@@ -55,6 +55,7 @@ app.add_middleware(
 app.include_router(review.router)
 app.include_router(optimize.router)
 app.include_router(helper.router)
+app.include_router(report.router)
 
 
 @app.get("/health", tags=["Health"])

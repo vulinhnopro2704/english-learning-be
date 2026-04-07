@@ -1,13 +1,14 @@
 """Core FSRS scheduling service.
 
 Uses py-fsrs library for spaced repetition calculations.
-Auto-grades based on is_correct + duration_ms + exercise_type (MochiMochi-style).
+Auto-grades based on is_correct + duration_ms + exercise_type.
 """
 
+import json
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fsrs import Card, Rating, ReviewLog as FSRSReviewLog, Scheduler
+from fsrs import Card, Rating, Scheduler
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,25 +27,36 @@ GRADE_THRESHOLDS: dict[str, dict[str, int]] = {
 DEFAULT_THRESHOLD = {"easy_max_ms": 3000, "hard_min_ms": 10000}
 
 
+def normalize_exercise_type(exercise_type: str | None) -> str:
+    if not exercise_type:
+        return "FLASHCARD"
+    normalized = str(exercise_type).upper()
+    if normalized not in GRADE_THRESHOLDS:
+        return "FLASHCARD"
+    return normalized
+
+
 def auto_grade(is_correct: bool, duration_ms: int, exercise_type: str) -> Rating:
     """Convert exercise result into FSRS Rating (1-4).
 
-    - Incorrect → Again (1)
-    - Correct + slow → Hard (2)
-    - Correct + normal → Good (3)
-    - Correct + fast → Easy (4)
+    - Incorrect -> Again (1)
+    - Correct + slow -> Hard (2)
+    - Correct + normal -> Good (3)
+    - Correct + fast -> Easy (4)
     """
     if not is_correct:
         return Rating.Again
 
-    thresholds = GRADE_THRESHOLDS.get(exercise_type, DEFAULT_THRESHOLD)
+    if duration_ms <= 0:
+        raise ValueError("duration_ms must be greater than 0")
+
+    thresholds = GRADE_THRESHOLDS.get(normalize_exercise_type(exercise_type), DEFAULT_THRESHOLD)
 
     if duration_ms <= thresholds["easy_max_ms"]:
         return Rating.Easy
-    elif duration_ms >= thresholds["hard_min_ms"]:
+    if duration_ms >= thresholds["hard_min_ms"]:
         return Rating.Hard
-    else:
-        return Rating.Good
+    return Rating.Good
 
 
 def _build_scheduler(config: FSRSConfig | None) -> Scheduler:
@@ -97,6 +109,16 @@ def _extract_card_fields(
     }
 
 
+def _safe_review_log_payload(review_log_json: str, event: dict) -> dict:
+    try:
+        payload = json.loads(review_log_json)
+    except (ValueError, TypeError):
+        payload = {"raw": review_log_json}
+
+    payload["event"] = event
+    return payload
+
+
 # ─── Service Functions ────────────────────────────────────────────────────────
 
 
@@ -136,8 +158,16 @@ async def review_card(
     is_correct: bool,
     duration_ms: int,
     exercise_type: str,
+    attempts: int = 1,
+    had_wrong: bool = False,
+    autocommit: bool = True,
 ) -> tuple[CardMemoryState, int]:
     """Process a single review and return updated state + grade used."""
+    if duration_ms <= 0:
+        raise ValueError("duration_ms must be greater than 0")
+
+    normalized_exercise_type = normalize_exercise_type(exercise_type)
+
     # 1. Load config & build scheduler
     config = await get_user_config(db, user_id)
     scheduler = _build_scheduler(config)
@@ -155,7 +185,7 @@ async def review_card(
     card = _card_from_db(card_state)
 
     # 4. Auto-grade
-    grade = auto_grade(is_correct, duration_ms, exercise_type)
+    grade = auto_grade(is_correct, duration_ms, normalized_exercise_type)
 
     # 5. Capture state BEFORE review for logging
     old_state = card.state.value if hasattr(card.state, "value") else int(card.state)
@@ -165,7 +195,13 @@ async def review_card(
     old_scheduled_days = card.scheduled_days if hasattr(card, "scheduled_days") else 0
 
     # 6. Run FSRS scheduling
-    new_card, review_log = scheduler.review_card(card, grade)
+    review_datetime = datetime.now(timezone.utc)
+    new_card, review_log = scheduler.review_card(
+        card,
+        grade,
+        review_datetime=review_datetime,
+        review_duration=duration_ms,
+    )
 
     # 7. Calculate retrievability
     retrievability = scheduler.get_card_retrievability(new_card)
@@ -193,7 +229,17 @@ async def review_card(
         )
         db.add(card_state)
 
-    # 9. Save review log
+    # 9. Save review log with normalized event metadata
+    review_payload = _safe_review_log_payload(
+        review_log.to_json(),
+        {
+            "attempts": attempts,
+            "hadWrong": had_wrong,
+            "exerciseType": normalized_exercise_type,
+            "durationMsValid": duration_ms > 0,
+        },
+    )
+
     log_entry = ReviewLog(
         user_id=user_id,
         word_id=word_id,
@@ -204,13 +250,14 @@ async def review_card(
         stability=old_stability,
         elapsed_days=old_elapsed_days,
         scheduled_days=old_scheduled_days,
-        reviewed_at=datetime.now(timezone.utc),
-        log_data=review_log.to_json(),
+        reviewed_at=review_datetime,
+        log_data=review_payload,
     )
     db.add(log_entry)
 
-    await db.commit()
-    await db.refresh(card_state)
+    if autocommit:
+        await db.commit()
+        await db.refresh(card_state)
 
     grade_value = grade.value if hasattr(grade, "value") else int(grade)
     return card_state, grade_value
@@ -224,15 +271,27 @@ async def bulk_review(
     """Process multiple reviews in a single request."""
     results = []
     for item in items:
+        exercise_type = item.get("exercise_type")
+        if hasattr(exercise_type, "value"):
+            exercise_type = exercise_type.value
+
         card_state, grade = await review_card(
             db=db,
             user_id=user_id,
             word_id=item["word_id"],
             is_correct=item["is_correct"],
-            duration_ms=item.get("duration_ms", 0),
-            exercise_type=item.get("exercise_type", "FLASHCARD"),
+            duration_ms=item["duration_ms"],
+            exercise_type=exercise_type or "FLASHCARD",
+            attempts=item.get("attempts", 1),
+            had_wrong=item.get("had_wrong", False),
+            autocommit=False,
         )
         results.append((card_state, grade))
+
+    await db.commit()
+    for card_state, _ in results:
+        await db.refresh(card_state)
+
     return results
 
 

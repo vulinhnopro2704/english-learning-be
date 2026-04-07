@@ -103,6 +103,8 @@ class FSRSConfig(Base):
     request_retention = Column("requestRetention", Float, nullable=False, default=0.9)
     easy_days = Column("easyDays", JSONB, nullable=False, default=[])  # e.g. [0, 6] for Sun/Sat
     max_reviews_per_day = Column("maxReviewsPerDay", Integer, nullable=False, default=100)
+    last_trained_at = Column("lastTrainedAt", DateTime(timezone=True), nullable=True)
+    current_model_version = Column("currentModelVersion", Integer, nullable=False, default=0)
 
     updated_at = Column(
         "updatedAt",
@@ -110,4 +112,39 @@ class FSRSConfig(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
+class FSRSModelVersion(Base):
+    """Versioned model snapshots for safe rollout and rollback."""
+
+    __tablename__ = "fsrs_model_version"
+
+    id = Column("id", UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column("userId", UUID(as_uuid=True), nullable=False, index=True)
+    version = Column("version", Integer, nullable=False)
+    weights = Column("weights", JSONB, nullable=False, default=[])
+    request_retention = Column("requestRetention", Float, nullable=False, default=0.9)
+    sample_size = Column("sampleSize", Integer, nullable=False, default=0)
+    metric_type = Column("metricType", String, nullable=False, default="log_loss")
+    metric_baseline = Column("metricBaseline", Float, nullable=True)
+    metric_candidate = Column("metricCandidate", Float, nullable=True)
+    improvement_pct = Column("improvementPct", Float, nullable=True)
+    status = Column("status", String, nullable=False, default="accepted")
+    trained_at = Column(
+        "trainedAt",
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    created_at = Column(
+        "createdAt",
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("userId", "version", name="uq_fsrs_model_user_version"),
+        Index("ix_fsrs_model_user_status", "userId", "status"),
     )

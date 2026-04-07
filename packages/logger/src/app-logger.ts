@@ -50,8 +50,28 @@ export class AppLogger implements LoggerService {
               const ctx = chalk.cyan(
                 `[${toContextLabel(typeof context === 'string' ? context : undefined)}]`,
               );
-              const level = chalk.bold(lvl.toUpperCase());
-              return `${timestamp()} ${ctx} ${level} ${message}`;
+              let coloredLevel: string;
+              switch (lvl.toLowerCase()) {
+                case 'error':
+                  coloredLevel = chalk.red.bold(lvl.toUpperCase());
+                  break;
+                case 'warn':
+                  coloredLevel = chalk.yellow.bold(lvl.toUpperCase());
+                  break;
+                case 'info':
+                  coloredLevel = chalk.green.bold(lvl.toUpperCase());
+                  break;
+                case 'debug':
+                  coloredLevel = chalk.magenta.bold(lvl.toUpperCase());
+                  break;
+                case 'verbose':
+                  coloredLevel = chalk.cyanBright.bold(lvl.toUpperCase());
+                  break;
+                default:
+                  coloredLevel = chalk.bold(lvl.toUpperCase());
+                  break;
+              }
+              return `${chalk.gray(timestamp())} ${ctx} ${coloredLevel} ${message}`;
             }),
           ),
         }),
