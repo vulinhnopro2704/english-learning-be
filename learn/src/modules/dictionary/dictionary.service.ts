@@ -3,11 +3,15 @@ import { ApiException } from '@english-learning/nest-error-handler';
 import { DictionarySearchDto } from './dtos/dictionary-search.dto';
 import { PrismaService } from '../db/prisma.service';
 import { RedisService } from '../redis/redis.service';
+import {
+  buildCacheKey,
+  buildScopePattern,
+  CACHE_TTL_SECONDS,
+} from '../redis/cache-key.util';
 
 const MOCHI_PRIVATE_KEY = 'M0ch1M0ch1_En_$ecret_k3y';
 const MOCHI_BASE_URL =
   'https://mochien-server-release.mochidemy.com/api/v5.0/words/dictionary-english';
-const DICTIONARY_CACHE_TTL_SECONDS = 60 * 60 * 24;
 
 type DictionarySentenceAudio = {
   key: string;
@@ -154,42 +158,39 @@ export class DictionaryService {
   }
 
   private buildCacheKey(query: DictionarySearchDto) {
-    return [
-      'dictionary',
-      query.word.trim().toLowerCase(),
-      query.language ?? 'vi',
-      query.type ?? 'web',
-      query.definition ?? 0,
-      query.searchIelts ?? 1,
-    ].join(':');
+    return buildCacheKey('dictionary', {
+      params: {
+        endpoint: 'search',
+        word: query.word.trim().toLowerCase(),
+        language: query.language ?? 'vi',
+        type: query.type ?? 'web',
+        definition: query.definition ?? 0,
+        searchIelts: query.searchIelts ?? 1,
+      },
+    });
   }
 
   private async getCachedResult(cacheKey: string) {
-    try {
-      const raw = await this.redisService.get(cacheKey);
-      if (!raw) {
-        return null;
-      }
-
-      return JSON.parse(raw) as DictionarySearchResult;
-    } catch {
-      return null;
-    }
+    return this.redisService.getJson<DictionarySearchResult>(cacheKey);
   }
 
   private async setCachedResult(
     cacheKey: string,
     result: DictionarySearchResult,
   ) {
-    try {
-      await this.redisService.set(
-        cacheKey,
-        JSON.stringify(result),
-        DICTIONARY_CACHE_TTL_SECONDS,
-      );
-    } catch {
-      // Redis cache failure should not affect API response
-    }
+    await this.redisService.setJson(cacheKey, result, CACHE_TTL_SECONDS.LONG);
+  }
+
+  private async invalidateRelatedCaches() {
+    await this.redisService.delByPatterns([
+      buildScopePattern('dictionary'),
+      buildScopePattern('words'),
+      buildScopePattern('lessons'),
+      buildScopePattern('courses'),
+      buildScopePattern('progress'),
+      buildScopePattern('vocabulary'),
+      buildScopePattern('practice'),
+    ]);
   }
 
   private enqueueBackgroundSync(entries: DictionaryEntry[]) {
@@ -199,7 +200,13 @@ export class DictionaryService {
   }
 
   private async syncWordsFromDictionary(entries: DictionaryEntry[]) {
+    let hasInsertedNewWord = false;
+
     for (const entry of entries) {
+      if (!Number.isInteger(entry.id) || entry.id <= 0) {
+        continue;
+      }
+
       const normalizedWord = entry.content.trim();
       if (!normalizedWord) {
         continue;
@@ -227,7 +234,16 @@ export class DictionaryService {
       };
 
       try {
-        const existing = await this.prisma.word.findFirst({
+        const existingById = await this.prisma.word.findUnique({
+          where: { id: entry.id },
+          select: { id: true },
+        });
+
+        if (existingById) {
+          continue;
+        }
+
+        const existingByWord = await this.prisma.word.findFirst({
           where: {
             word: {
               equals: normalizedWord,
@@ -246,20 +262,24 @@ export class DictionaryService {
           select: { id: true },
         });
 
-        if (!existing) {
-          await this.prisma.word.create({
-            data: updatePayload,
-          });
+        if (existingByWord) {
           continue;
         }
 
-        await this.prisma.word.update({
-          where: { id: existing.id },
-          data: updatePayload,
+        await this.prisma.word.create({
+          data: {
+            id: entry.id,
+            ...updatePayload,
+          },
         });
+        hasInsertedNewWord = true;
       } catch {
         // background sync should be best-effort and must not break API
       }
+    }
+
+    if (hasInsertedNewWord) {
+      await this.invalidateRelatedCaches();
     }
   }
 
@@ -279,11 +299,15 @@ export class DictionaryService {
       return value;
     }
 
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+
     if (value === null || value === undefined) {
       return '';
     }
 
-    return String(value);
+    return '';
   }
 
   private toNullableString(value: unknown): string | null {

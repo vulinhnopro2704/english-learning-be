@@ -1,23 +1,61 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../db/prisma.service';
+import { RedisService } from '../redis/redis.service';
+import {
+  buildCacheKey,
+  buildScopePattern,
+  CACHE_TTL_SECONDS,
+} from '../redis/cache-key.util';
 
 @Injectable()
 export class StreakService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
+
+  private async invalidateUserCaches(userId: string) {
+    await this.redisService.delByPatterns([
+      buildScopePattern('streak', userId),
+      buildScopePattern('progress', userId),
+      buildScopePattern('practice', userId),
+    ]);
+  }
 
   async getStreak(userId: string) {
+    const cacheKey = buildCacheKey('streak', {
+      userId,
+      params: { endpoint: 'getStreak' },
+    });
+
+    const cached =
+      await this.redisService.getJson<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const streak = await this.prisma.userStreak.findUnique({
       where: { userId },
     });
 
     if (!streak) {
-      return {
+      const response = {
         userId,
         currentStreak: 0,
         longestStreak: 0,
         lastActivity: null,
       };
+
+      await this.redisService.setJson(
+        cacheKey,
+        response,
+        CACHE_TTL_SECONDS.SHORT,
+      );
+
+      return response;
     }
+
+    await this.redisService.setJson(cacheKey, streak, CACHE_TTL_SECONDS.SHORT);
 
     return streak;
   }
@@ -38,7 +76,7 @@ export class StreakService {
 
     if (!existing) {
       // First activity ever
-      return this.prisma.userStreak.create({
+      const created = await this.prisma.userStreak.create({
         data: {
           userId,
           currentStreak: 1,
@@ -46,6 +84,10 @@ export class StreakService {
           lastActivity: now,
         },
       });
+
+      await this.invalidateUserCaches(userId);
+
+      return created;
     }
 
     const lastActivityDate = new Date(existing.lastActivity);
@@ -72,7 +114,7 @@ export class StreakService {
 
     const newLongest = Math.max(existing.longestStreak, newStreak);
 
-    return this.prisma.userStreak.update({
+    const updated = await this.prisma.userStreak.update({
       where: { userId },
       data: {
         currentStreak: newStreak,
@@ -80,5 +122,9 @@ export class StreakService {
         lastActivity: now,
       },
     });
+
+    await this.invalidateUserCaches(userId);
+
+    return updated;
   }
 }

@@ -72,7 +72,10 @@ export class PracticeController {
     description:
       'Proxy FSRS-AI /fsrs/cards/risk to fetch high risk cards, then hydrate with word details.',
   })
-  @ApiResponse({ status: 200, description: 'List of words with high risk to forget' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of words with high risk to forget',
+  })
   @ApiStandardErrorResponses({ statuses: [401, 422, 500, 502, 503] })
   getRiskCards(
     @CurrentUser('id') userId: string,

@@ -1,6 +1,12 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
+import { RedisService } from '../redis/redis.service';
+import {
+  buildCacheKey,
+  buildScopePattern,
+  CACHE_TTL_SECONDS,
+} from '../redis/cache-key.util';
 import { CreateCourseDto } from './dtos/create-course.dto';
 import { UpdateCourseDto } from './dtos/update-course.dto';
 import { CourseFilterDto } from './dtos/course-filter.dto';
@@ -24,7 +30,24 @@ const COURSE_SELECT = {
 
 @Injectable()
 export class CoursesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
+
+  private async invalidateRelatedCaches(userId?: string) {
+    await this.redisService.delByPatterns([
+      buildScopePattern('courses'),
+      buildScopePattern('lessons'),
+      buildScopePattern('words'),
+      buildScopePattern('progress'),
+      buildScopePattern('progress', userId),
+      buildScopePattern('practice'),
+      buildScopePattern('practice', userId),
+      buildScopePattern('vocabulary'),
+      buildScopePattern('vocabulary', userId),
+    ]);
+  }
 
   private isUserRole(user?: CurrentUserPayload): boolean {
     return (user?.role ?? '').toUpperCase() === 'USER';
@@ -86,6 +109,27 @@ export class CoursesService {
   }
 
   async findAll(filter: CourseFilterDto, user?: CurrentUserPayload) {
+    const cacheKey = buildCacheKey('courses', {
+      userId: user?.id,
+      params: {
+        endpoint: 'findAll',
+        role: user?.role ?? 'anonymous',
+        filter,
+      },
+    });
+
+    const cached = await this.redisService.getJson<{
+      data: unknown[];
+      pagination: {
+        nextCursor: number | null;
+        hasMore: boolean;
+        total: number;
+      };
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const take = filter.take ?? 20;
 
     const where: Prisma.CourseWhereInput = {};
@@ -137,7 +181,7 @@ export class CoursesService {
       const nextCursor =
         hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
 
-      return {
+      const response = {
         data,
         pagination: {
           nextCursor,
@@ -145,6 +189,14 @@ export class CoursesService {
           total,
         },
       };
+
+      await this.redisService.setJson(
+        cacheKey,
+        response,
+        CACHE_TTL_SECONDS.MEDIUM,
+      );
+
+      return response;
     }
 
     const courseIds = data.map((course) => course.id);
@@ -242,7 +294,7 @@ export class CoursesService {
         ? (enrichedData[enrichedData.length - 1]?.id ?? null)
         : null;
 
-    return {
+    const response = {
       data: enrichedData,
       pagination: {
         nextCursor,
@@ -250,9 +302,32 @@ export class CoursesService {
         total,
       },
     };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.MEDIUM,
+    );
+
+    return response;
   }
 
   async findOne(id: number, user?: CurrentUserPayload) {
+    const cacheKey = buildCacheKey('courses', {
+      userId: user?.id,
+      params: {
+        endpoint: 'findOne',
+        role: user?.role ?? 'anonymous',
+        id,
+      },
+    });
+
+    const cached =
+      await this.redisService.getJson<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const visibilityWhere = this.buildCourseVisibilityWhere(user);
     const lessonVisibilityWhere = this.buildLessonVisibilityWhere(user);
 
@@ -286,6 +361,11 @@ export class CoursesService {
     }
 
     if (!this.isUserRole(user)) {
+      await this.redisService.setJson(
+        cacheKey,
+        course,
+        CACHE_TTL_SECONDS.MEDIUM,
+      );
       return course;
     }
 
@@ -364,7 +444,7 @@ export class CoursesService {
       };
     });
 
-    return {
+    const response = {
       ...course,
       lessons,
       completedLessons: completedLessons.length,
@@ -379,12 +459,20 @@ export class CoursesService {
         lastCompletedLessonAt,
       },
     };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.MEDIUM,
+    );
+
+    return response;
   }
 
   async create(dto: CreateCourseDto, user?: CurrentUserPayload) {
     const isUserCreated = this.isUserRole(user);
 
-    return this.prisma.course.create({
+    const created = await this.prisma.course.create({
       data: {
         ...dto,
         isUserCreated,
@@ -392,24 +480,39 @@ export class CoursesService {
       },
       select: COURSE_SELECT,
     });
+
+    await this.invalidateRelatedCaches(user?.id);
+
+    return created;
   }
 
   async update(id: number, dto: UpdateCourseDto, user?: CurrentUserPayload) {
     const course = await this.findOne(id, user);
-    this.assertCourseWritePermission(course, user);
+    this.assertCourseWritePermission(
+      course as { isUserCreated: boolean; createdByUserId: string | null },
+      user,
+    );
 
-    return this.prisma.course.update({
+    const updated = await this.prisma.course.update({
       where: { id },
       data: dto,
       select: COURSE_SELECT,
     });
+
+    await this.invalidateRelatedCaches(user?.id);
+
+    return updated;
   }
 
   async remove(id: number, user?: CurrentUserPayload) {
     const course = await this.findOne(id, user);
-    this.assertCourseWritePermission(course, user);
+    this.assertCourseWritePermission(
+      course as { isUserCreated: boolean; createdByUserId: string | null },
+      user,
+    );
 
     await this.prisma.course.delete({ where: { id } });
+    await this.invalidateRelatedCaches(user?.id);
 
     return { message: `Course with ID ${id} deleted successfully` };
   }

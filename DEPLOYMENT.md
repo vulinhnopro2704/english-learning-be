@@ -107,16 +107,16 @@ Push to main ──► GitHub Actions
 
 ### 🗂️ Storage Service
 
-| Secret                   | Mô tả                                    | Ví dụ                                            |
-| ------------------------ | ---------------------------------------- | ------------------------------------------------ |
-| `STORAGE_DATABASE_URL`   | PostgreSQL connection string             | `postgresql://user:pass@host/db?sslmode=require` |
-| `STORAGE_PORT`           | Port cho Storage service                 | `3003`                                           |
-| `CLOUDINARY_CLOUD_NAME`  | Cloudinary cloud name                    | `demo-cloud`                                     |
-| `CLOUDINARY_API_KEY`     | Cloudinary API key                       | `1234567890`                                     |
-| `CLOUDINARY_API_SECRET`  | Cloudinary API secret                    | `xxxxxxxxxxxx`                                   |
-| `SIGNED_URL_TTL_SECONDS` | TTL signed URL (giây, tuỳ chọn)         | `300`                                            |
-| `MAX_FILE_SIZE_MB`       | Giới hạn file upload (MB, tuỳ chọn)      | `10`                                             |
-| `ALLOWED_MIME_TYPES`     | Danh sách MIME cho phép, phân tách `,`   | `image/png,image/jpeg,application/pdf`           |
+| Secret                   | Mô tả                                  | Ví dụ                                            |
+| ------------------------ | -------------------------------------- | ------------------------------------------------ |
+| `STORAGE_DATABASE_URL`   | PostgreSQL connection string           | `postgresql://user:pass@host/db?sslmode=require` |
+| `STORAGE_PORT`           | Port cho Storage service               | `3003`                                           |
+| `CLOUDINARY_CLOUD_NAME`  | Cloudinary cloud name                  | `demo-cloud`                                     |
+| `CLOUDINARY_API_KEY`     | Cloudinary API key                     | `1234567890`                                     |
+| `CLOUDINARY_API_SECRET`  | Cloudinary API secret                  | `xxxxxxxxxxxx`                                   |
+| `SIGNED_URL_TTL_SECONDS` | TTL signed URL (giây, tuỳ chọn)        | `300`                                            |
+| `MAX_FILE_SIZE_MB`       | Giới hạn file upload (MB, tuỳ chọn)    | `10`                                             |
+| `ALLOWED_MIME_TYPES`     | Danh sách MIME cho phép, phân tách `,` | `image/png,image/jpeg,application/pdf`           |
 
 ### 🤖 FSRS-AI Service
 
@@ -127,25 +127,27 @@ Push to main ──► GitHub Actions
 
 ### 🌐 Shared
 
-| Secret           | Mô tả                              | Ví dụ                       |
-| ---------------- | ---------------------------------- | --------------------------- |
-| `CORS_ORIGIN`    | Allowed CORS origin (frontend URL) | `https://your-frontend.com` |
-| `REDIS_PASSWORD` | Redis password                     | `a-strong-password`         |
-| `REDIS_PORT`     | Redis port trên VPS                | `6379`                      |
+| Secret           | Mô tả                                       | Ví dụ                          |
+| ---------------- | ------------------------------------------- | ------------------------------ |
+| `CORS_ORIGIN`    | Allowed CORS origin (frontend URL)          | `https://your-frontend.com`    |
+| `REDIS_PASSWORD` | Redis password                              | `a-strong-password`            |
+| `REDIS_PORT`     | Redis port trên VPS                         | `6379`                         |
+| `REDIS_URL`      | Redis connection URL (tuỳ chọn)             | `redis://:password@redis:6379` |
+| `REDIS_DB`       | Redis logical DB cho Learn cache (tuỳ chọn) | `0`                            |
 
 ### 📘 Swagger cho Gateway/Auth/Learn/Storage (tuỳ chọn, cho môi trường dev)
 
-| Secret                  | Mô tả                  | Mặc định    |
-| ----------------------- | ---------------------- | ----------- |
-| `AUTH_SWAGGER_ENABLED`  | Bật/tắt docs auth      | `true`      |
-| `AUTH_SWAGGER_PATH`     | Path docs auth nội bộ  | `api-docs`  |
-| `AUTH_SWAGGER_TITLE`    | Tiêu đề docs auth      | `Auth API`  |
-| `LEARN_SWAGGER_ENABLED` | Bật/tắt docs learn     | `true`      |
-| `LEARN_SWAGGER_PATH`    | Path docs learn nội bộ | `api-docs`  |
-| `LEARN_SWAGGER_TITLE`   | Tiêu đề docs learn     | `Learn API` |
-| `STORAGE_SWAGGER_ENABLED` | Bật/tắt docs storage   | `true`      |
-| `STORAGE_SWAGGER_PATH`    | Path docs storage nội bộ | `api-docs` |
-| `STORAGE_SWAGGER_TITLE`   | Tiêu đề docs storage   | `Storage API` |
+| Secret                    | Mô tả                    | Mặc định      |
+| ------------------------- | ------------------------ | ------------- |
+| `AUTH_SWAGGER_ENABLED`    | Bật/tắt docs auth        | `true`        |
+| `AUTH_SWAGGER_PATH`       | Path docs auth nội bộ    | `api-docs`    |
+| `AUTH_SWAGGER_TITLE`      | Tiêu đề docs auth        | `Auth API`    |
+| `LEARN_SWAGGER_ENABLED`   | Bật/tắt docs learn       | `true`        |
+| `LEARN_SWAGGER_PATH`      | Path docs learn nội bộ   | `api-docs`    |
+| `LEARN_SWAGGER_TITLE`     | Tiêu đề docs learn       | `Learn API`   |
+| `STORAGE_SWAGGER_ENABLED` | Bật/tắt docs storage     | `true`        |
+| `STORAGE_SWAGGER_PATH`    | Path docs storage nội bộ | `api-docs`    |
+| `STORAGE_SWAGGER_TITLE`   | Tiêu đề docs storage     | `Storage API` |
 
 ---
 
@@ -197,6 +199,35 @@ Push code lên branch `main` → GitHub Actions tự động:
 2. Service nào build success sẽ được pull image mới và update.
 3. Service build fail giữ image cũ để không chặn các service khác.
 4. `api-gateway` luôn được start lại ở cuối deploy và được kiểm tra trạng thái running.
+
+---
+
+## Redis Cache (Learn Service)
+
+Learn service đã bật cache Redis cho các API đọc (courses, lessons, words, vocabulary, progress, practice, streak, dictionary).
+
+### Key strategy
+
+- Namespace: `learn:v1`
+- Format: `learn:v1:<scope>:u:<user-or-public>:q:<serialized-params>`
+- Mỗi scope có key riêng để dễ invalidation theo pattern.
+
+### TTL mặc định
+
+- `SHORT`: 60 giây
+- `MEDIUM`: 5 phút
+- `LONG`: 24 giờ
+
+### Invalidation policy
+
+- API mutate (create/update/delete/complete/submit/toggle) sẽ xóa cache theo scope liên quan.
+- Một mutate có thể xóa nhiều scope để tránh stale data xuyên module.
+- Dictionary background sync khi insert word mới cũng sẽ invalidation các cache liên quan.
+
+### Env khuyến nghị
+
+- Bắt buộc: `REDIS_URL` hoặc cặp `REDIS_HOST` + `REDIS_PORT` (và `REDIS_PASSWORD` nếu có auth).
+- Nên có: `REDIS_DB` để tách cache Learn khỏi service khác nếu dùng chung Redis.
 
 ---
 
@@ -288,12 +319,13 @@ Khi cần deploy thêm service (VD: `gateway`, `notification`):
 
 ## Troubleshooting
 
-| Vấn đề                    | Giải pháp                                                      |
-| ------------------------- | -------------------------------------------------------------- |
-| Container không start     | `docker compose logs <service>` xem lỗi                        |
-| GHCR pull bị 401          | Kiểm tra `GHCR_PAT` đã có quyền `read:packages`                |
-| Port bị chiếm             | Đổi port trong GitHub Secrets → redeploy                       |
-| Redis connection refused  | Kiểm tra `REDIS_PASSWORD` khớp giữa root `.env` và `auth/.env` |
-| Database connection error | Kiểm tra `DATABASE_URL` đúng và Neon cho phép IP của VPS       |
-| Login OK nhưng không có cookie | Kiểm tra `COOKIE_DOMAIN` đúng domain API thực tế và `CORS_ORIGIN` đúng origin FE |
-| PM2 memory limit          | Sửa `max_memory_restart` trong `ecosystem.config.cjs`          |
+| Vấn đề                          | Giải pháp                                                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Container không start           | `docker compose logs <service>` xem lỗi                                                                 |
+| GHCR pull bị 401                | Kiểm tra `GHCR_PAT` đã có quyền `read:packages`                                                         |
+| Port bị chiếm                   | Đổi port trong GitHub Secrets → redeploy                                                                |
+| Redis connection refused        | Kiểm tra `REDIS_URL`/`REDIS_PASSWORD` khớp giữa root `.env`, `auth/.env`, `learn/.env`                  |
+| Dữ liệu GET chưa mới sau mutate | Kiểm tra service mutate đã chạy thành công và Redis đang reachable (xem `docker compose logs -f learn`) |
+| Database connection error       | Kiểm tra `DATABASE_URL` đúng và Neon cho phép IP của VPS                                                |
+| Login OK nhưng không có cookie  | Kiểm tra `COOKIE_DOMAIN` đúng domain API thực tế và `CORS_ORIGIN` đúng origin FE                        |
+| PM2 memory limit                | Sửa `max_memory_restart` trong `ecosystem.config.cjs`                                                   |

@@ -4,6 +4,12 @@ import { PrismaService } from '../db/prisma.service';
 import { CreateWordDto } from './dtos/create-word.dto';
 import { UpdateWordDto } from './dtos/update-word.dto';
 import { WordFilterDto } from './dtos/word-filter.dto';
+import { RedisService } from '../redis/redis.service';
+import {
+  buildCacheKey,
+  buildScopePattern,
+  CACHE_TTL_SECONDS,
+} from '../redis/cache-key.util';
 import type { Prisma } from '../../generated/prisma/client';
 import type { CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 
@@ -25,7 +31,25 @@ const WORD_SELECT = {
 
 @Injectable()
 export class WordsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
+
+  private async invalidateRelatedCaches(userId?: string) {
+    await this.redisService.delByPatterns([
+      buildScopePattern('words'),
+      buildScopePattern('lessons'),
+      buildScopePattern('courses'),
+      buildScopePattern('vocabulary'),
+      buildScopePattern('vocabulary', userId),
+      buildScopePattern('progress'),
+      buildScopePattern('progress', userId),
+      buildScopePattern('practice'),
+      buildScopePattern('practice', userId),
+      buildScopePattern('dictionary'),
+    ]);
+  }
 
   private isUserRole(user?: CurrentUserPayload): boolean {
     return (user?.role ?? '').toUpperCase() === 'USER';
@@ -114,6 +138,27 @@ export class WordsService {
   }
 
   async findAll(filter: WordFilterDto, user?: CurrentUserPayload) {
+    const cacheKey = buildCacheKey('words', {
+      userId: user?.id,
+      params: {
+        endpoint: 'findAll',
+        role: user?.role ?? 'anonymous',
+        filter,
+      },
+    });
+
+    const cached = await this.redisService.getJson<{
+      data: unknown[];
+      pagination: {
+        nextCursor: number | null;
+        hasMore: boolean;
+        total: number;
+      };
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const take = filter.take ?? 20;
 
     const where: Prisma.WordWhereInput = {};
@@ -177,7 +222,7 @@ export class WordsService {
     const nextCursor =
       hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
 
-    return {
+    const response = {
       data,
       pagination: {
         nextCursor,
@@ -185,9 +230,32 @@ export class WordsService {
         total,
       },
     };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.MEDIUM,
+    );
+
+    return response;
   }
 
   async findOne(id: number, user?: CurrentUserPayload) {
+    const cacheKey = buildCacheKey('words', {
+      userId: user?.id,
+      params: {
+        endpoint: 'findOne',
+        role: user?.role ?? 'anonymous',
+        id,
+      },
+    });
+
+    const cached =
+      await this.redisService.getJson<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const lessonVisibilityWhere = this.buildLessonVisibilityWhere(user);
     const word = await this.prisma.word.findFirst({
       where: {
@@ -220,38 +288,65 @@ export class WordsService {
       });
     }
 
+    await this.redisService.setJson(cacheKey, word, CACHE_TTL_SECONDS.MEDIUM);
+
     return word;
   }
 
   async create(dto: CreateWordDto, user?: CurrentUserPayload) {
     await this.getLessonForWordWrite(dto.lessonId, user);
 
-    return this.prisma.word.create({
+    const created = await this.prisma.word.create({
       data: dto,
       select: WORD_SELECT,
     });
+
+    await this.invalidateRelatedCaches(user?.id);
+
+    return created;
   }
 
   async update(id: number, dto: UpdateWordDto, user?: CurrentUserPayload) {
     const existingWord = await this.findOne(id, user);
-    this.assertWordWritePermission(existingWord, user);
+    this.assertWordWritePermission(
+      existingWord as {
+        lesson: {
+          isUserCreated: boolean;
+          createdByUserId: string | null;
+        } | null;
+      },
+      user,
+    );
 
     if (dto.lessonId != null) {
       await this.getLessonForWordWrite(dto.lessonId, user);
     }
 
-    return this.prisma.word.update({
+    const updated = await this.prisma.word.update({
       where: { id },
       data: dto,
       select: WORD_SELECT,
     });
+
+    await this.invalidateRelatedCaches(user?.id);
+
+    return updated;
   }
 
   async remove(id: number, user?: CurrentUserPayload) {
     const existingWord = await this.findOne(id, user);
-    this.assertWordWritePermission(existingWord, user);
+    this.assertWordWritePermission(
+      existingWord as {
+        lesson: {
+          isUserCreated: boolean;
+          createdByUserId: string | null;
+        } | null;
+      },
+      user,
+    );
 
     await this.prisma.word.delete({ where: { id } });
+    await this.invalidateRelatedCaches(user?.id);
 
     return { message: `Word with ID ${id} deleted successfully` };
   }

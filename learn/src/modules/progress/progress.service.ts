@@ -6,6 +6,12 @@ import {
   LessonProgressFilterDto,
   WordProgressFilterDto,
 } from './dtos/progress.dto';
+import { RedisService } from '../redis/redis.service';
+import {
+  buildCacheKey,
+  buildScopePattern,
+  CACHE_TTL_SECONDS,
+} from '../redis/cache-key.util';
 import type { Prisma } from '../../generated/prisma/client';
 
 function normalizeCompletionScore(score: number): number {
@@ -22,7 +28,22 @@ function normalizeCompletionScore(score: number): number {
 
 @Injectable()
 export class ProgressService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
+
+  private async invalidateUserCaches(userId: string) {
+    await this.redisService.delByPatterns([
+      buildScopePattern('progress', userId),
+      buildScopePattern('courses', userId),
+      buildScopePattern('lessons', userId),
+      buildScopePattern('words'),
+      buildScopePattern('vocabulary', userId),
+      buildScopePattern('practice', userId),
+      buildScopePattern('streak', userId),
+    ]);
+  }
 
   // ═══ COURSE PROGRESS ═══════════════════════════════════════════════════════
 
@@ -39,15 +60,39 @@ export class ProgressService {
       });
 
     // Upsert — idempotent
-    return this.prisma.userCourseProgress.upsert({
+    const progress = await this.prisma.userCourseProgress.upsert({
       where: { userId_courseId: { userId, courseId } },
       create: { userId, courseId },
       update: { lastAccessedAt: new Date() },
       include: { course: { select: { id: true, title: true, icon: true } } },
     });
+
+    await this.invalidateUserCaches(userId);
+
+    return progress;
   }
 
   async getMyCourses(userId: string, filter: CourseProgressFilterDto) {
+    const cacheKey = buildCacheKey('progress', {
+      userId,
+      params: {
+        endpoint: 'getMyCourses',
+        filter,
+      },
+    });
+
+    const cached = await this.redisService.getJson<{
+      data: unknown[];
+      pagination: {
+        nextCursor: number | null;
+        hasMore: boolean;
+        total: number;
+      };
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const take = filter.take ?? 20;
 
     const where: Prisma.UserCourseProgressWhereInput = { userId };
@@ -170,7 +215,18 @@ export class ProgressService {
         ? (enrichedData[enrichedData.length - 1]?.id ?? null)
         : null;
 
-    return { data: enrichedData, pagination: { nextCursor, hasMore, total } };
+    const response = {
+      data: enrichedData,
+      pagination: { nextCursor, hasMore, total },
+    };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.SHORT,
+    );
+
+    return response;
   }
 
   // ═══ LESSON PROGRESS ═══════════════════════════════════════════════════════
@@ -281,13 +337,37 @@ export class ProgressService {
       }
     }
 
-    return {
+    const response = {
       lessonProgress,
       wordsUnlocked: lesson.words.length,
     };
+
+    await this.invalidateUserCaches(userId);
+
+    return response;
   }
 
   async getMyLessons(userId: string, filter: LessonProgressFilterDto) {
+    const cacheKey = buildCacheKey('progress', {
+      userId,
+      params: {
+        endpoint: 'getMyLessons',
+        filter,
+      },
+    });
+
+    const cached = await this.redisService.getJson<{
+      data: unknown[];
+      pagination: {
+        nextCursor: number | null;
+        hasMore: boolean;
+        total: number;
+      };
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const take = filter.take ?? 20;
 
     const where: Prisma.UserLessonProgressWhereInput = { userId };
@@ -353,13 +433,43 @@ export class ProgressService {
         ? (enrichedData[enrichedData.length - 1]?.id ?? null)
         : null;
 
-    return { data: enrichedData, pagination: { nextCursor, hasMore, total } };
+    const response = {
+      data: enrichedData,
+      pagination: { nextCursor, hasMore, total },
+    };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.SHORT,
+    );
+
+    return response;
   }
 
   // ═══ WORD PROGRESS ════════════════════════════════════════════════════════
 
   async getMyWords(userId: string, filter: WordProgressFilterDto) {
+    const cacheKey = buildCacheKey('progress', {
+      userId,
+      params: {
+        endpoint: 'getMyWords',
+        filter,
+      },
+    });
+
     const take = filter.take ?? 20;
+    const cached = await this.redisService.getJson<{
+      data: unknown[];
+      pagination: {
+        nextCursor: number | null;
+        hasMore: boolean;
+        total: number;
+      };
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
     await this.prisma.userWordProgress.updateMany({
       where: {
@@ -441,10 +551,29 @@ export class ProgressService {
     const nextCursor =
       hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
 
-    return { data, pagination: { nextCursor, hasMore, total } };
+    const response = { data, pagination: { nextCursor, hasMore, total } };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.SHORT,
+    );
+
+    return response;
   }
 
   async getProgressStats(userId: string) {
+    const cacheKey = buildCacheKey('progress', {
+      userId,
+      params: { endpoint: 'getProgressStats' },
+    });
+
+    const cached =
+      await this.redisService.getJson<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const [
       totalWords,
       masteredWords,
@@ -478,7 +607,7 @@ export class ProgressService {
       _count: true,
     });
 
-    return {
+    const response = {
       totalWords,
       masteredWords,
       dueForReview,
@@ -503,5 +632,13 @@ export class ProgressService {
         {} as Record<string, number>,
       ),
     };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.SHORT,
+    );
+
+    return response;
   }
 }

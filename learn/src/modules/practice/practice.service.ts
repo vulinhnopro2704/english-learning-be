@@ -3,6 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
 import { StreakService } from '../streak/streak.service';
+import { RedisService } from '../redis/redis.service';
+import {
+  buildCacheKey,
+  buildScopePattern,
+  CACHE_TTL_SECONDS,
+} from '../redis/cache-key.util';
 import {
   SubmitFSRSPracticeDto,
   PracticeHistoryFilterDto,
@@ -20,6 +26,7 @@ export class PracticeService {
     private readonly prisma: PrismaService,
     private readonly streakService: StreakService,
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
   ) {
     const fsrsUrl = this.configService.get<string>('FSRS_AI_URL');
     if (!fsrsUrl) {
@@ -32,9 +39,34 @@ export class PracticeService {
     this.fsrsBaseUrl = fsrsUrl;
   }
 
+  private async invalidateUserCaches(userId: string) {
+    await this.redisService.delByPatterns([
+      buildScopePattern('practice', userId),
+      buildScopePattern('progress', userId),
+      buildScopePattern('streak', userId),
+      buildScopePattern('courses', userId),
+      buildScopePattern('lessons', userId),
+      buildScopePattern('words'),
+    ]);
+  }
+
   // ═══ FSRS PRACTICE (Review / Ôn tập) ══════════════════════════════════════
 
   async getDueWords(userId: string, filter: FSRSDueFilterDto) {
+    const cacheKey = buildCacheKey('practice', {
+      userId,
+      params: {
+        endpoint: 'getDueWords',
+        filter,
+      },
+    });
+
+    const cached =
+      await this.redisService.getJson<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const dueUrl = new URL(`${this.fsrsBaseUrl}/api/v1/fsrs/due`);
     dueUrl.searchParams.set('user_id', userId);
     if (typeof filter.take === 'number') {
@@ -75,7 +107,13 @@ export class PracticeService {
       : [];
 
     if (wordIds.length === 0) {
-      return { data: [], total: 0 };
+      const emptyResponse = { data: [], total: 0 };
+      await this.redisService.setJson(
+        cacheKey,
+        emptyResponse,
+        CACHE_TTL_SECONDS.SHORT,
+      );
+      return emptyResponse;
     }
 
     const progresses = await this.prisma.userWordProgress.findMany({
@@ -106,7 +144,18 @@ export class PracticeService {
       .map((id) => byId.get(id))
       .filter((item): item is (typeof progresses)[number] => Boolean(item));
 
-    return { data: ordered, total: duePayload?.total ?? ordered.length };
+    const response = {
+      data: ordered,
+      total: duePayload?.total ?? ordered.length,
+    };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.SHORT,
+    );
+
+    return response;
   }
 
   async submitFSRS(userId: string, dto: SubmitFSRSPracticeDto) {
@@ -196,15 +245,39 @@ export class PracticeService {
       );
     }
 
-    return {
+    const response = {
       session,
       fsrsResult,
     };
+
+    await this.invalidateUserCaches(userId);
+
+    return response;
   }
 
   // ═══ HISTORY ══════════════════════════════════════════════════════════════
 
   async getHistory(userId: string, filter: PracticeHistoryFilterDto) {
+    const cacheKey = buildCacheKey('practice', {
+      userId,
+      params: {
+        endpoint: 'getHistory',
+        filter,
+      },
+    });
+
+    const cached = await this.redisService.getJson<{
+      data: unknown[];
+      pagination: {
+        nextCursor: number | null;
+        hasMore: boolean;
+        total: number;
+      };
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const take = filter.take ?? 20;
 
     const where: Prisma.PracticeSessionWhereInput = { userId };
@@ -247,12 +320,34 @@ export class PracticeService {
     const nextCursor =
       hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
 
-    return { data, pagination: { nextCursor, hasMore, total } };
+    const response = { data, pagination: { nextCursor, hasMore, total } };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.SHORT,
+    );
+
+    return response;
   }
 
   // ═══ FSRS RISK CARDS ══════════════════════════════════════════════════════
-  
+
   async getRiskCards(userId: string, filter: FSRSRiskFilterDto) {
+    const cacheKey = buildCacheKey('practice', {
+      userId,
+      params: {
+        endpoint: 'getRiskCards',
+        filter,
+      },
+    });
+
+    const cached =
+      await this.redisService.getJson<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const riskUrl = new URL(`${this.fsrsBaseUrl}/api/v1/fsrs/cards/risk`);
     riskUrl.searchParams.set('user_id', userId);
     if (typeof filter.take === 'number') {
@@ -283,6 +378,11 @@ export class PracticeService {
 
     const items = riskPayload?.metrics?.items ?? [];
     if (!items || items.length === 0) {
+      await this.redisService.setJson(
+        cacheKey,
+        riskPayload,
+        CACHE_TTL_SECONDS.SHORT,
+      );
       return riskPayload;
     }
 
@@ -311,7 +411,7 @@ export class PracticeService {
 
     const byId = new Map(words.map((w) => [w.id, w]));
 
-    return {
+    const response = {
       ...riskPayload,
       metrics: {
         ...riskPayload.metrics,
@@ -321,5 +421,13 @@ export class PracticeService {
         })),
       },
     };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.SHORT,
+    );
+
+    return response;
   }
 }

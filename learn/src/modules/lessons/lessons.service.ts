@@ -7,6 +7,12 @@ import { UpdateLessonDto } from './dtos/update-lesson.dto';
 import { LessonFilterDto } from './dtos/lesson-filter.dto';
 import { ProgressService } from '../progress/progress.service';
 import { StreakService } from '../streak/streak.service';
+import { RedisService } from '../redis/redis.service';
+import {
+  buildCacheKey,
+  buildScopePattern,
+  CACHE_TTL_SECONDS,
+} from '../redis/cache-key.util';
 import type { Prisma } from '../../generated/prisma/client';
 import type { CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 
@@ -33,7 +39,22 @@ export class LessonsService {
     private readonly progressService: ProgressService,
     private readonly streakService: StreakService,
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
   ) {}
+
+  private async invalidateRelatedCaches(userId?: string) {
+    await this.redisService.delByPatterns([
+      buildScopePattern('lessons'),
+      buildScopePattern('courses'),
+      buildScopePattern('words'),
+      buildScopePattern('progress'),
+      buildScopePattern('progress', userId),
+      buildScopePattern('practice'),
+      buildScopePattern('practice', userId),
+      buildScopePattern('streak'),
+      buildScopePattern('streak', userId),
+    ]);
+  }
 
   private isUserRole(user?: CurrentUserPayload): boolean {
     return (user?.role ?? '').toUpperCase() === 'USER';
@@ -171,14 +192,39 @@ export class LessonsService {
       );
     }
 
-    return {
+    const response = {
       lessonProgress: progressResult.lessonProgress,
       wordsUnlocked: progressResult.wordsUnlocked,
       session,
     };
+
+    await this.invalidateRelatedCaches(userId);
+
+    return response;
   }
 
   async findAll(filter: LessonFilterDto, user?: CurrentUserPayload) {
+    const cacheKey = buildCacheKey('lessons', {
+      userId: user?.id,
+      params: {
+        endpoint: 'findAll',
+        role: user?.role ?? 'anonymous',
+        filter,
+      },
+    });
+
+    const cached = await this.redisService.getJson<{
+      data: unknown[];
+      pagination: {
+        nextCursor: number | null;
+        hasMore: boolean;
+        total: number;
+      };
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const take = filter.take ?? 20;
 
     const where: Prisma.LessonWhereInput = {};
@@ -283,7 +329,7 @@ export class LessonsService {
         ? (enrichedData[enrichedData.length - 1]?.id ?? null)
         : null;
 
-    return {
+    const response = {
       data: enrichedData,
       pagination: {
         nextCursor,
@@ -291,9 +337,32 @@ export class LessonsService {
         total,
       },
     };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.MEDIUM,
+    );
+
+    return response;
   }
 
   async findOne(id: number, user?: CurrentUserPayload) {
+    const cacheKey = buildCacheKey('lessons', {
+      userId: user?.id,
+      params: {
+        endpoint: 'findOne',
+        role: user?.role ?? 'anonymous',
+        id,
+      },
+    });
+
+    const cached =
+      await this.redisService.getJson<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const visibilityWhere = this.buildLessonVisibilityWhere(user);
 
     const lesson = await this.prisma.lesson.findFirst({
@@ -329,6 +398,11 @@ export class LessonsService {
     }
 
     if (!this.isUserRole(user)) {
+      await this.redisService.setJson(
+        cacheKey,
+        lesson,
+        CACHE_TTL_SECONDS.MEDIUM,
+      );
       return lesson;
     }
 
@@ -348,7 +422,7 @@ export class LessonsService {
 
     const isLearned = progress?.status === 'COMPLETED';
 
-    return {
+    const response = {
       ...lesson,
       isLearned,
       learnedAt: progress?.completedAt ?? null,
@@ -360,13 +434,21 @@ export class LessonsService {
           }
         : null,
     };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.MEDIUM,
+    );
+
+    return response;
   }
 
   async create(dto: CreateLessonDto, user?: CurrentUserPayload) {
     const isUserCreated = this.isUserRole(user);
     await this.assertCourseAttachPermission(dto.courseId, user);
 
-    return this.prisma.lesson.create({
+    const created = await this.prisma.lesson.create({
       data: {
         ...dto,
         isUserCreated,
@@ -374,25 +456,40 @@ export class LessonsService {
       },
       select: LESSON_SELECT,
     });
+
+    await this.invalidateRelatedCaches(user?.id);
+
+    return created;
   }
 
   async update(id: number, dto: UpdateLessonDto, user?: CurrentUserPayload) {
     const lesson = await this.findOne(id, user);
-    this.assertLessonWritePermission(lesson, user);
+    this.assertLessonWritePermission(
+      lesson as { isUserCreated: boolean; createdByUserId: string | null },
+      user,
+    );
     await this.assertCourseAttachPermission(dto.courseId, user);
 
-    return this.prisma.lesson.update({
+    const updated = await this.prisma.lesson.update({
       where: { id },
       data: dto,
       select: LESSON_SELECT,
     });
+
+    await this.invalidateRelatedCaches(user?.id);
+
+    return updated;
   }
 
   async remove(id: number, user?: CurrentUserPayload) {
     const lesson = await this.findOne(id, user);
-    this.assertLessonWritePermission(lesson, user);
+    this.assertLessonWritePermission(
+      lesson as { isUserCreated: boolean; createdByUserId: string | null },
+      user,
+    );
 
     await this.prisma.lesson.delete({ where: { id } });
+    await this.invalidateRelatedCaches(user?.id);
 
     return { message: `Lesson with ID ${id} deleted successfully` };
   }

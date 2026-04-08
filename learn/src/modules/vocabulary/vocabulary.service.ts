@@ -7,6 +7,12 @@ import {
 } from './dtos/vocabulary.dto';
 import { CreateVocabularyFromDictionaryDto } from './dtos/create-vocabulary-from-dictionary.dto';
 import { VocabularyFilterDto } from './dtos/vocabulary-filter.dto';
+import { RedisService } from '../redis/redis.service';
+import {
+  buildCacheKey,
+  buildScopePattern,
+  CACHE_TTL_SECONDS,
+} from '../redis/cache-key.util';
 import type { Prisma } from '../../generated/prisma/client';
 
 const WORD_INCLUDE = {
@@ -28,7 +34,22 @@ const WORD_INCLUDE = {
 
 @Injectable()
 export class VocabularyService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
+
+  private async invalidateRelatedCaches(userId: string) {
+    await this.redisService.delByPatterns([
+      buildScopePattern('vocabulary', userId),
+      buildScopePattern('progress', userId),
+      buildScopePattern('courses', userId),
+      buildScopePattern('lessons', userId),
+      buildScopePattern('words'),
+      buildScopePattern('practice', userId),
+      buildScopePattern('dictionary'),
+    ]);
+  }
 
   async createFromDictionary(
     userId: string,
@@ -67,7 +88,7 @@ export class VocabularyService {
         },
       }));
 
-    return this.prisma.userVocabularyNote.upsert({
+    const note = await this.prisma.userVocabularyNote.upsert({
       where: { userId_wordId: { userId, wordId: word.id } },
       create: {
         userId,
@@ -81,9 +102,33 @@ export class VocabularyService {
       },
       include: WORD_INCLUDE,
     });
+
+    await this.invalidateRelatedCaches(userId);
+
+    return note;
   }
 
   async getMyNotes(userId: string, filter: VocabularyFilterDto) {
+    const cacheKey = buildCacheKey('vocabulary', {
+      userId,
+      params: {
+        endpoint: 'getMyNotes',
+        filter,
+      },
+    });
+
+    const cached = await this.redisService.getJson<{
+      data: unknown[];
+      pagination: {
+        nextCursor: number | null;
+        hasMore: boolean;
+        total: number;
+      };
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const take = filter.take ?? 20;
 
     const where: Prisma.UserVocabularyNoteWhereInput = { userId };
@@ -127,7 +172,15 @@ export class VocabularyService {
     const nextCursor =
       hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
 
-    return { data, pagination: { nextCursor, hasMore, total } };
+    const response = { data, pagination: { nextCursor, hasMore, total } };
+
+    await this.redisService.setJson(
+      cacheKey,
+      response,
+      CACHE_TTL_SECONDS.MEDIUM,
+    );
+
+    return response;
   }
 
   async upsertNote(userId: string, dto: UpsertVocabularyNoteDto) {
@@ -142,7 +195,7 @@ export class VocabularyService {
         message: `Word with ID ${dto.wordId} not found`,
       });
 
-    return this.prisma.userVocabularyNote.upsert({
+    const note = await this.prisma.userVocabularyNote.upsert({
       where: { userId_wordId: { userId, wordId: dto.wordId } },
       create: {
         userId,
@@ -158,6 +211,10 @@ export class VocabularyService {
       },
       include: WORD_INCLUDE,
     });
+
+    await this.invalidateRelatedCaches(userId);
+
+    return note;
   }
 
   async updateNote(
@@ -165,21 +222,25 @@ export class VocabularyService {
     noteId: number,
     dto: UpdateVocabularyNoteDto,
   ) {
-    const note = await this.prisma.userVocabularyNote.findFirst({
+    const existingNote = await this.prisma.userVocabularyNote.findFirst({
       where: { id: noteId, userId },
     });
-    if (!note)
+    if (!existingNote)
       throw new ApiException({
         statusCode: HttpStatus.NOT_FOUND,
         errorCode: 'VOCABULARY_NOTE_NOT_FOUND',
         message: `Note with ID ${noteId} not found`,
       });
 
-    return this.prisma.userVocabularyNote.update({
+    const note = await this.prisma.userVocabularyNote.update({
       where: { id: noteId },
       data: dto,
       include: WORD_INCLUDE,
     });
+
+    await this.invalidateRelatedCaches(userId);
+
+    return note;
   }
 
   async removeNote(userId: string, noteId: number) {
@@ -194,6 +255,7 @@ export class VocabularyService {
       });
 
     await this.prisma.userVocabularyNote.delete({ where: { id: noteId } });
+    await this.invalidateRelatedCaches(userId);
 
     return { message: `Note with ID ${noteId} deleted successfully` };
   }
@@ -204,11 +266,15 @@ export class VocabularyService {
     });
 
     if (existing) {
-      return this.prisma.userVocabularyNote.update({
+      const note = await this.prisma.userVocabularyNote.update({
         where: { id: existing.id },
         data: { isFavorite: !existing.isFavorite },
         include: WORD_INCLUDE,
       });
+
+      await this.invalidateRelatedCaches(userId);
+
+      return note;
     }
 
     // Auto-create note entry if toggle favorite on a word with no note
@@ -220,7 +286,7 @@ export class VocabularyService {
         message: `Word with ID ${wordId} not found`,
       });
 
-    return this.prisma.userVocabularyNote.create({
+    const note = await this.prisma.userVocabularyNote.create({
       data: {
         userId,
         wordId,
@@ -228,5 +294,9 @@ export class VocabularyService {
       },
       include: WORD_INCLUDE,
     });
+
+    await this.invalidateRelatedCaches(userId);
+
+    return note;
   }
 }
