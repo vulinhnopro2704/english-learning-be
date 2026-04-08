@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Course
 ALTER TABLE "Course"
-  RENAME CONSTRAINT IF EXISTS "api_course_pkey" TO "Course_pkey";
+  RENAME CONSTRAINT "api_course_pkey" TO "Course_pkey";
 
 ALTER TABLE "Course"
   ADD COLUMN IF NOT EXISTS "isPublished" BOOLEAN NOT NULL DEFAULT false;
@@ -21,7 +21,7 @@ ALTER TABLE "Course"
 
 -- Lesson
 ALTER TABLE "Lesson"
-  RENAME CONSTRAINT IF EXISTS "api_lesson_pkey" TO "Lesson_pkey";
+  RENAME CONSTRAINT "api_lesson_pkey" TO "Lesson_pkey";
 
 ALTER TABLE "Lesson"
   ADD COLUMN IF NOT EXISTS "isPublished" BOOLEAN NOT NULL DEFAULT false;
@@ -35,7 +35,7 @@ ALTER TABLE "Lesson"
 
 -- Word
 ALTER TABLE "Word"
-  RENAME CONSTRAINT IF EXISTS "api_word_pkey" TO "Word_pkey";
+  RENAME CONSTRAINT "api_word_pkey" TO "Word_pkey";
 
 ALTER TABLE "Word"
   ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
@@ -43,6 +43,28 @@ ALTER TABLE "Word"
 --------------------------------------------------
 -- CREATE TABLES
 --------------------------------------------------
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_type
+    WHERE typname = 'LessonStatus'
+  ) THEN
+    CREATE TYPE "LessonStatus" AS ENUM ('LOCKED', 'UNLOCKED', 'IN_PROGRESS', 'COMPLETED');
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_type
+    WHERE typname = 'WordMasteryLevel'
+  ) THEN
+    CREATE TYPE "WordMasteryLevel" AS ENUM ('NEW', 'LEVEL_1', 'LEVEL_2', 'LEVEL_3', 'LEVEL_4', 'LEVEL_5');
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS "UserStreak" (
     "userId" UUID PRIMARY KEY,
@@ -130,14 +152,14 @@ CREATE INDEX IF NOT EXISTS "UserCourseProgress_userId_idx"
   ON "UserCourseProgress"("userId");
 
 ALTER TABLE "UserCourseProgress"
-  ADD CONSTRAINT IF NOT EXISTS "UserCourseProgress_userId_courseId_key"
+  ADD CONSTRAINT "UserCourseProgress_userId_courseId_key"
   UNIQUE ("userId", "courseId");
 
 CREATE INDEX IF NOT EXISTS "UserLessonProgress_userId_idx"
   ON "UserLessonProgress"("userId");
 
 ALTER TABLE "UserLessonProgress"
-  ADD CONSTRAINT IF NOT EXISTS "UserLessonProgress_userId_lessonId_key"
+  ADD CONSTRAINT "UserLessonProgress_userId_lessonId_key"
   UNIQUE ("userId", "lessonId");
 
 CREATE INDEX IF NOT EXISTS "UserWordProgress_userId_idx"
@@ -150,14 +172,14 @@ CREATE INDEX IF NOT EXISTS "UserWordProgress_userId_status_idx"
   ON "UserWordProgress"("userId", "status");
 
 ALTER TABLE "UserWordProgress"
-  ADD CONSTRAINT IF NOT EXISTS "UserWordProgress_userId_wordId_key"
+  ADD CONSTRAINT "UserWordProgress_userId_wordId_key"
   UNIQUE ("userId", "wordId");
 
 CREATE INDEX IF NOT EXISTS "UserVocabularyNote_userId_idx"
   ON "UserVocabularyNote"("userId");
 
 ALTER TABLE "UserVocabularyNote"
-  ADD CONSTRAINT IF NOT EXISTS "UserVocabularyNote_userId_wordId_key"
+  ADD CONSTRAINT "UserVocabularyNote_userId_wordId_key"
   UNIQUE ("userId", "wordId");
 
 CREATE INDEX IF NOT EXISTS "ReviewLog_userId_wordId_idx"
@@ -167,7 +189,7 @@ CREATE INDEX IF NOT EXISTS "ReviewLog_reviewedAt_idx"
   ON "ReviewLog"("reviewedAt");
 
 ALTER TABLE "UserFSRSSetting"
-  ADD CONSTRAINT IF NOT EXISTS "UserFSRSSetting_userId_key"
+  ADD CONSTRAINT "UserFSRSSetting_userId_key"
   UNIQUE ("userId");
 
 --------------------------------------------------
@@ -175,49 +197,49 @@ ALTER TABLE "UserFSRSSetting"
 --------------------------------------------------
 
 ALTER TABLE "Lesson"
-  ADD CONSTRAINT IF NOT EXISTS "Lesson_courseId_fkey"
+  ADD CONSTRAINT "Lesson_courseId_fkey"
   FOREIGN KEY ("courseId")
   REFERENCES "Course"("id")
   ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE "Word"
-  ADD CONSTRAINT IF NOT EXISTS "Word_lessonId_fkey"
+  ADD CONSTRAINT "Word_lessonId_fkey"
   FOREIGN KEY ("lessonId")
   REFERENCES "Lesson"("id")
   ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE "UserCourseProgress"
-  ADD CONSTRAINT IF NOT EXISTS "UserCourseProgress_courseId_fkey"
+  ADD CONSTRAINT "UserCourseProgress_courseId_fkey"
   FOREIGN KEY ("courseId")
   REFERENCES "Course"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "UserLessonProgress"
-  ADD CONSTRAINT IF NOT EXISTS "UserLessonProgress_lessonId_fkey"
+  ADD CONSTRAINT "UserLessonProgress_lessonId_fkey"
   FOREIGN KEY ("lessonId")
   REFERENCES "Lesson"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "UserWordProgress"
-  ADD CONSTRAINT IF NOT EXISTS "UserWordProgress_wordId_fkey"
+  ADD CONSTRAINT "UserWordProgress_wordId_fkey"
   FOREIGN KEY ("wordId")
   REFERENCES "Word"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "UserVocabularyNote"
-  ADD CONSTRAINT IF NOT EXISTS "UserVocabularyNote_wordId_fkey"
+  ADD CONSTRAINT "UserVocabularyNote_wordId_fkey"
   FOREIGN KEY ("wordId")
   REFERENCES "Word"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "ReviewLog"
-  ADD CONSTRAINT IF NOT EXISTS "ReviewLog_wordId_fkey"
+  ADD CONSTRAINT "ReviewLog_wordId_fkey"
   FOREIGN KEY ("wordId")
   REFERENCES "Word"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "ReviewLog"
-  ADD CONSTRAINT IF NOT EXISTS "ReviewLog_userId_wordId_fkey"
+  ADD CONSTRAINT "ReviewLog_userId_wordId_fkey"
   FOREIGN KEY ("userId", "wordId")
   REFERENCES "UserWordProgress"("userId", "wordId")
   ON DELETE CASCADE ON UPDATE CASCADE;

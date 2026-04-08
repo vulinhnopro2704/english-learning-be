@@ -1,6 +1,3 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateEnum
 CREATE TYPE "LessonStatus" AS ENUM ('LOCKED', 'UNLOCKED', 'IN_PROGRESS', 'COMPLETED');
 
@@ -10,59 +7,31 @@ CREATE TYPE "WordMasteryLevel" AS ENUM ('NEW', 'LEVEL_1', 'LEVEL_2', 'LEVEL_3', 
 -- CreateEnum
 CREATE TYPE "PracticeType" AS ENUM ('FSRS', 'LEARN_LESSON');
 
--- CreateTable
-CREATE TABLE "Course" (
-    "id" SERIAL NOT NULL,
-    "title" VARCHAR(255) NOT NULL,
-    "enTitle" VARCHAR(255),
-    "description" TEXT,
-    "image" VARCHAR(255),
-    "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMPTZ(6) NOT NULL,
-    "icon" VARCHAR(10),
-    "isPublished" BOOLEAN NOT NULL DEFAULT false,
-    "isUserCreated" BOOLEAN NOT NULL DEFAULT false,
-    "createdByUserId" UUID,
-    "order" INTEGER NOT NULL DEFAULT 0,
+-- DropForeignKey
+ALTER TABLE "Lesson" DROP CONSTRAINT "api_lesson_course_id_cc1d5c75_fk_api_course_id";
 
-    CONSTRAINT "Course_pkey" PRIMARY KEY ("id")
-);
+-- DropForeignKey
+ALTER TABLE "Word" DROP CONSTRAINT "api_word_lesson_id_ee17c753_fk_api_lesson_id";
 
--- CreateTable
-CREATE TABLE "Lesson" (
-    "id" SERIAL NOT NULL,
-    "title" VARCHAR(255) NOT NULL,
-    "description" TEXT,
-    "image" VARCHAR(255),
-    "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMPTZ(6) NOT NULL,
-    "courseId" INTEGER,
-    "isPublished" BOOLEAN NOT NULL DEFAULT false,
-    "isUserCreated" BOOLEAN NOT NULL DEFAULT false,
-    "createdByUserId" UUID,
-    "order" INTEGER NOT NULL DEFAULT 0,
+-- AlterTable
+ALTER TABLE "Course" RENAME CONSTRAINT "api_course_pkey" TO "Course_pkey";
+ALTER TABLE "Course" ADD COLUMN "createdByUserId" UUID;
+ALTER TABLE "Course" ADD COLUMN "isPublished" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Course" ADD COLUMN "isUserCreated" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Course" ADD COLUMN "order" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Course" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
 
-    CONSTRAINT "Lesson_pkey" PRIMARY KEY ("id")
-);
+-- AlterTable
+ALTER TABLE "Lesson" RENAME CONSTRAINT "api_lesson_pkey" TO "Lesson_pkey";
+ALTER TABLE "Lesson" ADD COLUMN "createdByUserId" UUID;
+ALTER TABLE "Lesson" ADD COLUMN "isPublished" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Lesson" ADD COLUMN "isUserCreated" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Lesson" ADD COLUMN "order" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Lesson" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
 
--- CreateTable
-CREATE TABLE "Word" (
-    "id" SERIAL NOT NULL,
-    "word" VARCHAR(255) NOT NULL,
-    "pronunciation" VARCHAR(255),
-    "meaning" TEXT NOT NULL,
-    "example" TEXT,
-    "exampleVi" TEXT,
-    "image" VARCHAR(255),
-    "audio" VARCHAR(255),
-    "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMPTZ(6) NOT NULL,
-    "lessonId" INTEGER,
-    "pos" VARCHAR(255),
-    "cefr" VARCHAR(10),
-
-    CONSTRAINT "Word_pkey" PRIMARY KEY ("id")
-);
+-- AlterTable
+ALTER TABLE "Word" RENAME CONSTRAINT "api_word_pkey" TO "Word_pkey";
+ALTER TABLE "Word" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
 
 -- CreateTable
 CREATE TABLE "UserStreak" (
@@ -149,24 +118,6 @@ CREATE TABLE "PracticeSession" (
 );
 
 -- CreateIndex
-CREATE INDEX "Course_createdByUserId_idx" ON "Course"("createdByUserId");
-
--- CreateIndex
-CREATE INDEX "Course_isUserCreated_createdByUserId_idx" ON "Course"("isUserCreated", "createdByUserId");
-
--- CreateIndex
-CREATE INDEX "Lesson_courseId_idx" ON "Lesson"("courseId");
-
--- CreateIndex
-CREATE INDEX "Lesson_createdByUserId_idx" ON "Lesson"("createdByUserId");
-
--- CreateIndex
-CREATE INDEX "Lesson_isUserCreated_createdByUserId_idx" ON "Lesson"("isUserCreated", "createdByUserId");
-
--- CreateIndex
-CREATE INDEX "Word_lessonId_idx" ON "Word"("lessonId");
-
--- CreateIndex
 CREATE INDEX "UserCourseProgress_userId_idx" ON "UserCourseProgress"("userId");
 
 -- CreateIndex
@@ -202,6 +153,18 @@ CREATE INDEX "PracticeSession_userId_idx" ON "PracticeSession"("userId");
 -- CreateIndex
 CREATE INDEX "PracticeSession_userId_type_idx" ON "PracticeSession"("userId", "type");
 
+-- CreateIndex
+CREATE INDEX "Course_createdByUserId_idx" ON "Course"("createdByUserId");
+
+-- CreateIndex
+CREATE INDEX "Course_isUserCreated_createdByUserId_idx" ON "Course"("isUserCreated", "createdByUserId");
+
+-- CreateIndex
+CREATE INDEX "Lesson_createdByUserId_idx" ON "Lesson"("createdByUserId");
+
+-- CreateIndex
+CREATE INDEX "Lesson_isUserCreated_createdByUserId_idx" ON "Lesson"("isUserCreated", "createdByUserId");
+
 -- AddForeignKey
 ALTER TABLE "Lesson" ADD CONSTRAINT "Lesson_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -222,4 +185,10 @@ ALTER TABLE "UserVocabularyNote" ADD CONSTRAINT "UserVocabularyNote_wordId_fkey"
 
 -- AddForeignKey
 ALTER TABLE "PracticeSession" ADD CONSTRAINT "PracticeSession_lessonId_fkey" FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- RenameIndex
+ALTER INDEX "api_lesson_course_id_cc1d5c75" RENAME TO "Lesson_courseId_idx";
+
+-- RenameIndex
+ALTER INDEX "api_word_lesson_id_ee17c753" RENAME TO "Word_lessonId_idx";
 
