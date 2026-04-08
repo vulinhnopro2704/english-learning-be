@@ -29,6 +29,8 @@ import { UpdateWordDto } from './dtos/update-word.dto';
 import { WordFilterDto } from './dtos/word-filter.dto';
 import { WordResponseDto } from './dtos/word-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('words')
 @ApiBearerAuth()
@@ -45,8 +47,11 @@ export class WordsController {
     includeTotal: true,
   })
   @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
-  findAll(@Query() filter: WordFilterDto) {
-    return this.wordsService.findAll(filter);
+  findAll(
+    @Query() filter: WordFilterDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.wordsService.findAll(filter, user);
   }
 
   @Get(':id')
@@ -54,8 +59,11 @@ export class WordsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkEntityResponse({ type: WordResponseDto, description: 'Word found' })
   @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.wordsService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.wordsService.findOne(id, user);
   }
 
   @Post()
@@ -65,8 +73,8 @@ export class WordsController {
     description: 'Word created',
   })
   @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
-  create(@Body() dto: CreateWordDto) {
-    return this.wordsService.create(dto);
+  create(@Body() dto: CreateWordDto, @CurrentUser() user: CurrentUserPayload) {
+    return this.wordsService.create(dto, user);
   }
 
   @Patch(':id')
@@ -77,8 +85,12 @@ export class WordsController {
     description: 'Word updated',
   })
   @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateWordDto) {
-    return this.wordsService.update(id, dto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateWordDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.wordsService.update(id, dto, user);
   }
 
   @Delete(':id')
@@ -86,7 +98,10 @@ export class WordsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiMessageResponse('Word deleted')
   @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.wordsService.remove(id);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.wordsService.remove(id, user);
   }
 }

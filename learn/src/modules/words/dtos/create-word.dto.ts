@@ -67,8 +67,7 @@ export class CreateWordDto {
   cefr?: string;
 
   /** Parent lesson ID */
-  @ApiPropertyOptional({ example: 1 })
-  @IsOptional()
+  @ApiProperty({ example: 1 })
   @IsInt()
-  lessonId?: number;
+  lessonId!: number;
 }

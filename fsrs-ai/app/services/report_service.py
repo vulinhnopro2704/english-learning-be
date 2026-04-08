@@ -104,20 +104,20 @@ async def get_insights(db: AsyncSession, user_id: UUID, window: str) -> dict:
 
     narrative: list[str] = []
     if memory_score >= 80:
-        narrative.append("Tri nho cua ban dang rat tot va on dinh.")
+        narrative.append("Trí nhớ của bạn đang rất tốt và ổn định.")
     elif memory_score >= 60:
-        narrative.append("Kha nang ghi nho cua ban dang on dinh o muc kha.")
+        narrative.append("Khả năng ghi nhớ của bạn đang ổn định ở mức khá.")
     else:
-        narrative.append("Kha nang ghi nho dang giam, nen tang tan suat on tap ngan.")
+        narrative.append("Khả năng ghi nhớ đang giảm, nên tăng tần suất ôn tập ngắn.")
 
     narrative.append(
-        f"Ngay mai co {due_tomorrow} tu den han, nen chia 1-2 phien on de tranh don bai."
+        f"Ngày mai có {due_tomorrow} từ đến hạn, nên chia 1-2 phiên ôn để tránh dồn bài."
     )
 
     if trend < -0.03:
-        narrative.append("Ty le nho lai giam so voi ky truoc, nen giam do kho tam thoi.")
+        narrative.append("Tỷ lệ nhớ lại giảm so với kỳ trước, nên giảm độ khó tạm thời.")
     elif trend > 0.03:
-        narrative.append("Ty le nho lai dang cai thien tot so voi ky truoc.")
+        narrative.append("Tỷ lệ nhớ lại đang cải thiện tốt so với kỳ trước.")
 
     return {
         "metrics": {
@@ -203,8 +203,8 @@ async def get_daily_report(
 
     avg_accuracy = _safe_ratio(sum(day["accuracy"] for day in days), len(days)) if days else 0.0
     narrative = [
-        f"Trong khoang thoi gian da chon, do chinh xac trung binh dat {round(avg_accuracy * 100, 1)}%.",
-        "Tien do on tap dang duoc theo doi theo ngay de can bang khoi luong bai.",
+        f"Trong khoảng thời gian đã chọn, độ chính xác trung bình đạt {round(avg_accuracy * 100, 1)}%.",
+        "Tiến độ ôn tập đang được theo dõi theo ngày để cân bằng khối lượng bài.",
     ]
 
     return {
@@ -279,15 +279,15 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> dict:
     next_7d_due = int(due_7d_result.scalar() or 0)
     suggested_daily_limit = max(10, min(200, int((next_7d_due + overdue_gt3d) / 7) + 5))
 
-    narrative = [f"Ban dang co {overdue_gt3d} tu qua han hon 3 ngay."]
+    narrative = [f"Bạn đang có {overdue_gt3d} từ quá hạn hơn 3 ngày."]
     narrative.append(
-        f"Toc do hien tai {'tang' if speed_delta_pct > 0 else 'giam'} {abs(round(speed_delta_pct * 100, 1))}% va do chinh xac {'tang' if accuracy_delta_pct >= 0 else 'giam'} {abs(round(accuracy_delta_pct * 100, 1))}%."
+        f"Tốc độ hiện tại {'tăng' if speed_delta_pct > 0 else 'giảm'} {abs(round(speed_delta_pct * 100, 1))}% và độ chính xác {'tăng' if accuracy_delta_pct >= 0 else 'giảm'} {abs(round(accuracy_delta_pct * 100, 1))}%."
     )
 
     if accuracy_delta_pct < -0.03:
-        narrative.append("Nen giam so cau kho trong 2-3 ngay de on dinh do chinh xac.")
+        narrative.append("Nên giảm số câu khó trong 2-3 ngày để ổn định độ chính xác.")
     else:
-        narrative.append("Co the duy tri nhip hien tai va uu tien xu ly bai qua han truoc.")
+        narrative.append("Có thể duy trì nhịp hiện tại và ưu tiên xử lý bài quá hạn trước.")
 
     return {
         "metrics": {

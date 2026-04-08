@@ -36,6 +36,15 @@ export class CourseResponseDto {
   @ApiProperty({ example: false })
   isPublished!: boolean;
 
+  @ApiProperty({ example: false })
+  isUserCreated!: boolean;
+
+  @ApiPropertyOptional({
+    example: 'c0c58e9b-2ec4-43df-9309-1f0f80d220e1',
+    nullable: true,
+  })
+  createdByUserId?: string | null;
+
   @ApiProperty({ example: '2026-03-27T14:22:31.123Z' })
   createdAt!: string;
 

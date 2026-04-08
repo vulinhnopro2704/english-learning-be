@@ -30,6 +30,15 @@ export class LessonResponseDto {
   @ApiProperty({ example: false })
   isPublished!: boolean;
 
+  @ApiProperty({ example: false })
+  isUserCreated!: boolean;
+
+  @ApiPropertyOptional({
+    example: 'c0c58e9b-2ec4-43df-9309-1f0f80d220e1',
+    nullable: true,
+  })
+  createdByUserId?: string | null;
+
   @ApiPropertyOptional({ example: 1, nullable: true })
   courseId?: number | null;
 

@@ -75,8 +75,11 @@ export class LessonsController {
     description: 'Lesson created',
   })
   @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
-  create(@Body() dto: CreateLessonDto) {
-    return this.lessonsService.create(dto);
+  create(
+    @Body() dto: CreateLessonDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.lessonsService.create(dto, user);
   }
 
   @Post(':id/complete')
@@ -109,8 +112,12 @@ export class LessonsController {
     description: 'Lesson updated',
   })
   @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateLessonDto) {
-    return this.lessonsService.update(id, dto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateLessonDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.lessonsService.update(id, dto, user);
   }
 
   @Delete(':id')
@@ -118,7 +125,10 @@ export class LessonsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiMessageResponse('Lesson deleted')
   @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.lessonsService.remove(id);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.lessonsService.remove(id, user);
   }
 }

@@ -16,6 +16,8 @@ const COURSE_SELECT = {
   icon: true,
   order: true,
   isPublished: true,
+  isUserCreated: true,
+  createdByUserId: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -28,10 +30,70 @@ export class CoursesService {
     return (user?.role ?? '').toUpperCase() === 'USER';
   }
 
+  private buildCourseVisibilityWhere(
+    user?: CurrentUserPayload,
+  ): Prisma.CourseWhereInput | undefined {
+    if (!this.isUserRole(user)) {
+      return undefined;
+    }
+
+    return {
+      OR: [
+        { isUserCreated: false },
+        {
+          isUserCreated: true,
+          createdByUserId: user!.id,
+        },
+      ],
+    };
+  }
+
+  private buildLessonVisibilityWhere(
+    user?: CurrentUserPayload,
+  ): Prisma.LessonWhereInput | undefined {
+    if (!this.isUserRole(user)) {
+      return undefined;
+    }
+
+    return {
+      OR: [
+        { isUserCreated: false },
+        {
+          isUserCreated: true,
+          createdByUserId: user!.id,
+        },
+      ],
+    };
+  }
+
+  private assertCourseWritePermission(
+    course: { isUserCreated: boolean; createdByUserId: string | null },
+    user?: CurrentUserPayload,
+  ) {
+    if (!this.isUserRole(user)) {
+      return;
+    }
+
+    if (course.isUserCreated && course.createdByUserId === user!.id) {
+      return;
+    }
+
+    throw new ApiException({
+      statusCode: HttpStatus.FORBIDDEN,
+      errorCode: 'COURSE_FORBIDDEN',
+      message: 'You do not have permission to modify this course',
+    });
+  }
+
   async findAll(filter: CourseFilterDto, user?: CurrentUserPayload) {
     const take = filter.take ?? 20;
 
     const where: Prisma.CourseWhereInput = {};
+    const visibilityWhere = this.buildCourseVisibilityWhere(user);
+
+    if (visibilityWhere) {
+      where.AND = [visibilityWhere];
+    }
 
     if (filter.search) {
       where.OR = [
@@ -191,11 +253,18 @@ export class CoursesService {
   }
 
   async findOne(id: number, user?: CurrentUserPayload) {
-    const course = await this.prisma.course.findUnique({
-      where: { id },
+    const visibilityWhere = this.buildCourseVisibilityWhere(user);
+    const lessonVisibilityWhere = this.buildLessonVisibilityWhere(user);
+
+    const course = await this.prisma.course.findFirst({
+      where: {
+        id,
+        ...(visibilityWhere ? { AND: [visibilityWhere] } : {}),
+      },
       select: {
         ...COURSE_SELECT,
         lessons: {
+          where: lessonVisibilityWhere,
           select: {
             id: true,
             title: true,
@@ -312,15 +381,22 @@ export class CoursesService {
     };
   }
 
-  async create(dto: CreateCourseDto) {
+  async create(dto: CreateCourseDto, user?: CurrentUserPayload) {
+    const isUserCreated = this.isUserRole(user);
+
     return this.prisma.course.create({
-      data: dto,
+      data: {
+        ...dto,
+        isUserCreated,
+        createdByUserId: isUserCreated ? user!.id : null,
+      },
       select: COURSE_SELECT,
     });
   }
 
-  async update(id: number, dto: UpdateCourseDto) {
-    await this.findOne(id);
+  async update(id: number, dto: UpdateCourseDto, user?: CurrentUserPayload) {
+    const course = await this.findOne(id, user);
+    this.assertCourseWritePermission(course, user);
 
     return this.prisma.course.update({
       where: { id },
@@ -329,8 +405,9 @@ export class CoursesService {
     });
   }
 
-  async remove(id: number) {
-    await this.findOne(id);
+  async remove(id: number, user?: CurrentUserPayload) {
+    const course = await this.findOne(id, user);
+    this.assertCourseWritePermission(course, user);
 
     await this.prisma.course.delete({ where: { id } });
 

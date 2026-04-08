@@ -73,8 +73,11 @@ export class CoursesController {
     description: 'Course created',
   })
   @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
-  create(@Body() dto: CreateCourseDto) {
-    return this.coursesService.create(dto);
+  create(
+    @Body() dto: CreateCourseDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.coursesService.create(dto, user);
   }
 
   @Patch(':id')
@@ -85,8 +88,12 @@ export class CoursesController {
     description: 'Course updated',
   })
   @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCourseDto) {
-    return this.coursesService.update(id, dto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateCourseDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.coursesService.update(id, dto, user);
   }
 
   @Delete(':id')
@@ -94,7 +101,10 @@ export class CoursesController {
   @ApiParam({ name: 'id', type: Number })
   @ApiMessageResponse('Course deleted')
   @ApiStandardErrorResponses({ statuses: [401, 404, 422, 500] })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.coursesService.remove(id);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    return this.coursesService.remove(id, user);
   }
 }

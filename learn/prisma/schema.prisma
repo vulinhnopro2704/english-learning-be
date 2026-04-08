@@ -18,9 +18,14 @@ model Course {
   updatedAt   DateTime             @updatedAt @db.Timestamptz(6)
   icon        String?              @db.VarChar(10)
   isPublished Boolean              @default(false)
+  isUserCreated Boolean            @default(false)
+  createdByUserId String?          @db.Uuid
   order       Int                  @default(0)
   lessons     Lesson[]
   progress    UserCourseProgress[]
+
+  @@index([createdByUserId])
+  @@index([isUserCreated, createdByUserId])
 }
 
 model Lesson {
@@ -32,6 +37,8 @@ model Lesson {
   updatedAt   DateTime             @updatedAt @db.Timestamptz(6)
   courseId    Int?
   isPublished Boolean              @default(false)
+  isUserCreated Boolean            @default(false)
+  createdByUserId String?          @db.Uuid
   order       Int                  @default(0)
   course      Course?              @relation(fields: [courseId], references: [id])
   progress    UserLessonProgress[]
@@ -39,6 +46,8 @@ model Lesson {
   sessions    PracticeSession[]
 
   @@index([courseId])
+  @@index([createdByUserId])
+  @@index([isUserCreated, createdByUserId])
 }
 
 model Word {

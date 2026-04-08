@@ -31,6 +31,13 @@ export class LessonFilterDto {
   @IsBoolean()
   isPublished?: boolean;
 
+  /** Filter only lessons created by current user */
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  createdByMe?: boolean;
+
   /** Sort field */
   @ApiPropertyOptional({
     enum: ['order', 'createdAt', 'title'],
