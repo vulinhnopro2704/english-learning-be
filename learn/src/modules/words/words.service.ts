@@ -33,21 +33,19 @@ export class WordsService {
 
   private buildLessonVisibilityWhere(
     user?: CurrentUserPayload,
-  ): Prisma.LessonRelationFilter | undefined {
+  ): Prisma.LessonWhereInput | undefined {
     if (!this.isUserRole(user)) {
       return undefined;
     }
 
     return {
-      is: {
-        OR: [
-          { isUserCreated: false },
-          {
-            isUserCreated: true,
-            createdByUserId: user!.id,
-          },
-        ],
-      },
+      OR: [
+        { isUserCreated: false },
+        {
+          isUserCreated: true,
+          createdByUserId: user!.id,
+        },
+      ],
     };
   }
 
@@ -124,7 +122,7 @@ export class WordsService {
 
     if (lessonVisibilityWhere) {
       andWhere.push({
-        OR: [{ lessonId: null }, { lesson: lessonVisibilityWhere.is }],
+        OR: [{ lessonId: null }, { lesson: lessonVisibilityWhere }],
       });
     }
 
@@ -196,7 +194,7 @@ export class WordsService {
         id,
         ...(lessonVisibilityWhere
           ? {
-              OR: [{ lessonId: null }, { lesson: lessonVisibilityWhere.is }],
+              OR: [{ lessonId: null }, { lesson: lessonVisibilityWhere }],
             }
           : {}),
       },
