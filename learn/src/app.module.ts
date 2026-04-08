@@ -8,6 +8,8 @@ import { ProgressModule } from './modules/progress/progress.module';
 import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
 import { StreakModule } from './modules/streak/streak.module';
 import { PracticeModule } from './modules/practice/practice.module';
+import { DictionaryModule } from './modules/dictionary/dictionary.module';
+import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -15,6 +17,7 @@ import { PracticeModule } from './modules/practice/practice.module';
       isGlobal: true,
     }),
     DbModule,
+    RedisModule,
     CoursesModule,
     LessonsModule,
     WordsModule,
@@ -22,6 +25,7 @@ import { PracticeModule } from './modules/practice/practice.module';
     VocabularyModule,
     StreakModule,
     PracticeModule,
+    DictionaryModule,
   ],
 })
 export class LearnModule {}

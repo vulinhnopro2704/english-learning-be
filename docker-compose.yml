@@ -12,7 +12,7 @@ services:
       - STORAGE_UPSTREAM_URL=${STORAGE_UPSTREAM_URL:-http://storage:3003}
       - FSRS_AI_UPSTREAM_URL=${FSRS_AI_UPSTREAM_URL:-http://fsrs-ai:3004}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379
+      - REDIS_URL=${REDIS_URL:-redis://:${REDIS_PASSWORD:-changeme}@redis:6379}
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
       - RATE_LIMIT_WINDOW_SEC=${RATE_LIMIT_WINDOW_SEC:-60}
       - TRUST_X_FORWARDED_FOR=${TRUST_X_FORWARDED_FOR:-true}
@@ -69,9 +69,13 @@ services:
     environment:
       - PORT=${LEARN_PORT:-3002}
       - FSRS_AI_URL=${FSRS_AI_URL:-http://fsrs-ai:3004}
+      - REDIS_URL=${REDIS_URL:-redis://:${REDIS_PASSWORD:-changeme}@redis:6379}
       - SWAGGER_ENABLED=${LEARN_SWAGGER_ENABLED:-true}
       - SWAGGER_PATH=${LEARN_SWAGGER_PATH:-api-docs}
       - SWAGGER_TITLE=${LEARN_SWAGGER_TITLE:-Learn API}
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: no
     networks:
       - app-network

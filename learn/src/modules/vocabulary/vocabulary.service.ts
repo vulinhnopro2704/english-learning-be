@@ -5,6 +5,7 @@ import {
   UpsertVocabularyNoteDto,
   UpdateVocabularyNoteDto,
 } from './dtos/vocabulary.dto';
+import { CreateVocabularyFromDictionaryDto } from './dtos/create-vocabulary-from-dictionary.dto';
 import { VocabularyFilterDto } from './dtos/vocabulary-filter.dto';
 import type { Prisma } from '../../generated/prisma/client';
 
@@ -28,6 +29,59 @@ const WORD_INCLUDE = {
 @Injectable()
 export class VocabularyService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async createFromDictionary(
+    userId: string,
+    dto: CreateVocabularyFromDictionaryDto,
+  ) {
+    const normalizedWord = dto.word.trim();
+    if (!normalizedWord) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'INVALID_WORD',
+        message: 'Word cannot be empty',
+      });
+    }
+
+    const existingWord = await this.prisma.word.findFirst({
+      where: {
+        word: {
+          equals: normalizedWord,
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    const word =
+      existingWord ??
+      (await this.prisma.word.create({
+        data: {
+          word: normalizedWord,
+          pronunciation: dto.phonetic,
+          meaning: dto.translation ?? dto.definition,
+          example: dto.example,
+          exampleVi: dto.exampleTranslation,
+          audio: dto.audio,
+          pos: dto.partOfSpeech,
+          cefr: dto.cefrLevel,
+        },
+      }));
+
+    return this.prisma.userVocabularyNote.upsert({
+      where: { userId_wordId: { userId, wordId: word.id } },
+      create: {
+        userId,
+        wordId: word.id,
+        note: dto.note,
+        isFavorite: dto.isFavorite ?? false,
+      },
+      update: {
+        note: dto.note,
+        isFavorite: dto.isFavorite,
+      },
+      include: WORD_INCLUDE,
+    });
+  }
 
   async getMyNotes(userId: string, filter: VocabularyFilterDto) {
     const take = filter.take ?? 20;

@@ -96,6 +96,12 @@ export class WordProgressFilterDto {
   @IsString()
   status?: string;
 
+  /** Filter by CEFR level (e.g. A1, B2) */
+  @ApiPropertyOptional({ example: 'A1' })
+  @IsOptional()
+  @IsString()
+  cefr?: string;
+
   /** Search by word text */
   @ApiPropertyOptional({ example: 'hello' })
   @IsOptional()

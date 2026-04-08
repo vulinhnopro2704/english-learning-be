@@ -303,6 +303,7 @@ jobs:
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
             REDIS_PORT=${{ secrets.REDIS_PORT }}
+            REDIS_URL=redis://:${{ secrets.REDIS_PASSWORD }}@redis:6379
             RATE_LIMIT_MAX=${{ secrets.RATE_LIMIT_MAX || '100' }}
             RATE_LIMIT_WINDOW_SEC=${{ secrets.RATE_LIMIT_WINDOW_SEC || '60' }}
             TRUST_X_FORWARDED_FOR=${{ secrets.TRUST_X_FORWARDED_FOR || 'true' }}
@@ -332,7 +333,7 @@ jobs:
             JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
             JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
             COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
-            REDIS_URL=redis://:${{ secrets.REDIS_PASSWORD }}@redis:6379
+            REDIS_URL=${{ secrets.REDIS_URL || format('redis://:{0}@redis:6379', secrets.REDIS_PASSWORD) }}
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
             PORT=${{ secrets.AUTH_PORT }}
             ENVEOF
@@ -342,6 +343,7 @@ jobs:
             cat > learn/.env << ENVEOF
             DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
+            REDIS_URL=${{ secrets.REDIS_URL || format('redis://:{0}@redis:6379', secrets.REDIS_PASSWORD) }}
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
             FSRS_AI_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
             PORT=${{ secrets.LEARN_PORT }}

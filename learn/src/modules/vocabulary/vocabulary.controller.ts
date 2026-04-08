@@ -23,6 +23,7 @@ import {
   UpsertVocabularyNoteDto,
   UpdateVocabularyNoteDto,
 } from './dtos/vocabulary.dto';
+import { CreateVocabularyFromDictionaryDto } from './dtos/create-vocabulary-from-dictionary.dto';
 import { VocabularyFilterDto } from './dtos/vocabulary-filter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -54,6 +55,22 @@ export class VocabularyController {
     @Body() dto: UpsertVocabularyNoteDto,
   ) {
     return this.vocabularyService.upsertNote(userId, dto);
+  }
+
+  @Post('from-dictionary')
+  @ApiOperation({
+    summary: 'Create or update vocabulary note from dictionary payload',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Dictionary word saved to notebook',
+  })
+  @ApiStandardErrorResponses({ statuses: [401, 422, 500] })
+  createFromDictionary(
+    @CurrentUser('id') userId: string,
+    @Body() dto: CreateVocabularyFromDictionaryDto,
+  ) {
+    return this.vocabularyService.createFromDictionary(userId, dto);
   }
 
   @Patch(':id')

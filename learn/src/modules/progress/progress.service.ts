@@ -373,18 +373,25 @@ export class ProgressService {
     });
 
     const where: Prisma.UserWordProgressWhereInput = { userId };
+    const wordWhere: Prisma.WordWhereInput = {};
 
     if (filter.status) {
       where.status = filter.status as any;
     }
 
     if (filter.search) {
-      where.word = {
-        OR: [
-          { word: { contains: filter.search, mode: 'insensitive' } },
-          { meaning: { contains: filter.search, mode: 'insensitive' } },
-        ],
-      };
+      wordWhere.OR = [
+        { word: { contains: filter.search, mode: 'insensitive' } },
+        { meaning: { contains: filter.search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (filter.cefr) {
+      wordWhere.cefr = filter.cefr;
+    }
+
+    if (Object.keys(wordWhere).length > 0) {
+      where.word = wordWhere;
     }
 
     const orderBy: Prisma.UserWordProgressOrderByWithRelationInput = {
@@ -402,8 +409,18 @@ export class ProgressService {
             word: true,
             pronunciation: true,
             meaning: true,
+            example: true,
+            exampleVi: true,
+            image: true,
+            audio: true,
             pos: true,
             cefr: true,
+            lesson: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
           },
         },
       },
