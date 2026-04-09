@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, type ConfigOptions } from 'cloudinary';
+import { Readable } from 'stream';
 
 export type UploadResourceType = 'image' | 'video' | 'raw';
 
@@ -77,5 +78,58 @@ export class CloudinaryService {
       type: 'upload',
       attachment: false,
     });
+  }
+
+  async uploadBuffer(input: {
+    buffer: Buffer;
+    resourceType: UploadResourceType;
+    folder: string;
+    publicId: string;
+    format?: string;
+  }): Promise<{
+    publicId: string;
+    secureUrl: string;
+    format: string | null;
+    bytes: number;
+  }> {
+    const stream = Readable.from(input.buffer);
+
+    const result = await new Promise<{
+      public_id: string;
+      secure_url: string;
+      format?: string;
+      bytes?: number;
+    }>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: input.resourceType,
+          folder: input.folder,
+          public_id: input.publicId,
+          use_filename: false,
+          overwrite: true,
+          format: input.format,
+        },
+        (error, uploaded) => {
+          if (error || !uploaded) {
+            reject(
+              error instanceof Error
+                ? error
+                : new Error('Cloudinary upload failed'),
+            );
+            return;
+          }
+          resolve(uploaded as never);
+        },
+      );
+
+      stream.pipe(uploadStream);
+    });
+
+    return {
+      publicId: result.public_id,
+      secureUrl: result.secure_url,
+      format: result.format ?? null,
+      bytes: result.bytes ?? input.buffer.byteLength,
+    };
   }
 }

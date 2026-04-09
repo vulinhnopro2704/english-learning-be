@@ -46,69 +46,87 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
-    if (existingUser) {
-      throw new ApiException({
-        statusCode: HttpStatus.CONFLICT,
-        errorCode: 'EMAIL_ALREADY_REGISTERED',
-        message: 'Email already registered',
+    try {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: dto.email },
       });
+      if (existingUser) {
+        throw new ApiException({
+          statusCode: HttpStatus.CONFLICT,
+          errorCode: 'EMAIL_ALREADY_REGISTERED',
+          message: 'Email already registered',
+        });
+      }
+
+      const hashedPassword = await hash(dto.password, 12);
+      const user = await this.prisma.user.create({
+        data: {
+          id: uuidv7(),
+          email: dto.email,
+          password: hashedPassword,
+          name: dto.name,
+        },
+      });
+
+      const tokens = await this.generateTokens(user.id, user.email, user.role);
+      this.logger.log(`User registered: ${user.email}`);
+
+      return {
+        user: this.sanitizeUser(user),
+        ...tokens,
+      };
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `Register failed for ${dto.email}: ${err.message}`,
+        err.stack,
+      );
+      throw error;
     }
-
-    const hashedPassword = await hash(dto.password, 12);
-    const user = await this.prisma.user.create({
-      data: {
-        id: uuidv7(),
-        email: dto.email,
-        password: hashedPassword,
-        name: dto.name,
-      },
-    });
-
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
-    this.logger.log(`User registered: ${user.email}`);
-
-    return {
-      user: this.sanitizeUser(user),
-      ...tokens,
-    };
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
-    if (!user || !user.password) {
-      throw new ApiException({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        errorCode: 'INVALID_CREDENTIALS',
-        message: 'Invalid credentials',
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { email: dto.email },
       });
-    }
+      if (!user || !user.password) {
+        throw new ApiException({
+          statusCode: HttpStatus.UNAUTHORIZED,
+          errorCode: 'INVALID_CREDENTIALS',
+          message: 'Invalid credentials',
+        });
+      }
 
-    const isPasswordValid = await compare(dto.password, user.password);
-    if (!isPasswordValid) {
-      throw new ApiException({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        errorCode: 'INVALID_CREDENTIALS',
-        message: 'Invalid credentials',
+      const isPasswordValid = await compare(dto.password, user.password);
+      if (!isPasswordValid) {
+        throw new ApiException({
+          statusCode: HttpStatus.UNAUTHORIZED,
+          errorCode: 'INVALID_CREDENTIALS',
+          message: 'Invalid credentials',
+        });
+      }
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
       });
+
+      const tokens = await this.generateTokens(user.id, user.email, user.role);
+      this.logger.log(`User logged in: ${user.email}`);
+
+      return {
+        user: this.sanitizeUser(user),
+        ...tokens,
+      };
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `Login failed for ${dto.email}: ${err.message}`,
+        err.stack,
+      );
+      throw error;
     }
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    });
-
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
-    this.logger.log(`User logged in: ${user.email}`);
-
-    return {
-      user: this.sanitizeUser(user),
-      ...tokens,
-    };
   }
 
   async logout(

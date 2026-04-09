@@ -1,14 +1,14 @@
-import {
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiException } from '@english-learning/nest-error-handler';
+import { createHash } from 'crypto';
+import { extname } from 'path';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import type { CurrentUser } from '../common/auth/current-user.interface';
 import { FileType, Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFileDto } from './dto/create-file.dto';
+import { IngestRemoteAudioDto } from './dto/ingest-remote-audio.dto';
 import { ListFilesQueryDto } from './dto/list-files-query.dto';
 import {
   DownloadUrlQueryDto,
@@ -87,6 +87,89 @@ export class FilesService {
     }
   }
 
+  async ingestRemoteAudio(dto: IngestRemoteAudioDto, user: CurrentUser) {
+    let response: Response;
+    try {
+      response = await fetch(dto.sourceUrl);
+    } catch {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_GATEWAY,
+        errorCode: 'REMOTE_AUDIO_FETCH_FAILED',
+        message: 'Unable to fetch remote audio source',
+      });
+    }
+
+    if (!response.ok) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_GATEWAY,
+        errorCode: 'REMOTE_AUDIO_FETCH_FAILED',
+        message: 'Remote audio source returned an error',
+      });
+    }
+
+    const contentType = (response.headers.get('content-type') || '')
+      .split(';')[0]
+      ?.trim()
+      .toLowerCase();
+
+    const allowedMimeTypes = this.parseAllowedMimeTypes();
+    if (!contentType || !allowedMimeTypes.includes(contentType)) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'MIME_TYPE_NOT_ALLOWED',
+        message: 'Remote audio MIME type is not allowed',
+      });
+    }
+
+    const audioBuffer = Buffer.from(await response.arrayBuffer());
+    const maxSizeMb = Number(
+      this.configService.get<string>('MAX_FILE_SIZE_MB') ?? '10',
+    );
+    const maxSizeBytes = maxSizeMb * 1024 * 1024;
+    if (audioBuffer.byteLength > maxSizeBytes) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'FILE_SIZE_LIMIT_EXCEEDED',
+        message: `Remote audio exceeds MAX_FILE_SIZE_MB (${maxSizeMb}MB)`,
+      });
+    }
+
+    const format = this.resolveAudioFormat(contentType, dto.sourceUrl);
+    const sourceHash = createHash('sha1').update(dto.sourceUrl).digest('hex');
+    const normalizedWord = (dto.word || 'word')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .slice(0, 80);
+    const publicId = `${dto.folder}/${normalizedWord || 'word'}-${dto.accent}-${sourceHash.slice(0, 12)}`;
+
+    const uploaded = await this.cloudinaryService.uploadBuffer({
+      buffer: audioBuffer,
+      folder: dto.folder,
+      resourceType: 'raw',
+      publicId,
+      format,
+    });
+
+    return this.createFile(
+      {
+        publicId: uploaded.publicId,
+        secureUrl: uploaded.secureUrl,
+        type: 'file',
+        format: uploaded.format ?? format,
+        size: uploaded.bytes,
+        metadata: {
+          accent: dto.accent,
+          sourceUrl: dto.sourceUrl,
+          sourceProvider: 'dictionary',
+          contentType,
+          ...(dto.metadata ?? {}),
+        },
+      },
+      user,
+    );
+  }
+
   async getFileById(id: string) {
     const file = await this.prisma.file.findUnique({ where: { id } });
     if (!file) {
@@ -148,7 +231,7 @@ export class FilesService {
 
     const hasMore = files.length > take;
     const data = hasMore ? files.slice(0, take) : files;
-    const nextCursor = hasMore ? data[data.length - 1]?.id ?? null : null;
+    const nextCursor = hasMore ? (data[data.length - 1]?.id ?? null) : null;
 
     return {
       data,
@@ -167,7 +250,28 @@ export class FilesService {
     return raw
       .split(',')
       .map((item) => item.trim())
+      .map((item) => item.toLowerCase())
       .filter(Boolean);
+  }
+
+  private resolveAudioFormat(contentType: string, sourceUrl: string) {
+    const byMime: Record<string, string> = {
+      'audio/mpeg': 'mp3',
+      'audio/mp3': 'mp3',
+      'audio/wav': 'wav',
+      'audio/x-wav': 'wav',
+      'audio/webm': 'webm',
+      'audio/ogg': 'ogg',
+    };
+
+    if (byMime[contentType]) {
+      return byMime[contentType];
+    }
+
+    const sourcePath = sourceUrl.split('?')[0] || sourceUrl;
+    const extension = extname(sourcePath).replace('.', '').toLowerCase();
+
+    return extension || 'mp3';
   }
 
   private toPrismaFileType(type: 'image' | 'video' | 'file'): FileType {

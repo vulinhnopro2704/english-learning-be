@@ -30,6 +30,7 @@ import {
   FileResponseDto,
   UploadSignatureResponseDto,
 } from './dto/file-response.dto';
+import { IngestRemoteAudioDto } from './dto/ingest-remote-audio.dto';
 import { ListFilesQueryDto } from './dto/list-files-query.dto';
 import {
   DownloadUrlQueryDto,
@@ -46,7 +47,9 @@ export class FilesController {
 
   @Post('upload-signature')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Create Cloudinary upload signature for direct upload' })
+  @ApiOperation({
+    summary: 'Create Cloudinary upload signature for direct upload',
+  })
   @ApiBody({ type: UploadSignatureDto })
   @ApiOkResponse({ type: UploadSignatureResponseDto })
   @ApiStandardErrorResponses({ statuses: [400, 401, 422, 500] })
@@ -64,6 +67,21 @@ export class FilesController {
     @CurrentUserDecorator() user: CurrentUser,
   ) {
     return this.filesService.createFile(dto, user);
+  }
+
+  @Post('ingest-remote-audio')
+  @ApiOperation({
+    summary:
+      'Fetch remote audio URL, upload to Cloudinary, and persist metadata',
+  })
+  @ApiBody({ type: IngestRemoteAudioDto })
+  @ApiCreatedResponse({ type: FileResponseDto })
+  @ApiStandardErrorResponses({ statuses: [400, 401, 409, 422, 500] })
+  ingestRemoteAudio(
+    @Body() dto: IngestRemoteAudioDto,
+    @CurrentUserDecorator() user: CurrentUser,
+  ) {
+    return this.filesService.ingestRemoteAudio(dto, user);
   }
 
   @Get(':id/download-url')

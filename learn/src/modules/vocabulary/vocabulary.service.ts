@@ -1,6 +1,8 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiException } from '@english-learning/nest-error-handler';
 import { PrismaService } from '../db/prisma.service';
+import { StreakService } from '../streak/streak.service';
 import {
   UpsertVocabularyNoteDto,
   UpdateVocabularyNoteDto,
@@ -24,19 +26,37 @@ const WORD_INCLUDE = {
       meaning: true,
       example: true,
       exampleVi: true,
+      phoneticUs: true,
+      phoneticUk: true,
+      audioUs: true,
+      audioUk: true,
+      dictionaryMetadata: true,
       pos: true,
       cefr: true,
       image: true,
       audio: true,
+      examples: {
+        select: {
+          id: true,
+          example: true,
+          exampleVi: true,
+          exampleAudio: true,
+          order: true,
+        },
+      },
     },
   },
 } as const;
 
 @Injectable()
 export class VocabularyService {
+  private readonly logger = new Logger(VocabularyService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
+    private readonly configService: ConfigService,
+    private readonly streakService: StreakService,
   ) {}
 
   private async invalidateRelatedCaches(userId: string) {
@@ -56,37 +76,136 @@ export class VocabularyService {
     dto: CreateVocabularyFromDictionaryDto,
   ) {
     const normalizedWord = dto.word.trim();
-    if (!normalizedWord) {
+    const normalizedMeaning =
+      dto.translation?.trim() ||
+      dto.definition?.trim() ||
+      dto.definitionGpt?.trim() ||
+      '';
+    const normalizedPhonetic =
+      dto.phoneticUs?.trim() ||
+      dto.phoneticUk?.trim() ||
+      dto.phonetic?.trim() ||
+      '';
+
+    if (!normalizedWord || !normalizedMeaning) {
       throw new ApiException({
         statusCode: HttpStatus.BAD_REQUEST,
-        errorCode: 'INVALID_WORD',
-        message: 'Word cannot be empty',
+        errorCode: 'INVALID_WORD_PAYLOAD',
+        message: 'Word and meaning are required',
       });
     }
 
-    const existingWord = await this.prisma.word.findFirst({
-      where: {
-        word: {
-          equals: normalizedWord,
-          mode: 'insensitive',
-        },
+    const duplicateWhere: Prisma.WordWhereInput = {
+      word: {
+        equals: normalizedWord,
+        mode: 'insensitive',
       },
+      meaning: {
+        equals: normalizedMeaning,
+        mode: 'insensitive',
+      },
+      ...(normalizedPhonetic
+        ? {
+            OR: [
+              {
+                pronunciation: {
+                  equals: normalizedPhonetic,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                phoneticUs: {
+                  equals: normalizedPhonetic,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                phoneticUk: {
+                  equals: normalizedPhonetic,
+                  mode: 'insensitive',
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const existingWord = await this.prisma.word.findFirst({
+      where: duplicateWhere,
     });
 
-    const word =
-      existingWord ??
-      (await this.prisma.word.create({
-        data: {
-          word: normalizedWord,
-          pronunciation: dto.phonetic,
-          meaning: dto.translation ?? dto.definition,
-          example: dto.example,
-          exampleVi: dto.exampleTranslation,
-          audio: dto.audio,
-          pos: dto.partOfSpeech,
-          cefr: dto.cefrLevel,
-        },
-      }));
+    const word = existingWord
+      ? await this.prisma.word.update({
+          where: { id: existingWord.id },
+          data: {
+            phoneticUs:
+              existingWord.phoneticUs || dto.phoneticUs || dto.phonetic || null,
+            phoneticUk: existingWord.phoneticUk || dto.phoneticUk || null,
+            pronunciation:
+              existingWord.pronunciation ||
+              dto.phonetic ||
+              dto.phoneticUs ||
+              null,
+            pos: existingWord.pos || dto.partOfSpeech || null,
+            cefr: existingWord.cefr || dto.cefrLevel || null,
+            dictionaryMetadata: {
+              ...(typeof existingWord.dictionaryMetadata === 'object' &&
+              existingWord.dictionaryMetadata
+                ? (existingWord.dictionaryMetadata as Prisma.JsonObject)
+                : {}),
+              sourceProvider: dto.sourceProvider ?? 'dictionary',
+              ...(dto.sourceMetadata ?? {}),
+            },
+          },
+        })
+      : await this.prisma.word.create({
+          data: {
+            word: normalizedWord,
+            pronunciation: dto.phonetic || dto.phoneticUs || null,
+            phoneticUs: dto.phoneticUs || dto.phonetic || null,
+            phoneticUk: dto.phoneticUk || null,
+            meaning: normalizedMeaning,
+            example: dto.example,
+            exampleVi: dto.exampleTranslation,
+            audio: dto.audio || dto.audioUs || null,
+            audioUs: dto.audioUs || dto.audio || null,
+            audioUk: dto.audioUk || null,
+            pos: dto.partOfSpeech,
+            cefr: dto.cefrLevel,
+            dictionaryMetadata: {
+              sourceProvider: dto.sourceProvider ?? 'dictionary',
+              ...(dto.sourceMetadata ?? {}),
+            },
+          },
+        });
+
+    await this.upsertWordExamples(word.id, dto);
+
+    const syncedAudio = await this.syncWordAudios({
+      wordId: word.id,
+      userId,
+      word: normalizedWord,
+      audioUs: dto.audioUs || dto.audio,
+      audioUk: dto.audioUk,
+      fallbackAudioUs: word.audioUs || word.audio,
+      fallbackAudioUk: word.audioUk,
+    });
+
+    await this.prisma.word.update({
+      where: { id: word.id },
+      data: {
+        audio: syncedAudio.audioUs || word.audio || dto.audio || null,
+        audioUs:
+          syncedAudio.audioUs ||
+          word.audioUs ||
+          dto.audioUs ||
+          dto.audio ||
+          null,
+        audioUk: syncedAudio.audioUk || word.audioUk || dto.audioUk || null,
+        audioUsFileId: syncedAudio.audioUsFileId || word.audioUsFileId || null,
+        audioUkFileId: syncedAudio.audioUkFileId || word.audioUkFileId || null,
+      },
+    });
 
     const note = await this.prisma.userVocabularyNote.upsert({
       where: { userId_wordId: { userId, wordId: word.id } },
@@ -103,9 +222,214 @@ export class VocabularyService {
       include: WORD_INCLUDE,
     });
 
+    const now = new Date();
+    const progress = await this.prisma.userWordProgress.findUnique({
+      where: { userId_wordId: { userId, wordId: word.id } },
+      select: { id: true, nextReview: true },
+    });
+
+    if (!progress) {
+      await this.prisma.userWordProgress.create({
+        data: {
+          userId,
+          wordId: word.id,
+          status: 'NEW',
+          proficiency: 0,
+          reviewCount: 0,
+          correctCount: 0,
+          nextReview: now,
+        },
+      });
+    } else if (!progress.nextReview) {
+      await this.prisma.userWordProgress.update({
+        where: { id: progress.id },
+        data: { nextReview: now },
+      });
+    }
+
+    try {
+      await this.prisma.practiceSession.create({
+        data: {
+          userId,
+          type: 'DICTIONARY_SAVE',
+          totalWords: 1,
+          correctCount: 1,
+          totalDurationMs: 0,
+          startedAt: now,
+          completedAt: now,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed creating DICTIONARY_SAVE session for user ${userId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+
+    try {
+      await this.streakService.recordActivity(userId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed recording streak for user ${userId} after dictionary save: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+
+    void this.initFsrsCard(userId, word.id);
+
     await this.invalidateRelatedCaches(userId);
 
     return note;
+  }
+
+  private async upsertWordExamples(
+    wordId: number,
+    dto: CreateVocabularyFromDictionaryDto,
+  ) {
+    const payloadExamples =
+      dto.examples && dto.examples.length > 0
+        ? dto.examples
+        : dto.example
+          ? [
+              {
+                example: dto.example,
+                exampleVi: dto.exampleTranslation,
+                order: 0,
+              },
+            ]
+          : [];
+
+    if (payloadExamples.length === 0) {
+      return;
+    }
+
+    await Promise.all(
+      payloadExamples
+        .filter((item) => item.example?.trim())
+        .map((item, index) =>
+          this.prisma.wordExample.upsert({
+            where: {
+              wordId_example: {
+                wordId,
+                example: item.example.trim(),
+              },
+            },
+            create: {
+              wordId,
+              example: item.example.trim(),
+              exampleVi: item.exampleVi || null,
+              exampleAudio: item.exampleAudio || null,
+              order: item.order ?? index,
+              source: {
+                sourceProvider: dto.sourceProvider ?? 'dictionary',
+                ...(dto.sourceMetadata ?? {}),
+              },
+            },
+            update: {
+              exampleVi: item.exampleVi || null,
+              exampleAudio: item.exampleAudio || null,
+              order: item.order ?? index,
+            },
+          }),
+        ),
+    );
+  }
+
+  private async syncWordAudios(input: {
+    wordId: number;
+    userId: string;
+    word: string;
+    audioUs?: string;
+    audioUk?: string;
+    fallbackAudioUs?: string | null;
+    fallbackAudioUk?: string | null;
+  }) {
+    const storageServiceUrl =
+      this.configService.get<string>('STORAGE_SERVICE_URL') ||
+      'http://localhost:3003';
+
+    if (!input.audioUs && !input.audioUk) {
+      return {
+        audioUs: input.fallbackAudioUs || null,
+        audioUk: input.fallbackAudioUk || null,
+        audioUsFileId: null as string | null,
+        audioUkFileId: null as string | null,
+      };
+    }
+
+    const ingest = async (audioUrl: string, accent: 'us' | 'uk') => {
+      const response = await fetch(
+        `${storageServiceUrl}/files/ingest-remote-audio`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': input.userId,
+          },
+          body: JSON.stringify({
+            sourceUrl: audioUrl,
+            folder: 'words/audio',
+            accent,
+            word: input.word,
+            metadata: {
+              wordId: input.wordId,
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new ApiException({
+          statusCode: HttpStatus.BAD_GATEWAY,
+          errorCode: 'AUDIO_INGEST_FAILED',
+          message: `Failed to ingest ${accent.toUpperCase()} audio via storage service`,
+        });
+      }
+
+      const payload = (await response.json()) as {
+        id: string;
+        secureUrl: string;
+      };
+
+      return {
+        fileId: payload.id,
+        secureUrl: payload.secureUrl,
+      };
+    };
+
+    const usResult = input.audioUs ? await ingest(input.audioUs, 'us') : null;
+    const ukResult = input.audioUk ? await ingest(input.audioUk, 'uk') : null;
+
+    return {
+      audioUs:
+        usResult?.secureUrl || input.fallbackAudioUs || input.audioUs || null,
+      audioUk:
+        ukResult?.secureUrl || input.fallbackAudioUk || input.audioUk || null,
+      audioUsFileId: usResult?.fileId || null,
+      audioUkFileId: ukResult?.fileId || null,
+    };
+  }
+
+  private async initFsrsCard(userId: string, wordId: number) {
+    const fsrsBaseUrl = this.configService.get<string>('FSRS_AI_URL');
+    if (!fsrsBaseUrl) {
+      return;
+    }
+
+    try {
+      const url = new URL(`${fsrsBaseUrl}/api/v1/fsrs/init-cards`);
+      url.searchParams.set('user_id', userId);
+      url.searchParams.append('word_ids', String(wordId));
+      await fetch(url.toString(), { method: 'POST' });
+    } catch (error) {
+      this.logger.warn(
+        `FSRS card init failed for user ${userId}, word ${wordId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
   }
 
   async getMyNotes(userId: string, filter: VocabularyFilterDto) {

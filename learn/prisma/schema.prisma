@@ -54,11 +54,18 @@ model Word {
   id              Int                  @id @default(autoincrement())
   word            String               @db.VarChar(255)
   pronunciation   String?              @db.VarChar(255)
+  phoneticUs      String?              @db.VarChar(255)
+  phoneticUk      String?              @db.VarChar(255)
   meaning         String
   example         String?
   exampleVi       String?
   image           String?              @db.VarChar(255)
   audio           String?              @db.VarChar(255)
+  audioUs         String?              @db.VarChar(255)
+  audioUk         String?              @db.VarChar(255)
+  audioUsFileId   String?              @db.Uuid
+  audioUkFileId   String?              @db.Uuid
+  dictionaryMetadata Json?
   createdAt       DateTime             @default(now()) @db.Timestamptz(6)
   updatedAt       DateTime             @updatedAt @db.Timestamptz(6)
   lessonId        Int?
@@ -66,9 +73,27 @@ model Word {
   cefr            String?              @db.VarChar(10)
   vocabularyNotes UserVocabularyNote[]
   progress        UserWordProgress[]
+  examples        WordExample[]
   lesson          Lesson?              @relation(fields: [lessonId], references: [id])
 
   @@index([lessonId])
+}
+
+model WordExample {
+  id          Int      @id @default(autoincrement())
+  wordId      Int
+  example     String
+  exampleVi   String?
+  exampleAudio String? @db.VarChar(255)
+  order       Int      @default(0)
+  source      Json?
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+  word        Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@index([wordId])
+  @@index([wordId, order])
+  @@unique([wordId, example])
 }
 
 model UserStreak {
@@ -162,6 +187,7 @@ enum WordMasteryLevel {
 enum PracticeType {
   FSRS // Ôn tập (Review) — spaced repetition
   LEARN_LESSON // Học mới (Learn) — lesson-based
+  DICTIONARY_SAVE // Lưu từ từ từ điển và kích hoạt học
 }
 
 model PracticeSession {
