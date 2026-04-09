@@ -17,6 +17,9 @@ import {
 } from '../redis/cache-key.util';
 import type { Prisma } from '../../generated/prisma/client';
 
+const MOCHI_AUDIO_BASE_URL =
+  'https://mochien-server.mochidemy.com/audios/question/';
+
 const WORD_INCLUDE = {
   word: {
     select: {
@@ -75,6 +78,10 @@ export class VocabularyService {
     userId: string,
     dto: CreateVocabularyFromDictionaryDto,
   ) {
+    const normalizedAudio = this.normalizeAudioSourceUrl(dto.audio);
+    const normalizedAudioUs = this.normalizeAudioSourceUrl(dto.audioUs);
+    const normalizedAudioUk = this.normalizeAudioSourceUrl(dto.audioUk);
+
     const normalizedWord = dto.word.trim();
     const normalizedMeaning =
       dto.translation?.trim() ||
@@ -167,9 +174,9 @@ export class VocabularyService {
             meaning: normalizedMeaning,
             example: dto.example,
             exampleVi: dto.exampleTranslation,
-            audio: dto.audio || dto.audioUs || null,
-            audioUs: dto.audioUs || dto.audio || null,
-            audioUk: dto.audioUk || null,
+            audio: normalizedAudio || normalizedAudioUs || null,
+            audioUs: normalizedAudioUs || normalizedAudio || null,
+            audioUk: normalizedAudioUk || null,
             pos: dto.partOfSpeech,
             cefr: dto.cefrLevel,
             dictionaryMetadata: {
@@ -185,8 +192,8 @@ export class VocabularyService {
       wordId: word.id,
       userId,
       word: normalizedWord,
-      audioUs: dto.audioUs || dto.audio,
-      audioUk: dto.audioUk,
+      audioUs: normalizedAudioUs || normalizedAudio,
+      audioUk: normalizedAudioUk,
       fallbackAudioUs: word.audioUs || word.audio,
       fallbackAudioUk: word.audioUk,
     });
@@ -194,14 +201,15 @@ export class VocabularyService {
     await this.prisma.word.update({
       where: { id: word.id },
       data: {
-        audio: syncedAudio.audioUs || word.audio || dto.audio || null,
+        audio: syncedAudio.audioUs || word.audio || normalizedAudio || null,
         audioUs:
           syncedAudio.audioUs ||
           word.audioUs ||
-          dto.audioUs ||
-          dto.audio ||
+          normalizedAudioUs ||
+          normalizedAudio ||
           null,
-        audioUk: syncedAudio.audioUk || word.audioUk || dto.audioUk || null,
+        audioUk:
+          syncedAudio.audioUk || word.audioUk || normalizedAudioUk || null,
         audioUsFileId: syncedAudio.audioUsFileId || word.audioUsFileId || null,
         audioUkFileId: syncedAudio.audioUkFileId || word.audioUkFileId || null,
       },
@@ -320,7 +328,8 @@ export class VocabularyService {
               wordId,
               example: item.example.trim(),
               exampleVi: item.exampleVi || null,
-              exampleAudio: item.exampleAudio || null,
+              exampleAudio:
+                this.normalizeAudioSourceUrl(item.exampleAudio) || null,
               order: item.order ?? index,
               source: {
                 sourceProvider: dto.sourceProvider ?? 'dictionary',
@@ -329,7 +338,8 @@ export class VocabularyService {
             },
             update: {
               exampleVi: item.exampleVi || null,
-              exampleAudio: item.exampleAudio || null,
+              exampleAudio:
+                this.normalizeAudioSourceUrl(item.exampleAudio) || null,
               order: item.order ?? index,
             },
           }),
@@ -360,9 +370,14 @@ export class VocabularyService {
     }
 
     const ingest = async (audioUrl: string, accent: 'us' | 'uk') => {
-      const response = await fetch(
-        `${storageServiceUrl}/files/ingest-remote-audio`,
-        {
+      const ingestPaths = [
+        '/files/ingest-remote-audio',
+        '/v1/files/ingest-remote-audio',
+      ];
+
+      let lastStatus: number | null = null;
+      for (const ingestPath of ingestPaths) {
+        const response = await fetch(`${storageServiceUrl}${ingestPath}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -377,26 +392,31 @@ export class VocabularyService {
               wordId: input.wordId,
             },
           }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new ApiException({
-          statusCode: HttpStatus.BAD_GATEWAY,
-          errorCode: 'AUDIO_INGEST_FAILED',
-          message: `Failed to ingest ${accent.toUpperCase()} audio via storage service`,
         });
+
+        if (response.ok) {
+          const payload = (await response.json()) as {
+            id: string;
+            secureUrl: string;
+          };
+
+          return {
+            fileId: payload.id,
+            secureUrl: payload.secureUrl,
+          };
+        }
+
+        lastStatus = response.status;
+        if (response.status !== HttpStatus.NOT_FOUND) {
+          break;
+        }
       }
 
-      const payload = (await response.json()) as {
-        id: string;
-        secureUrl: string;
-      };
-
-      return {
-        fileId: payload.id,
-        secureUrl: payload.secureUrl,
-      };
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_GATEWAY,
+        errorCode: 'AUDIO_INGEST_FAILED',
+        message: `Failed to ingest ${accent.toUpperCase()} audio via storage service (status: ${lastStatus ?? 'unknown'})`,
+      });
     };
 
     const usResult = input.audioUs ? await ingest(input.audioUs, 'us') : null;
@@ -430,6 +450,20 @@ export class VocabularyService {
         }`,
       );
     }
+  }
+
+  private normalizeAudioSourceUrl(audio?: string | null): string | undefined {
+    const value = audio?.trim();
+    if (!value) {
+      return undefined;
+    }
+
+    if (/^https?:\/\//i.test(value)) {
+      return value;
+    }
+
+    const normalizedPath = value.startsWith('/') ? value.slice(1) : value;
+    return `${MOCHI_AUDIO_BASE_URL}${normalizedPath}`;
   }
 
   async getMyNotes(userId: string, filter: VocabularyFilterDto) {

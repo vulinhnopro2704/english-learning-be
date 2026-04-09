@@ -7,7 +7,6 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  IsUrl,
   MaxLength,
   Min,
   ValidateNested,
@@ -25,7 +24,7 @@ export class DictionaryExampleDto {
 
   @ApiPropertyOptional({ example: 'https://audio.example.com/example.mp3' })
   @IsOptional()
-  @IsUrl({ require_tld: false })
+  @IsString()
   exampleAudio?: string;
 
   @ApiPropertyOptional({ example: 0 })
@@ -73,17 +72,17 @@ export class CreateVocabularyFromDictionaryDto {
 
   @ApiPropertyOptional({ example: 'https://audio.example.com/us.mp3' })
   @IsOptional()
-  @IsUrl({ require_tld: false })
+  @IsString()
   audio?: string;
 
   @ApiPropertyOptional({ example: 'https://audio.example.com/us.mp3' })
   @IsOptional()
-  @IsUrl({ require_tld: false })
+  @IsString()
   audioUs?: string;
 
   @ApiPropertyOptional({ example: 'https://audio.example.com/uk.mp3' })
   @IsOptional()
-  @IsUrl({ require_tld: false })
+  @IsString()
   audioUk?: string;
 
   @ApiPropertyOptional({ example: 'Hello, how are you?' })
