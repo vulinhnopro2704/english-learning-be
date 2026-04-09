@@ -360,6 +360,18 @@ export class VocabularyService {
       this.configService.get<string>('STORAGE_SERVICE_URL') ||
       'http://localhost:3003';
 
+    const normalizeUuid = (value?: string | null): string | null => {
+      if (!value) {
+        return null;
+      }
+
+      const normalized = value.trim();
+      const uuidV4Pattern =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+      return uuidV4Pattern.test(normalized) ? normalized : null;
+    };
+
     if (!input.audioUs && !input.audioUk) {
       return {
         audioUs: input.fallbackAudioUs || null,
@@ -376,47 +388,55 @@ export class VocabularyService {
       ];
 
       let lastStatus: number | null = null;
-      for (const ingestPath of ingestPaths) {
-        const response = await fetch(`${storageServiceUrl}${ingestPath}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': input.userId,
-          },
-          body: JSON.stringify({
-            sourceUrl: audioUrl,
-            folder: 'words/audio',
-            accent,
-            word: input.word,
-            metadata: {
-              wordId: input.wordId,
+      try {
+        for (const ingestPath of ingestPaths) {
+          const response = await fetch(`${storageServiceUrl}${ingestPath}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-id': input.userId,
             },
-          }),
-        });
+            body: JSON.stringify({
+              sourceUrl: audioUrl,
+              folder: 'words/audio',
+              accent,
+              word: input.word,
+              metadata: {
+                wordId: input.wordId,
+              },
+            }),
+          });
 
-        if (response.ok) {
-          const payload = (await response.json()) as {
-            id: string;
-            secureUrl: string;
-          };
+          if (response.ok) {
+            const payload = (await response.json()) as {
+              id: string;
+              secureUrl: string;
+            };
 
-          return {
-            fileId: payload.id,
-            secureUrl: payload.secureUrl,
-          };
+            return {
+              fileId: payload.id,
+              secureUrl: payload.secureUrl,
+            };
+          }
+
+          lastStatus = response.status;
+          if (response.status !== 404) {
+            break;
+          }
         }
-
-        lastStatus = response.status;
-        if (response.status !== HttpStatus.NOT_FOUND) {
-          break;
-        }
+      } catch (error) {
+        this.logger.warn(
+          `Failed ingesting ${accent.toUpperCase()} audio for word "${input.word}" due to network/storage error: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+        return null;
       }
 
-      throw new ApiException({
-        statusCode: HttpStatus.BAD_GATEWAY,
-        errorCode: 'AUDIO_INGEST_FAILED',
-        message: `Failed to ingest ${accent.toUpperCase()} audio via storage service (status: ${lastStatus ?? 'unknown'})`,
-      });
+      this.logger.warn(
+        `Failed ingesting ${accent.toUpperCase()} audio for word "${input.word}" (status: ${lastStatus ?? 'unknown'}). Falling back to source audio URL.`,
+      );
+      return null;
     };
 
     const usResult = input.audioUs ? await ingest(input.audioUs, 'us') : null;
@@ -427,8 +447,8 @@ export class VocabularyService {
         usResult?.secureUrl || input.fallbackAudioUs || input.audioUs || null,
       audioUk:
         ukResult?.secureUrl || input.fallbackAudioUk || input.audioUk || null,
-      audioUsFileId: usResult?.fileId || null,
-      audioUkFileId: ukResult?.fileId || null,
+      audioUsFileId: normalizeUuid(usResult?.fileId),
+      audioUkFileId: normalizeUuid(ukResult?.fileId),
     };
   }
 
