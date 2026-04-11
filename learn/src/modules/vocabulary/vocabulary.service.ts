@@ -78,6 +78,10 @@ export class VocabularyService {
     userId: string,
     dto: CreateVocabularyFromDictionaryDto,
   ) {
+    const normalizedSourceProvider = (dto.sourceProvider || 'mochi')
+      .trim()
+      .toLowerCase();
+
     const normalizedAudio = this.normalizeAudioSourceUrl(dto.audio);
     const normalizedAudioUs = this.normalizeAudioSourceUrl(dto.audioUs);
     const normalizedAudioUk = this.normalizeAudioSourceUrl(dto.audioUk);
@@ -137,9 +141,20 @@ export class VocabularyService {
         : {}),
     };
 
-    const existingWord = await this.prisma.word.findFirst({
-      where: duplicateWhere,
-    });
+    const existingWordByExternalId = dto.externalDictionaryId
+      ? await this.prisma.word.findFirst({
+          where: {
+            externalDictionaryId: dto.externalDictionaryId,
+            sourceProvider: normalizedSourceProvider,
+          },
+        })
+      : null;
+
+    const existingWord =
+      existingWordByExternalId ||
+      (await this.prisma.word.findFirst({
+        where: duplicateWhere,
+      }));
 
     const word = existingWord
       ? await this.prisma.word.update({
@@ -155,12 +170,21 @@ export class VocabularyService {
               null,
             pos: existingWord.pos || dto.partOfSpeech || null,
             cefr: existingWord.cefr || dto.cefrLevel || null,
+            sourceProvider:
+              existingWord.sourceProvider || normalizedSourceProvider,
+            externalDictionaryId:
+              existingWord.externalDictionaryId ||
+              dto.externalDictionaryId ||
+              null,
             dictionaryMetadata: {
               ...(typeof existingWord.dictionaryMetadata === 'object' &&
               existingWord.dictionaryMetadata
                 ? (existingWord.dictionaryMetadata as Prisma.JsonObject)
                 : {}),
-              sourceProvider: dto.sourceProvider ?? 'dictionary',
+              sourceProvider: normalizedSourceProvider,
+              ...(dto.externalDictionaryId
+                ? { externalDictionaryId: dto.externalDictionaryId }
+                : {}),
               ...(dto.sourceMetadata ?? {}),
             },
           },
@@ -168,6 +192,8 @@ export class VocabularyService {
       : await this.prisma.word.create({
           data: {
             word: normalizedWord,
+            sourceProvider: normalizedSourceProvider,
+            externalDictionaryId: dto.externalDictionaryId,
             pronunciation: dto.phonetic || dto.phoneticUs || null,
             phoneticUs: dto.phoneticUs || dto.phonetic || null,
             phoneticUk: dto.phoneticUk || null,
@@ -180,7 +206,10 @@ export class VocabularyService {
             pos: dto.partOfSpeech,
             cefr: dto.cefrLevel,
             dictionaryMetadata: {
-              sourceProvider: dto.sourceProvider ?? 'dictionary',
+              sourceProvider: normalizedSourceProvider,
+              ...(dto.externalDictionaryId
+                ? { externalDictionaryId: dto.externalDictionaryId }
+                : {}),
               ...(dto.sourceMetadata ?? {}),
             },
           },
