@@ -53,6 +53,8 @@ model Lesson {
 model Word {
   id              Int                  @id @default(autoincrement())
   word            String               @db.VarChar(255)
+  sourceProvider  String               @default("internal") @db.VarChar(50)
+  externalDictionaryId Int?
   pronunciation   String?              @db.VarChar(255)
   phoneticUs      String?              @db.VarChar(255)
   phoneticUk      String?              @db.VarChar(255)
@@ -77,6 +79,7 @@ model Word {
   lesson          Lesson?              @relation(fields: [lessonId], references: [id])
 
   @@index([lessonId])
+  @@index([sourceProvider, externalDictionaryId])
 }
 
 model WordExample {

@@ -117,6 +117,13 @@ export class CreateVocabularyFromDictionaryDto {
   @IsString()
   sourceProvider?: string;
 
+  @ApiPropertyOptional({ example: 34586 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  externalDictionaryId?: number;
+
   @ApiPropertyOptional({ example: { entryId: 1001 } })
   @IsOptional()
   @IsObject()

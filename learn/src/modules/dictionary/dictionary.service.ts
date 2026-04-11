@@ -20,11 +20,105 @@ type DictionarySentenceAudio = {
 };
 
 type DictionaryWordDetail = {
+  id: number;
+  wmId: number;
   trans: string | null;
+  phonetic: string | null;
+  position: string | null;
+  picture: string | null;
+  audio: string | null;
   definition: string | null;
   definitionGpt: string | null;
   cefrLevel: string | null;
+  ieltsLevel: string | null;
+  toeic: string | null;
+  single: number | string | null;
+  collo: number | string | null;
+  synonym: number | string | null;
+  review: number;
   sentenceAudio: DictionarySentenceAudio[];
+  collocations: Array<Record<string, unknown>>;
+  synonyms: Record<string, unknown> | null;
+};
+
+type DictionaryPhoneme = {
+  character: string;
+  characterAudio: string | null;
+  phonemes: string;
+  phonemesAudio: string | null;
+};
+
+type DictionaryAnalyzing = {
+  typeWord: string;
+  countPhoneme: number;
+  phonemesUs: DictionaryPhoneme[];
+  phonemesUk: DictionaryPhoneme[];
+};
+
+type DictionaryPhrasalVerb = {
+  id: number;
+  wmId: number;
+  phrasalVerbs: string;
+  phoneticUk: string | null;
+  phoneticUs: string | null;
+  audioUk: string | null;
+  audioUs: string | null;
+};
+
+type DictionaryIdiom = {
+  id: number;
+  wmId: number;
+  idiom: string;
+  audio: string | null;
+  definition: string | null;
+  definitionGpt: string | null;
+  example: string | null;
+  idiomsExAudio: string | null;
+  example2: string | null;
+  stressed: string | null;
+  reason: string | null;
+  idiomsTran: Record<string, unknown> | null;
+  pivot: Record<string, unknown>;
+};
+
+type DictionaryVerbForm = {
+  id: number;
+  wmId: number;
+  presentSimple: string | null;
+  presentSimplePhonetic: string | null;
+  presentSimpleAudioUs: string | null;
+  presentSimpleAudioUk: string | null;
+  singularVerb: string | null;
+  singularVerbPhonetic: string | null;
+  singularVerbAudioUs: string | null;
+  singularVerbAudioUk: string | null;
+  pastSimple: string | null;
+  pastSimplePhonetic: string | null;
+  pastSimpleAudioUs: string | null;
+  pastSimpleAudioUk: string | null;
+  pastParticiple: string | null;
+  pastParticiplePhonetic: string | null;
+  pastParticipleAudioUs: string | null;
+  pastParticipleAudioUk: string | null;
+  ingForm: string | null;
+  ingFormPhonetic: string | null;
+  ingFormAudioUs: string | null;
+  ingFormAudioUk: string | null;
+};
+
+type DictionaryThesaurusItem = {
+  id: number;
+  wmId: number;
+  position: string;
+  positionContent: string;
+  strongestMatch: string;
+  strongMatch: string;
+  weakMatch: string;
+  strongestOpposite: string;
+  strongOpposite: string;
+  weakOpposite: string;
+  createdAt: string | null;
+  updatedAt: string | null;
 };
 
 type DictionaryEntry = {
@@ -35,6 +129,12 @@ type DictionaryEntry = {
   phoneticUk: string | null;
   audioUs: string | null;
   audioUk: string | null;
+  analyzing: DictionaryAnalyzing | null;
+  phrasalVerbs: DictionaryPhrasalVerb[];
+  idioms: DictionaryIdiom[];
+  verbForm: DictionaryVerbForm | null;
+  thesaurus: DictionaryThesaurusItem[];
+  isSaved: boolean;
   words: DictionaryWordDetail[];
 };
 
@@ -56,12 +156,12 @@ export class DictionaryService {
     private readonly redisService: RedisService,
   ) {}
 
-  async search(query: DictionarySearchDto) {
+  async search(query: DictionarySearchDto, userId?: string) {
     const cacheKey = this.buildCacheKey(query);
 
     const cachedResult = await this.getCachedResult(cacheKey);
     if (cachedResult) {
-      return cachedResult;
+      return this.withSavedStatus(cachedResult, userId);
     }
 
     const url = new URL(MOCHI_BASE_URL);
@@ -100,12 +200,26 @@ export class DictionaryService {
 
       const mappedData = this.toArray(payload.data).map((item) => {
         const words = this.toArray(item.words).map((word) => ({
+          id: this.toNumber(word.id),
+          wmId: this.toNumber(word.wmId ?? word.wm_id),
           trans: this.toNullableString(word.trans),
+          phonetic: this.toNullableString(word.phonetic),
+          position: this.toNullableString(word.position),
+          picture: this.toNullableString(word.picture),
+          audio: this.toNullableString(word.audio),
           definition: this.toNullableString(word.definition),
           definitionGpt: this.toNullableString(
             word.definitionGpt ?? word.definition_gpt,
           ),
           cefrLevel: this.toNullableString(word.cefrLevel ?? word.cefr_level),
+          ieltsLevel: this.toNullableString(
+            word.ieltsLevel ?? word.ielts_level,
+          ),
+          toeic: this.toNullableString(word.toeic),
+          single: this.toNumberish(word.single),
+          collo: this.toNumberish(word.collo),
+          synonym: this.toNumberish(word.synonym),
+          review: this.toNumber(word.review),
           sentenceAudio: this.toArray(
             word.sentenceAudio ?? word.sentence_audio,
           ).map((sentence) => ({
@@ -113,6 +227,199 @@ export class DictionaryService {
             trans: this.toNullableString(sentence.trans),
             audio: this.toNullableString(sentence.audio),
           })),
+          collocations: this.toArray(word.collocations),
+          synonyms: this.toObject(word.synonyms),
+        }));
+
+        const rawAnalyzing = this.toObject(item.analyzing ?? item.alalyzing);
+        const analyzing: DictionaryAnalyzing | null = rawAnalyzing
+          ? {
+              typeWord: this.toString(
+                rawAnalyzing.typeWord ?? rawAnalyzing.type_word,
+              ),
+              countPhoneme: this.toNumber(
+                rawAnalyzing.countPhoneme ?? rawAnalyzing.count_phoneme,
+              ),
+              phonemesUs: this.toArray(
+                rawAnalyzing.phonemesUs ?? rawAnalyzing.phonemes_us,
+              ).map((phoneme) => ({
+                character: this.toString(phoneme.character),
+                characterAudio: this.toNullableString(
+                  phoneme.characterAudio ?? phoneme.character_audio,
+                ),
+                phonemes: this.toString(phoneme.phonemes),
+                phonemesAudio: this.toNullableString(
+                  phoneme.phonemesAudio ?? phoneme.phonemes_audio,
+                ),
+              })),
+              phonemesUk: this.toArray(
+                rawAnalyzing.phonemesUk ?? rawAnalyzing.phonemes_uk,
+              ).map((phoneme) => ({
+                character: this.toString(phoneme.character),
+                characterAudio: this.toNullableString(
+                  phoneme.characterAudio ?? phoneme.character_audio,
+                ),
+                phonemes: this.toString(phoneme.phonemes),
+                phonemesAudio: this.toNullableString(
+                  phoneme.phonemesAudio ?? phoneme.phonemes_audio,
+                ),
+              })),
+            }
+          : null;
+
+        const phrasalVerbs = this.toArray(
+          item.phrasalVerbs ?? item.phrasal_verb,
+        ).map((phrasalVerb) => ({
+          id: this.toNumber(phrasalVerb.id),
+          wmId: this.toNumber(phrasalVerb.wmId ?? phrasalVerb.wm_id),
+          phrasalVerbs: this.toString(
+            phrasalVerb.phrasalVerbs ?? phrasalVerb.phrasal_verbs,
+          ),
+          phoneticUk: this.toNullableString(
+            phrasalVerb.phoneticUk ?? phrasalVerb.phonetic_uk,
+          ),
+          phoneticUs: this.toNullableString(
+            phrasalVerb.phoneticUs ?? phrasalVerb.phonetic_us,
+          ),
+          audioUk: this.toNullableString(
+            phrasalVerb.audioUk ?? phrasalVerb.audio_uk,
+          ),
+          audioUs: this.toNullableString(
+            phrasalVerb.audioUs ?? phrasalVerb.audio_us,
+          ),
+        }));
+
+        const idioms = this.toArray(item.idioms).map((idiom) => ({
+          id: this.toNumber(idiom.id),
+          wmId: this.toNumber(idiom.wmId ?? idiom.wm_id),
+          idiom: this.toString(idiom.idiom),
+          audio: this.toNullableString(idiom.audio),
+          definition: this.toNullableString(idiom.definition),
+          definitionGpt: this.toNullableString(
+            idiom.definitionGpt ?? idiom.definition_gpt,
+          ),
+          example: this.toNullableString(idiom.example),
+          idiomsExAudio: this.toNullableString(
+            idiom.idiomsExAudio ?? idiom.idioms_ex_audio,
+          ),
+          example2: this.toNullableString(idiom.example2),
+          stressed: this.toNullableString(idiom.stressed),
+          reason: this.toNullableString(idiom.reason),
+          idiomsTran: this.toObject(idiom.idiomsTran ?? idiom.idioms_tran),
+          pivot: this.toObject(idiom.pivot) ?? {},
+        }));
+
+        const rawVerbForm = this.toObject(item.verbForm ?? item.verb_form);
+        const verbForm: DictionaryVerbForm | null = rawVerbForm
+          ? {
+              id: this.toNumber(rawVerbForm.id),
+              wmId: this.toNumber(rawVerbForm.wmId ?? rawVerbForm.wm_id),
+              presentSimple: this.toNullableString(
+                rawVerbForm.presentSimple ?? rawVerbForm.present_simple,
+              ),
+              presentSimplePhonetic: this.toNullableString(
+                rawVerbForm.presentSimplePhonetic ??
+                  rawVerbForm.present_simple_phonetic,
+              ),
+              presentSimpleAudioUs: this.toNullableString(
+                rawVerbForm.presentSimpleAudioUs ??
+                  rawVerbForm.present_simple_audio_us,
+              ),
+              presentSimpleAudioUk: this.toNullableString(
+                rawVerbForm.presentSimpleAudioUk ??
+                  rawVerbForm.present_simple_audio_uk,
+              ),
+              singularVerb: this.toNullableString(
+                rawVerbForm.singularVerb ?? rawVerbForm.singular_verb,
+              ),
+              singularVerbPhonetic: this.toNullableString(
+                rawVerbForm.singularVerbPhonetic ??
+                  rawVerbForm.singular_verb_phonetic,
+              ),
+              singularVerbAudioUs: this.toNullableString(
+                rawVerbForm.singularVerbAudioUs ??
+                  rawVerbForm.singular_verb_audio_us,
+              ),
+              singularVerbAudioUk: this.toNullableString(
+                rawVerbForm.singularVerbAudioUk ??
+                  rawVerbForm.singular_verb_audio_uk,
+              ),
+              pastSimple: this.toNullableString(
+                rawVerbForm.pastSimple ?? rawVerbForm.past_simple,
+              ),
+              pastSimplePhonetic: this.toNullableString(
+                rawVerbForm.pastSimplePhonetic ??
+                  rawVerbForm.past_simple_phonetic,
+              ),
+              pastSimpleAudioUs: this.toNullableString(
+                rawVerbForm.pastSimpleAudioUs ??
+                  rawVerbForm.past_simple_audio_us,
+              ),
+              pastSimpleAudioUk: this.toNullableString(
+                rawVerbForm.pastSimpleAudioUk ??
+                  rawVerbForm.past_simple_audio_uk,
+              ),
+              pastParticiple: this.toNullableString(
+                rawVerbForm.pastParticiple ?? rawVerbForm.past_participle,
+              ),
+              pastParticiplePhonetic: this.toNullableString(
+                rawVerbForm.pastParticiplePhonetic ??
+                  rawVerbForm.past_participle_phonetic,
+              ),
+              pastParticipleAudioUs: this.toNullableString(
+                rawVerbForm.pastParticipleAudioUs ??
+                  rawVerbForm.past_participle_audio_us,
+              ),
+              pastParticipleAudioUk: this.toNullableString(
+                rawVerbForm.pastParticipleAudioUk ??
+                  rawVerbForm.past_participle_audio_uk,
+              ),
+              ingForm: this.toNullableString(
+                rawVerbForm.ingForm ?? rawVerbForm.ing_form,
+              ),
+              ingFormPhonetic: this.toNullableString(
+                rawVerbForm.ingFormPhonetic ?? rawVerbForm.ing_form_phonetic,
+              ),
+              ingFormAudioUs: this.toNullableString(
+                rawVerbForm.ingFormAudioUs ?? rawVerbForm.ing_form_audio_us,
+              ),
+              ingFormAudioUk: this.toNullableString(
+                rawVerbForm.ingFormAudioUk ?? rawVerbForm.ing_form_audio_uk,
+              ),
+            }
+          : null;
+
+        const thesaurus = this.toArray(item.thesaurus).map((thesaurusItem) => ({
+          id: this.toNumber(thesaurusItem.id),
+          wmId: this.toNumber(thesaurusItem.wmId ?? thesaurusItem.wm_id),
+          position: this.toString(thesaurusItem.position),
+          positionContent: this.toString(
+            thesaurusItem.positionContent ?? thesaurusItem.position_content,
+          ),
+          strongestMatch: this.toString(
+            thesaurusItem.strongestMatch ?? thesaurusItem.strongest_match,
+          ),
+          strongMatch: this.toString(
+            thesaurusItem.strongMatch ?? thesaurusItem.strong_match,
+          ),
+          weakMatch: this.toString(
+            thesaurusItem.weakMatch ?? thesaurusItem.weak_match,
+          ),
+          strongestOpposite: this.toString(
+            thesaurusItem.strongestOpposite ?? thesaurusItem.strongest_opposite,
+          ),
+          strongOpposite: this.toString(
+            thesaurusItem.strongOpposite ?? thesaurusItem.strong_opposite,
+          ),
+          weakOpposite: this.toString(
+            thesaurusItem.weakOpposite ?? thesaurusItem.weak_opposite,
+          ),
+          createdAt: this.toNullableString(
+            thesaurusItem.createdAt ?? thesaurusItem.created_at,
+          ),
+          updatedAt: this.toNullableString(
+            thesaurusItem.updatedAt ?? thesaurusItem.updated_at,
+          ),
         }));
 
         return {
@@ -127,6 +434,12 @@ export class DictionaryService {
           ),
           audioUs: this.toNullableString(item.audioUs ?? item.audio_us),
           audioUk: this.toNullableString(item.audioUk ?? item.audio_uk),
+          analyzing,
+          phrasalVerbs,
+          idioms,
+          verbForm,
+          thesaurus,
+          isSaved: false,
           words,
         };
       });
@@ -147,7 +460,7 @@ export class DictionaryService {
       this.enqueueBackgroundSync(mappedData);
       void this.setCachedResult(cacheKey, result);
 
-      return result;
+      return this.withSavedStatus(result, userId);
     } catch {
       throw new ApiException({
         statusCode: HttpStatus.BAD_GATEWAY,
@@ -234,12 +547,15 @@ export class DictionaryService {
       };
 
       try {
-        const existingById = await this.prisma.word.findUnique({
-          where: { id: entry.id },
+        const existingByExternalId = await this.prisma.word.findFirst({
+          where: {
+            sourceProvider: 'mochi',
+            externalDictionaryId: entry.id,
+          },
           select: { id: true },
         });
 
-        if (existingById) {
+        if (existingByExternalId) {
           continue;
         }
 
@@ -268,8 +584,13 @@ export class DictionaryService {
 
         await this.prisma.word.create({
           data: {
-            id: entry.id,
+            sourceProvider: 'mochi',
+            externalDictionaryId: entry.id,
             ...updatePayload,
+            dictionaryMetadata: {
+              sourceProvider: 'mochi',
+              externalDictionaryId: entry.id,
+            },
           },
         });
         hasInsertedNewWord = true;
@@ -325,5 +646,81 @@ export class DictionaryService {
 
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  private toNumberish(value: unknown): number | string | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof value === 'number') {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    return this.toString(value);
+  }
+
+  private toObject(value: unknown): Record<string, unknown> | null {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+      return null;
+    }
+
+    return value as Record<string, unknown>;
+  }
+
+  private async withSavedStatus(
+    result: DictionarySearchResult,
+    userId?: string,
+  ): Promise<DictionarySearchResult> {
+    if (!userId) {
+      return {
+        ...result,
+        data: result.data.map((entry) => ({ ...entry, isSaved: false })),
+      };
+    }
+
+    const externalIds = result.data
+      .map((entry) => entry.id)
+      .filter((id) => Number.isInteger(id) && id > 0);
+
+    if (externalIds.length === 0) {
+      return {
+        ...result,
+        data: result.data.map((entry) => ({ ...entry, isSaved: false })),
+      };
+    }
+
+    const savedWords = await this.prisma.word.findMany({
+      where: {
+        sourceProvider: 'mochi',
+        externalDictionaryId: { in: externalIds },
+        vocabularyNotes: {
+          some: {
+            userId,
+          },
+        },
+      },
+      select: {
+        externalDictionaryId: true,
+      },
+    });
+
+    const savedExternalIdSet = new Set(
+      savedWords
+        .map((word) => word.externalDictionaryId)
+        .filter((id): id is number => typeof id === 'number'),
+    );
+
+    return {
+      ...result,
+      data: result.data.map((entry) => ({
+        ...entry,
+        isSaved: savedExternalIdSet.has(entry.id),
+      })),
+    };
   }
 }

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { ApiStandardErrorResponses } from '@english-learning/nest-api-docs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { DictionaryService } from './dictionary.service';
 import { DictionarySearchDto } from './dtos/dictionary-search.dto';
 import { DictionarySearchResponseDto } from './dtos/dictionary-response.dto';
@@ -26,7 +27,10 @@ export class DictionaryController {
     type: DictionarySearchResponseDto,
   })
   @ApiStandardErrorResponses({ statuses: [401, 422, 500, 502, 503] })
-  search(@Query() query: DictionarySearchDto) {
-    return this.dictionaryService.search(query);
+  search(
+    @Query() query: DictionarySearchDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.dictionaryService.search(query, userId);
   }
 }
