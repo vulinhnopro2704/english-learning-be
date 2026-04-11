@@ -39,6 +39,7 @@ type DictionaryWordDetail = {
   sentenceAudio: DictionarySentenceAudio[];
   collocations: Array<Record<string, unknown>>;
   synonyms: Record<string, unknown> | null;
+  isSaved: boolean;
 };
 
 type DictionaryPhoneme = {
@@ -229,6 +230,7 @@ export class DictionaryService {
           })),
           collocations: this.toArray(word.collocations),
           synonyms: this.toObject(word.synonyms),
+          isSaved: false,
         }));
 
         const rawAnalyzing = this.toObject(item.analyzing ?? item.alalyzing);
@@ -679,18 +681,34 @@ export class DictionaryService {
     if (!userId) {
       return {
         ...result,
-        data: result.data.map((entry) => ({ ...entry, isSaved: false })),
+        data: result.data.map((entry) => ({
+          ...entry,
+          isSaved: false,
+          words: entry.words.map((word) => ({ ...word, isSaved: false })),
+        })),
       };
     }
 
-    const externalIds = result.data
+    const detailExternalIds = result.data
+      .flatMap((entry) => entry.words.map((word) => word.id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+
+    const entryExternalIds = result.data
       .map((entry) => entry.id)
       .filter((id) => Number.isInteger(id) && id > 0);
+
+    const externalIds = Array.from(
+      new Set([...detailExternalIds, ...entryExternalIds]),
+    );
 
     if (externalIds.length === 0) {
       return {
         ...result,
-        data: result.data.map((entry) => ({ ...entry, isSaved: false })),
+        data: result.data.map((entry) => ({
+          ...entry,
+          isSaved: false,
+          words: entry.words.map((word) => ({ ...word, isSaved: false })),
+        })),
       };
     }
 
@@ -719,7 +737,14 @@ export class DictionaryService {
       ...result,
       data: result.data.map((entry) => ({
         ...entry,
-        isSaved: savedExternalIdSet.has(entry.id),
+        words: entry.words.map((word) => ({
+          ...word,
+          isSaved:
+            savedExternalIdSet.has(word.id) || savedExternalIdSet.has(entry.id),
+        })),
+        isSaved:
+          savedExternalIdSet.has(entry.id) ||
+          entry.words.some((word) => savedExternalIdSet.has(word.id)),
       })),
     };
   }

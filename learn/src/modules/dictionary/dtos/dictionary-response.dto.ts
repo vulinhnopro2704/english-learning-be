@@ -99,6 +99,9 @@ export class DictionaryWordDetailDto {
 
   @ApiPropertyOptional({ type: Object, nullable: true })
   synonyms?: Record<string, unknown> | null;
+
+  @ApiProperty({ example: false })
+  isSaved!: boolean;
 }
 
 export class DictionaryPhrasalVerbDto {
