@@ -78,6 +78,8 @@ async function bootstrap() {
       <li><a href="/auth/api-docs/swagger">Auth Swagger UI</a></li>
       <li><a href="/learn/api-docs">Learn Scalar UI</a></li>
       <li><a href="/learn/api-docs/swagger">Learn Swagger UI</a></li>
+      <li><a href="/generative/api-docs">Generative Scalar UI</a></li>
+      <li><a href="/generative/api-docs/swagger">Generative Swagger UI</a></li>
       <li><a href="/fsrs-ai/api-docs">FSRS-AI Swagger UI</a></li>
       <li><a href="/fsrs-ai/api-docs/redoc">FSRS-AI ReDoc</a></li>
     </ul>
@@ -93,7 +95,10 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
-  appLogger.log(`Application is running on: http://localhost:${port}`, 'Bootstrap');
+  appLogger.log(
+    `Application is running on: http://localhost:${port}`,
+    'Bootstrap',
+  );
   if (swaggerEnabled) {
     appLogger.log(
       `API Docs (Scalar): http://localhost:${port}/${swaggerPath}`,

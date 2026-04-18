@@ -22,11 +22,13 @@ export class GatewayProxyService {
   private readonly learnDocsPrefix = '/learn/api-docs';
   private readonly storageDocsPrefix = '/storage/api-docs';
   private readonly fsrsAiDocsPrefix = '/fsrs-ai/api-docs';
+  private readonly generativeDocsPrefix = '/generative/api-docs';
 
   private readonly authUpstreamUrl: string;
   private readonly learnUpstreamUrl: string;
   private readonly storageUpstreamUrl: string;
   private readonly fsrsAiUpstreamUrl: string;
+  private readonly generativeUpstreamUrl: string;
   private readonly swaggerPath: string;
   private readonly swaggerEnabled: boolean;
   private readonly rateLimitWindowSec: number;
@@ -50,6 +52,9 @@ export class GatewayProxyService {
     this.fsrsAiUpstreamUrl =
       this.configService.get<string>('FSRS_AI_UPSTREAM_URL') ??
       'http://fsrs-ai:3004';
+    this.generativeUpstreamUrl =
+      this.configService.get<string>('GENERATIVE_UPSTREAM_URL') ??
+      'http://generative:3005';
     this.swaggerPath = `/${(this.configService.get<string>('SWAGGER_PATH') ?? 'api-docs').replace(/^\/+/, '')}`;
     this.swaggerEnabled =
       (this.configService.get<string>('SWAGGER_ENABLED') ?? 'true') === 'true';
@@ -189,6 +194,10 @@ export class GatewayProxyService {
       return this.fsrsAiUpstreamUrl;
     }
 
+    if (path.startsWith(this.generativeDocsPrefix)) {
+      return this.generativeUpstreamUrl;
+    }
+
     if (path.startsWith('/auth') || path.startsWith('/users')) {
       return this.authUpstreamUrl;
     }
@@ -199,6 +208,10 @@ export class GatewayProxyService {
 
     if (path.startsWith('/storage') || path.startsWith('/files')) {
       return this.storageUpstreamUrl;
+    }
+
+    if (path.startsWith('/generative') || path.startsWith('/tutor')) {
+      return this.generativeUpstreamUrl;
     }
 
     return this.learnUpstreamUrl;
@@ -223,7 +236,8 @@ export class GatewayProxyService {
       path.startsWith(this.authDocsPrefix) ||
       path.startsWith(this.learnDocsPrefix) ||
       path.startsWith(this.storageDocsPrefix) ||
-      path.startsWith(this.fsrsAiDocsPrefix)
+      path.startsWith(this.fsrsAiDocsPrefix) ||
+      path.startsWith(this.generativeDocsPrefix)
     ) {
       return false;
     }
@@ -419,12 +433,20 @@ export class GatewayProxyService {
       return path.replace(this.fsrsAiDocsPrefix, '/api-docs');
     }
 
+    if (path.startsWith(this.generativeDocsPrefix)) {
+      return path.replace(this.generativeDocsPrefix, '/api-docs');
+    }
+
     if (path.startsWith('/fsrs-ai')) {
       return path.replace('/fsrs-ai', '');
     }
 
     if (path.startsWith('/storage')) {
       return path.replace('/storage', '');
+    }
+
+    if (path.startsWith('/generative')) {
+      return path.replace('/generative', '');
     }
 
     return path;

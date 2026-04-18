@@ -11,6 +11,7 @@ services:
       - LEARN_UPSTREAM_URL=${LEARN_UPSTREAM_URL:-http://learn:3002}
       - STORAGE_UPSTREAM_URL=${STORAGE_UPSTREAM_URL:-http://storage:3003}
       - FSRS_AI_UPSTREAM_URL=${FSRS_AI_UPSTREAM_URL:-http://fsrs-ai:3004}
+      - GENERATIVE_UPSTREAM_URL=${GENERATIVE_UPSTREAM_URL:-http://generative:3005}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - REDIS_URL=${REDIS_URL:-redis://:${REDIS_PASSWORD:-changeme}@redis:6379}
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
@@ -32,6 +33,8 @@ services:
       storage:
         condition: service_started
       fsrs-ai:
+        condition: service_started
+      generative:
         condition: service_started
     restart: unless-stopped
     networks:
@@ -126,6 +129,32 @@ services:
       - FSRS_TRAIN_METRIC=${FSRS_TRAIN_METRIC:-log_loss}
       - FSRS_RESCHEDULE_MAX_SHIFT_RATIO=${FSRS_RESCHEDULE_MAX_SHIFT_RATIO:-0.3}
       - FSRS_ASYNC_RESCHEDULE_ENABLED=${FSRS_ASYNC_RESCHEDULE_ENABLED:-true}
+    restart: no
+    networks:
+      - app-network
+
+  # ── Generative Service ───────────────────────────
+  generative:
+    image: ${GENERATIVE_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/generative:latest}
+    container_name: generative-service
+    expose:
+      - '${GENERATIVE_PORT:-3005}'
+    env_file:
+      - ./generative/.env
+    environment:
+      - PORT=${GENERATIVE_PORT:-3005}
+      - REDIS_URL=${REDIS_URL:-redis://:${REDIS_PASSWORD:-changeme}@redis:6379}
+      - SWAGGER_ENABLED=${GENERATIVE_SWAGGER_ENABLED:-true}
+      - SWAGGER_PATH=${GENERATIVE_SWAGGER_PATH:-api-docs}
+      - SWAGGER_TITLE=${GENERATIVE_SWAGGER_TITLE:-Generative API}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
+      - ELEVENLABS_VOICE_ID=${ELEVENLABS_VOICE_ID:-EXAVITQu4vr4xnSDxMaL}
+      - ELEVENLABS_MODEL_ID=${ELEVENLABS_MODEL_ID:-eleven_flash_v2_5}
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: no
     networks:
       - app-network
