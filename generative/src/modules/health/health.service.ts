@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { RedisService } from '../redis/redis.service';
 
 @Injectable()
@@ -14,10 +15,18 @@ export class HealthService {
 
   async getReadiness() {
     const redisReady = await this.redisService.ping();
+    if (!redisReady) {
+      throw new ApiException({
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        errorCode: 'SERVICE_UNAVAILABLE',
+        message: 'Redis dependency is unreachable',
+      });
+    }
+
     return {
-      status: redisReady ? 'ready' : 'not_ready',
+      status: 'ready',
       checks: {
-        redis: redisReady ? 'ok' : 'unreachable',
+        redis: 'ok',
       },
     };
   }
