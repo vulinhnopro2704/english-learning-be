@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ApiException } from '@english-learning/nest-error-handler';
 import { createHash, randomUUID } from 'node:crypto';
 import { RedisService } from '../redis/redis.service';
@@ -50,6 +50,7 @@ interface TutorSessionState {
 
 @Injectable()
 export class TutorSessionsService {
+  private readonly logger = new Logger(TutorSessionsService.name);
   constructor(
     private readonly redisService: RedisService,
     private readonly llmService: LlmService,
@@ -317,7 +318,8 @@ export class TutorSessionsService {
           tutorText: turn.tutorText,
         })),
       });
-    } catch {
+    } catch (error) {
+      console.error(error);
       const correction = this.buildCorrection(userInput);
       return {
         tutorText: correction.hasError
