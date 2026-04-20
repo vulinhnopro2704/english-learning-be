@@ -9,6 +9,7 @@ on:
       - 'learn/**'
       - 'storage/**'
       - 'fsrs-ai/**'
+      - 'generative/**'
       - 'docker-compose.yml'
       - '.github/workflows/deploy.yml'
 
@@ -29,6 +30,7 @@ jobs:
       learn: ${{ steps.filter.outputs.learn }}
       storage: ${{ steps.filter.outputs.storage }}
       fsrs_ai: ${{ steps.filter.outputs.fsrs_ai }}
+      generative: ${{ steps.filter.outputs.generative }}
       infra: ${{ steps.filter.outputs.infra }}
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +48,8 @@ jobs:
               - 'storage/**'
             fsrs_ai:
               - 'fsrs-ai/**'
+            generative:
+              - 'generative/**'
             infra:
               - 'docker-compose.yml'
               - '.github/workflows/deploy.yml'
@@ -210,10 +214,42 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  build-generative:
+    needs: [detect-changes]
+    if: ${{ needs.detect-changes.outputs.generative == 'true' || needs.detect-changes.outputs.infra == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Generative image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: generative/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/generative:latest
+            ${{ env.IMAGE_PREFIX }}/generative:${{ github.sha }}
+          cache-from: type=gha,scope=nest-shared
+          cache-to: type=gha,mode=max,scope=nest-shared
+
   # ── Deploy to VPS ──────────────────────────────────────
   deploy:
-    if: ${{ always() && (needs.build-gateway.result != 'skipped' || needs.build-auth.result != 'skipped' || needs.build-learn.result != 'skipped' || needs.build-storage.result != 'skipped' || needs.build-fsrs-ai.result != 'skipped') }}
-    needs: [build-gateway, build-auth, build-learn, build-storage, build-fsrs-ai]
+    if: ${{ always() && (needs.build-gateway.result != 'skipped' || needs.build-auth.result != 'skipped' || needs.build-learn.result != 'skipped' || needs.build-storage.result != 'skipped' || needs.build-fsrs-ai.result != 'skipped' || needs.build-generative.result != 'skipped') }}
+    needs: [build-gateway, build-auth, build-learn, build-storage, build-fsrs-ai, build-generative]
     runs-on: ubuntu-latest
     environment: Production
     env:
@@ -222,6 +258,7 @@ jobs:
       BUILD_LEARN_RESULT: ${{ needs.build-learn.result }}
       BUILD_STORAGE_RESULT: ${{ needs.build-storage.result }}
       BUILD_FSRS_AI_RESULT: ${{ needs.build-fsrs-ai.result }}
+      BUILD_GENERATIVE_RESULT: ${{ needs.build-generative.result }}
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
@@ -233,7 +270,7 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           timeout: 80s
           command_timeout: 30m
-          envs: BUILD_GATEWAY_RESULT,BUILD_AUTH_RESULT,BUILD_LEARN_RESULT,BUILD_STORAGE_RESULT,BUILD_FSRS_AI_RESULT
+          envs: BUILD_GATEWAY_RESULT,BUILD_AUTH_RESULT,BUILD_LEARN_RESULT,BUILD_STORAGE_RESULT,BUILD_FSRS_AI_RESULT,BUILD_GENERATIVE_RESULT
           script: |
             set -u
 
@@ -280,11 +317,13 @@ jobs:
             LEARN_IMAGE=${{ env.IMAGE_PREFIX }}/learn:latest
             STORAGE_IMAGE=${{ env.IMAGE_PREFIX }}/storage:latest
             FSRS_AI_IMAGE=${{ env.IMAGE_PREFIX }}/fsrs-ai:latest
+            GENERATIVE_IMAGE=${{ env.IMAGE_PREFIX }}/generative:latest
             API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT || '3000' }}
             AUTH_PORT=${{ secrets.AUTH_PORT }}
             LEARN_PORT=${{ secrets.LEARN_PORT }}
             STORAGE_PORT=${{ secrets.STORAGE_PORT || '3003' }}
             FSRS_AI_PORT=${{ secrets.FSRS_AI_PORT || '3004' }}
+            GENERATIVE_PORT=${{ secrets.GENERATIVE_PORT || '3005' }}
             LEARN_DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
             STORAGE_DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
             FSRS_AI_DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
@@ -300,6 +339,7 @@ jobs:
             STORAGE_UPSTREAM_URL=http://storage:${{ secrets.STORAGE_PORT || '3003' }}
             FSRS_AI_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
             FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
+            GENERATIVE_UPSTREAM_URL=http://generative:${{ secrets.GENERATIVE_PORT || '3005' }}
             JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
             REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
             REDIS_PORT=${{ secrets.REDIS_PORT }}
@@ -379,6 +419,20 @@ jobs:
             FSRS_ASYNC_RESCHEDULE_ENABLED=${{ secrets.FSRS_ASYNC_RESCHEDULE_ENABLED || 'true' }}
             ENVEOF
 
+            # ── Create generative/.env ──
+            mkdir -p generative
+            cat > generative/.env << ENVEOF
+            PORT=${{ secrets.GENERATIVE_PORT || '3005' }}
+            REDIS_URL=${{ secrets.REDIS_URL || format('redis://:{0}@redis:6379/{1}', secrets.REDIS_PASSWORD, secrets.REDIS_DB || '1') }}
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            GEMINI_MODEL=${{ secrets.GEMINI_MODEL || 'gemini-2.0-flash' }}
+            ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}
+            ELEVENLABS_VOICE_ID=${{ secrets.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL' }}
+            ELEVENLABS_MODEL_ID=${{ secrets.ELEVENLABS_MODEL_ID || 'eleven_flash_v2_5' }}
+            ELEVENLABS_STT_MODEL_ID=${{ secrets.ELEVENLABS_STT_MODEL_ID || 'scribe_v2' }}
+            ENVEOF
+
             # ── Pull images & deploy (partial success tolerant) ──
             pull_if_built() {
               local service="$1"
@@ -404,12 +458,14 @@ jobs:
             pull_if_built learn "$BUILD_LEARN_RESULT"
             pull_if_built storage "$BUILD_STORAGE_RESULT"
             pull_if_built fsrs-ai "$BUILD_FSRS_AI_RESULT"
+            pull_if_built generative "$BUILD_GENERATIVE_RESULT"
             pull_if_built api-gateway "$BUILD_GATEWAY_RESULT"
 
             up_service auth
             up_service learn
             up_service storage
             up_service fsrs-ai
+            up_service generative
             up_service api-gateway
 
             if ! sudo_run docker compose ps --status running --services | grep -qx 'api-gateway'; then

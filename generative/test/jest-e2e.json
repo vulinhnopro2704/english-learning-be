@@ -1,0 +1,13 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "moduleNameMapper": {
+    "^@english-learning/nest-api-docs$": "<rootDir>/mocks/nest-api-docs.ts",
+    "^@english-learning/nest-error-handler$": "<rootDir>/mocks/nest-error-handler.ts"
+  },
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  }
+}

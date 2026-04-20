@@ -10,8 +10,14 @@ FSRS-AI la microservice FastAPI chuyen xu ly lich on tap (FSRS v6), optimizer, v
 
 ## 2) Run local
 
+Yeu cau Python: `3.12.x`.
+
+Luu y: hien tai dependency `pydantic-core` trong stack nay chua build on dinh voi Python `3.14`, nen neu tao virtualenv bang `3.14` thi `pip install -r requirements.txt` co the fail trong buoc build wheel.
+
 ```bash
 cd fsrs-ai
+python3.12 -m venv .venv
+source .venv/bin/activate
 cp .env.example .env
 pip install -r requirements.txt
 alembic upgrade head
