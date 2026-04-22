@@ -285,66 +285,23 @@ export class TutorSessionsService {
     };
   }
 
-  private buildCorrection(userInput: string) {
-    const normalized = userInput.trim();
-    const lower = normalized.toLowerCase();
-
-    if (lower.includes('goed')) {
-      return {
-        hasError: true,
-        correctedVersion: normalized.replace(/goed/gi, 'went'),
-        shortReason: 'Use went as the past tense of go.',
-      };
-    }
-
-    return {
-      hasError: false,
-      correctedVersion: normalized,
-      shortReason: 'Nice sentence structure.',
-    };
-  }
-
   private async buildTutorResponse(
     session: TutorSessionState,
     userInput: string,
   ): Promise<TutorLlmResponse> {
-    try {
-      return await this.llmService.generateTutorResponse({
-        userInput,
-        cefrLevel: session.tutorProfile.cefrLevel,
-        focusTopics: session.tutorProfile.focusTopics,
-        recentTurns: session.turns.slice(-4).map((turn) => ({
-          userInput: turn.userInput,
-          tutorText: turn.tutorText,
-        })),
-      });
-    } catch (error) {
-      console.error(error);
-      const correction = this.buildCorrection(userInput);
-      return {
-        tutorText: correction.hasError
-          ? `Great effort. A better sentence is: ${correction.correctedVersion}`
-          : 'Excellent sentence. Can you say another one using a different verb tense?',
-        emotionState: correction.hasError ? 'CORRECTIVE_SOFT' : 'ENCOURAGING',
-        animationState: correction.hasError
-          ? 'GESTURE_EXPLAIN'
-          : 'GESTURE_PRAISE',
-        correction,
-      };
-    }
+    return this.llmService.generateTutorResponse({
+      userInput,
+      cefrLevel: session.tutorProfile.cefrLevel,
+      focusTopics: session.tutorProfile.focusTopics,
+      recentTurns: session.turns.slice(-4).map((turn) => ({
+        userInput: turn.userInput,
+        tutorText: turn.tutorText,
+      })),
+    });
   }
 
   private async buildAudioResponse(tutorText: string, voiceId?: string) {
-    try {
-      return await this.ttsService.synthesize(tutorText, voiceId);
-    } catch {
-      return {
-        url: null,
-        mimeType: 'audio/mpeg',
-        provider: 'elevenlabs',
-        status: 'failed' as const,
-      };
-    }
+    return this.ttsService.synthesize(tutorText, voiceId);
   }
 
   private async getOrCreateTranscript(dto: InteractVoiceTutorSessionDto) {
