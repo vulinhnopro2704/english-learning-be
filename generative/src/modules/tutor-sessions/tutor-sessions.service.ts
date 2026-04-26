@@ -127,8 +127,12 @@ export class TutorSessionsService {
       llmResponse.tutorText,
       session.tutorProfile.voiceId,
     );
+    const audioWithAttribution = {
+      ...audio,
+      source: 'Voice by elevenlabs.io',
+    };
+
     const avatarBehavior = this.avatarBehaviorService.createAvatarBehavior({
-      text: llmResponse.tutorText,
       emotionState: llmResponse.emotionState,
       animationState: llmResponse.animationState,
     });
@@ -141,9 +145,8 @@ export class TutorSessionsService {
       animationState: llmResponse.animationState,
       facialExpression: avatarBehavior.facialExpression,
       animation: avatarBehavior.animation,
-      lipSync: avatarBehavior.lipSync,
       correction: llmResponse.correction,
-      audio,
+      audio: audioWithAttribution,
       createdAt: now,
     };
 

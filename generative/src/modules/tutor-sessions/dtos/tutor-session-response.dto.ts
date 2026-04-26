@@ -108,6 +108,12 @@ export class TutorAudioResponseDto {
   provider!: string;
 
   @ApiProperty({
+    example: 'Voice by elevenlabs.io',
+    description: 'Required attribution string for ElevenLabs free tier.',
+  })
+  source!: string;
+
+  @ApiProperty({
     example: 'completed',
     enum: AUDIO_STATUSES,
     description:
@@ -136,33 +142,6 @@ export class TutorCorrectionResponseDto {
   shortReason?: string;
 }
 
-export class TutorLipSyncCueDto {
-  @ApiProperty({
-    example: 0,
-    description: 'Cue start time in seconds from audio start.',
-  })
-  start!: number;
-
-  @ApiProperty({
-    example: 0.18,
-    description: 'Cue end time in seconds from audio start.',
-  })
-  end!: number;
-
-  @ApiProperty({
-    example: 'A',
-    description: 'Simplified viseme label used by avatar lip-sync layer.',
-  })
-  value!: string;
-}
-
-export class TutorLipSyncResponseDto {
-  @ApiProperty({
-    type: [TutorLipSyncCueDto],
-    description: 'Sequence of viseme cues for avatar mouth animation.',
-  })
-  mouthCues!: TutorLipSyncCueDto[];
-}
 
 export class TutorInteractionResponseDto {
   @ApiProperty({
@@ -206,12 +185,6 @@ export class TutorInteractionResponseDto {
     description: 'Resolved body animation value for client avatar system.',
   })
   animation!: string;
-
-  @ApiProperty({
-    type: TutorLipSyncResponseDto,
-    description: 'Lip-sync instruction payload derived from tutor text.',
-  })
-  lipSync!: TutorLipSyncResponseDto;
 
   @ApiProperty({
     type: TutorCorrectionResponseDto,
