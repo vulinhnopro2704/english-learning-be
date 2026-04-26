@@ -147,11 +147,6 @@ services:
       - SWAGGER_ENABLED=${GENERATIVE_SWAGGER_ENABLED:-true}
       - SWAGGER_PATH=${GENERATIVE_SWAGGER_PATH:-api-docs}
       - SWAGGER_TITLE=${GENERATIVE_SWAGGER_TITLE:-Generative API}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash}
-      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
-      - ELEVENLABS_VOICE_ID=${ELEVENLABS_VOICE_ID:-EXAVITQu4vr4xnSDxMaL}
-      - ELEVENLABS_MODEL_ID=${ELEVENLABS_MODEL_ID:-eleven_flash_v2_5}
     depends_on:
       redis:
         condition: service_healthy
