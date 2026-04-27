@@ -67,4 +67,7 @@ async function bootstrap() {
     );
   }
 }
-void bootstrap();
+void bootstrap().catch((err) => {
+  console.error('Bootstrap error:', err);
+  process.exit(1);
+});

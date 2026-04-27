@@ -1,0 +1,92 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["generative"]
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  englishLevel String    @map("english_level") // e.g., A2, B1
+  sessions     Session[]
+
+  @@map("users")
+  @@schema("generative")
+}
+
+enum ScenarioType {
+  SYSTEM
+  AI_GENERATED
+  USER_CREATED
+
+  @@schema("generative")
+}
+
+model Scenario {
+  id            String    @id @default(uuid())
+  title         String
+  description   String
+  aiPersona     String    @map("ai_persona")
+  userPersona   String    @map("user_persona")
+  requiredTasks Json      @map("required_tasks") // JSON array containing 3 tasks
+  
+  type          ScenarioType @default(SYSTEM)
+  level         String?
+  topic         String?
+  isPublic      Boolean      @default(true) @map("is_public")
+  creatorId     String?      @map("creator_id")
+  
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @default(now()) @map("updated_at")
+
+  sessions      Session[]
+
+  @@map("scenarios")
+  @@schema("generative")
+}
+
+model Session {
+  id                String             @id @default(uuid())
+  userId            String             @map("user_id")
+  scenarioId        String             @map("scenario_id")
+  status            String             @default("active") // "active" or "completed"
+  startedAt         DateTime           @default(now()) @map("started_at")
+  endedAt           DateTime?          @map("ended_at")
+  user              User               @relation(fields: [userId], references: [id])
+  scenario          Scenario           @relation(fields: [scenarioId], references: [id])
+  messages          Message[]
+  sessionEvaluation SessionEvaluation?
+
+  @@map("sessions")
+  @@schema("generative")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  sessionId String   @map("session_id")
+  role      String   // "user" or "ai"
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  session   Session  @relation(fields: [sessionId], references: [id])
+
+  @@map("messages")
+  @@schema("generative")
+}
+
+model SessionEvaluation {
+  id               String  @id @default(uuid())
+  sessionId        String  @unique @map("session_id")
+  task1Completed   Boolean @default(false) @map("task_1_completed")
+  task2Completed   Boolean @default(false) @map("task_2_completed")
+  task3Completed   Boolean @default(false) @map("task_3_completed")
+  grammarFeedback  Json?   @map("grammar_feedback") // JSON array of mistakes
+  session          Session @relation(fields: [sessionId], references: [id])
+
+  @@map("session_evaluations")
+  @@schema("generative")
+}
