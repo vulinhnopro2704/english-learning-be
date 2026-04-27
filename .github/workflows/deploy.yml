@@ -326,6 +326,7 @@ jobs:
             GENERATIVE_PORT=${{ secrets.GENERATIVE_PORT || '3005' }}
             LEARN_DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
             STORAGE_DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
+            GENERATIVE_DATABASE_URL=${{ secrets.GENERATIVE_DATABASE_URL }}
             FSRS_AI_DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
             FSRS_AI_ROOT_PATH=${{ secrets.FSRS_AI_ROOT_PATH || '/fsrs-ai' }}
             FSRS_TRAIN_MIN_VALID_LOGS=${{ secrets.FSRS_TRAIN_MIN_VALID_LOGS || '50' }}
@@ -423,6 +424,7 @@ jobs:
             mkdir -p generative
             cat > generative/.env << ENVEOF
             PORT=${{ secrets.GENERATIVE_PORT || '3005' }}
+            DATABASE_URL=${{ secrets.GENERATIVE_DATABASE_URL }}
             REDIS_URL=${{ secrets.REDIS_URL || format('redis://:{0}@redis:6379/{1}', secrets.REDIS_PASSWORD, secrets.REDIS_DB || '1') }}
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
