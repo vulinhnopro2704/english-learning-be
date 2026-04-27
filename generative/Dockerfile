@@ -13,6 +13,7 @@ WORKDIR /app
 COPY --from=deps /app/generative/node_modules ./generative/node_modules
 COPY generative ./generative
 WORKDIR /app/generative
+RUN npx prisma generate
 RUN pnpm build
 RUN pnpm prune --prod
 
