@@ -210,7 +210,11 @@ export class GatewayProxyService {
       return this.storageUpstreamUrl;
     }
 
-    if (path.startsWith('/generative') || path.startsWith('/tutor')) {
+    if (
+      path.startsWith('/generative') ||
+      path.startsWith('/tutor') ||
+      path.startsWith('/roleplay')
+    ) {
       return this.generativeUpstreamUrl;
     }
 
