@@ -412,6 +412,15 @@ export class GatewayProxyService {
         redirect: 'manual',
       });
 
+      if (
+        req.path === '/auth/google' ||
+        req.path === '/auth/google/callback'
+      ) {
+        this.logger.log(
+          `OAuth proxy ${req.method.toUpperCase()} ${req.path} -> ${response.status} location=${response.headers.get('location') ?? 'none'} traceId=${this.getTraceId(req)}`,
+        );
+      }
+
       this.copyResponseHeaders(response, res, req);
       res.status(response.status);
 
@@ -607,10 +616,18 @@ export class GatewayProxyService {
   }
 
   private normalizeCookieDomain(rawDomain?: string): string | undefined {
-    const domain = rawDomain?.trim();
+    const domain = rawDomain?.trim().replace(/:\d+$/, '').toLowerCase();
     if (!domain) {
       return undefined;
     }
-    return domain.replace(/:\d+$/, '');
+    if (
+      domain === 'localhost' ||
+      domain === '127.0.0.1' ||
+      domain === '::1' ||
+      /^\d{1,3}(\.\d{1,3}){3}$/.test(domain)
+    ) {
+      return undefined;
+    }
+    return domain;
   }
 }

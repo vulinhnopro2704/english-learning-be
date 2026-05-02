@@ -47,17 +47,29 @@ export class AuthService {
     private readonly redisService: RedisService,
     private readonly mailService: MailService,
   ) {
-    this.accessSecret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
-    this.refreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
-    this.accessExpiration = this.configService.getOrThrow<string>('JWT_ACCESS_EXPIRATION');
-    this.refreshExpiration = this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRATION');
-    this.cookieDomain = this.normalizeCookieDomain(this.configService.get<string>('COOKIE_DOMAIN'));
-    this.isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    this.accessSecret =
+      this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
+    this.refreshSecret =
+      this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+    this.accessExpiration = this.configService.getOrThrow<string>(
+      'JWT_ACCESS_EXPIRATION',
+    );
+    this.refreshExpiration = this.configService.getOrThrow<string>(
+      'JWT_REFRESH_EXPIRATION',
+    );
+    this.cookieDomain = this.normalizeCookieDomain(
+      this.configService.get<string>('COOKIE_DOMAIN'),
+    );
+    this.isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
     this.appPublicBaseUrl = this.configService
       .get<string>('APP_PUBLIC_BASE_URL', 'http://localhost:5173')
       .replace(/\/+$/, '');
     this.emailVerificationTtlMinutes = Number(
-      this.configService.get<string>('EMAIL_VERIFICATION_TOKEN_TTL_MINUTES', '60'),
+      this.configService.get<string>(
+        'EMAIL_VERIFICATION_TOKEN_TTL_MINUTES',
+        '60',
+      ),
     );
     this.passwordResetTtlMinutes = Number(
       this.configService.get<string>('PASSWORD_RESET_TOKEN_TTL_MINUTES', '30'),
@@ -112,7 +124,10 @@ export class AuthService {
       };
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`Register failed for ${normalizedEmail}: ${err.message}`, err.stack);
+      this.logger.error(
+        `Register failed for ${normalizedEmail}: ${err.message}`,
+        err.stack,
+      );
       throw error;
     }
   }
@@ -163,84 +178,126 @@ export class AuthService {
       };
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`Login failed for ${normalizedEmail}: ${err.message}`, err.stack);
+      this.logger.error(
+        `Login failed for ${normalizedEmail}: ${err.message}`,
+        err.stack,
+      );
       throw error;
     }
   }
 
   async loginWithGoogle(profile: GoogleAuthProfile) {
-    const normalizedEmail = this.normalizeEmail(profile.email);
-    if (!normalizedEmail) {
-      throw new ApiException({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        errorCode: 'GOOGLE_EMAIL_MISSING',
-        message: 'Google account email is missing',
-      });
-    }
-
-    const existingAccount = await this.prisma.authAccount.findUnique({
-      where: {
-        provider_providerAccountId: {
-          provider: AuthProvider.GOOGLE,
-          providerAccountId: profile.providerAccountId,
-        },
-      },
-      include: { user: true },
-    });
-
-    let user = existingAccount?.user ?? null;
-
-    if (!user) {
-      user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
-
-      if (!user) {
-        user = await this.prisma.user.create({
-          data: {
-            id: uuidv7(),
-            email: normalizedEmail,
-            name: profile.name,
-            avatar: profile.avatar,
-            emailVerifiedAt: new Date(),
-          },
+    try {
+      const normalizedEmail = this.normalizeEmail(profile.email);
+      if (!normalizedEmail) {
+        throw new ApiException({
+          statusCode: HttpStatus.UNAUTHORIZED,
+          errorCode: 'GOOGLE_EMAIL_MISSING',
+          message: 'Google account email is missing',
         });
       }
 
-      await this.prisma.authAccount.create({
+      this.logger.log(
+        `Google login processing providerAccountId=${profile.providerAccountId} email=${normalizedEmail}`,
+      );
+
+      const existingAccount = await this.prisma.authAccount.findUnique({
+        where: {
+          provider_providerAccountId: {
+            provider: AuthProvider.GOOGLE,
+            providerAccountId: profile.providerAccountId,
+          },
+        },
+        include: { user: true },
+      });
+
+      let user = existingAccount?.user ?? null;
+      this.logger.log(
+        `Google account lookup providerAccountId=${profile.providerAccountId} linkedUser=${user ? user.id : 'none'}`,
+      );
+
+      if (!user) {
+        user = await this.prisma.user.findUnique({
+          where: { email: normalizedEmail },
+        });
+
+        if (!user) {
+          user = await this.prisma.user.create({
+            data: {
+              id: uuidv7(),
+              email: normalizedEmail,
+              name: profile.name,
+              avatar: profile.avatar,
+              emailVerifiedAt: new Date(),
+            },
+          });
+          this.logger.log(`Google login created new user userId=${user.id}`);
+        } else {
+          this.logger.log(
+            `Google login linked existing email userId=${user.id}`,
+          );
+        }
+
+        await this.prisma.authAccount.create({
+          data: {
+            id: uuidv7(),
+            userId: user.id,
+            provider: AuthProvider.GOOGLE,
+            providerAccountId: profile.providerAccountId,
+            accessToken: profile.accessToken,
+            refreshToken: profile.refreshToken,
+          },
+        });
+        this.logger.log(
+          `Google login created auth account providerAccountId=${profile.providerAccountId} userId=${user.id}`,
+        );
+      }
+
+      const updatedUser = await this.prisma.user.update({
+        where: { id: user.id },
         data: {
-          id: uuidv7(),
-          userId: user.id,
-          provider: AuthProvider.GOOGLE,
-          providerAccountId: profile.providerAccountId,
-          accessToken: profile.accessToken,
-          refreshToken: profile.refreshToken,
+          name: user.name ?? profile.name,
+          avatar: user.avatar ?? profile.avatar,
+          emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
+          lastLoginAt: new Date(),
         },
       });
+
+      const tokens = await this.generateTokens(
+        updatedUser.id,
+        updatedUser.email,
+        updatedUser.role,
+      );
+      this.logger.log(
+        `Google login success userId=${updatedUser.id} email=${updatedUser.email}`,
+      );
+
+      return {
+        user: this.sanitizeUser(updatedUser),
+        ...tokens,
+      };
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `Google login failed for providerAccountId=${profile.providerAccountId} email=${profile.email}: ${err.message}`,
+        err.stack,
+      );
+      throw error;
     }
-
-    const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        name: user.name ?? profile.name,
-        avatar: user.avatar ?? profile.avatar,
-        emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
-        lastLoginAt: new Date(),
-      },
-    });
-
-    const tokens = await this.generateTokens(updatedUser.id, updatedUser.email, updatedUser.role);
-
-    return {
-      user: this.sanitizeUser(updatedUser),
-      ...tokens,
-    };
   }
 
-  async resendVerification(dto: ResendVerificationDto): Promise<{ message: string }> {
+  async resendVerification(
+    dto: ResendVerificationDto,
+  ): Promise<{ message: string }> {
     const normalizedEmail = this.normalizeEmail(dto.email);
-    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
 
     if (!user || user.emailVerifiedAt) {
-      return { message: 'If your email exists, verification mail has been sent' };
+      return {
+        message: 'If your email exists, verification mail has been sent',
+      };
     }
 
     const verification = this.createOpaqueToken();
@@ -275,7 +332,12 @@ export class AuthService {
       });
     }
 
-    if (this.isExpired(user.emailVerificationSentAt, this.emailVerificationTtlMinutes)) {
+    if (
+      this.isExpired(
+        user.emailVerificationSentAt,
+        this.emailVerificationTtlMinutes,
+      )
+    ) {
       throw new ApiException({
         statusCode: HttpStatus.BAD_REQUEST,
         errorCode: 'TOKEN_EXPIRED',
@@ -297,10 +359,14 @@ export class AuthService {
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
     const normalizedEmail = this.normalizeEmail(dto.email);
-    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
 
     if (!user) {
-      return { message: 'If your email exists, reset instructions have been sent' };
+      return {
+        message: 'If your email exists, reset instructions have been sent',
+      };
     }
 
     const reset = this.createOpaqueToken();
@@ -318,7 +384,9 @@ export class AuthService {
       `${this.appPublicBaseUrl}/reset-password?token=${encodeURIComponent(reset.raw)}`,
     );
 
-    return { message: 'If your email exists, reset instructions have been sent' };
+    return {
+      message: 'If your email exists, reset instructions have been sent',
+    };
   }
 
   async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
@@ -336,7 +404,9 @@ export class AuthService {
       });
     }
 
-    if (this.isExpired(user.passwordResetSentAt, this.passwordResetTtlMinutes)) {
+    if (
+      this.isExpired(user.passwordResetSentAt, this.passwordResetTtlMinutes)
+    ) {
       throw new ApiException({
         statusCode: HttpStatus.BAD_REQUEST,
         errorCode: 'TOKEN_EXPIRED',
@@ -358,7 +428,11 @@ export class AuthService {
     return { message: 'Password has been reset successfully' };
   }
 
-  async logout(userId: string, accessJti: string, refreshJti: string): Promise<void> {
+  async logout(
+    userId: string,
+    accessJti: string,
+    refreshJti: string,
+  ): Promise<void> {
     const accessTtl = this.parseDurationToSeconds(this.accessExpiration);
     const refreshTtl = this.parseDurationToSeconds(this.refreshExpiration);
 
@@ -380,7 +454,11 @@ export class AuthService {
     this.logger.log(`User logged out: ${userId}`);
   }
 
-  async refreshTokens(userId: string, oldRefreshJti: string, oldAccessJti?: string) {
+  async refreshTokens(
+    userId: string,
+    oldRefreshJti: string,
+    oldAccessJti?: string,
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -437,7 +515,9 @@ export class AuthService {
     const refreshJti = uuidv7();
 
     const accessExpiresIn = this.parseDurationToSeconds(this.accessExpiration);
-    const refreshExpiresIn = this.parseDurationToSeconds(this.refreshExpiration);
+    const refreshExpiresIn = this.parseDurationToSeconds(
+      this.refreshExpiration,
+    );
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
@@ -453,7 +533,11 @@ export class AuthService {
     return { accessToken, refreshToken, accessJti, refreshJti };
   }
 
-  setTokenCookies(res: Response, accessToken: string, refreshToken: string): void {
+  setTokenCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken: string,
+  ): void {
     const commonOptions = {
       httpOnly: true,
       secure: this.isProduction,
@@ -487,8 +571,12 @@ export class AuthService {
   }
 
   getOAuthRedirectUrl(success: boolean, errorCode?: string): string {
-    const successUrl = this.configService.getOrThrow<string>('GOOGLE_OAUTH_SUCCESS_REDIRECT_URL');
-    const failureUrl = this.configService.getOrThrow<string>('GOOGLE_OAUTH_FAILURE_REDIRECT_URL');
+    const successUrl = this.configService.getOrThrow<string>(
+      'GOOGLE_OAUTH_SUCCESS_REDIRECT_URL',
+    );
+    const failureUrl = this.configService.getOrThrow<string>(
+      'GOOGLE_OAUTH_FAILURE_REDIRECT_URL',
+    );
 
     const url = new URL(success ? successUrl : failureUrl);
     if (!success && errorCode) {
@@ -563,6 +651,20 @@ export class AuthService {
     if (!domain) {
       return undefined;
     }
-    return domain.split(':')[0]?.trim() || undefined;
+    const normalized = domain.split(':')[0]?.trim().toLowerCase();
+    if (!normalized) {
+      return undefined;
+    }
+    // Host-only cookies are safer for localhost/IP setups; explicit Domain on
+    // these values is frequently rejected by browsers.
+    if (
+      normalized === 'localhost' ||
+      normalized === '127.0.0.1' ||
+      normalized === '::1' ||
+      /^\d{1,3}(\.\d{1,3}){3}$/.test(normalized)
+    ) {
+      return undefined;
+    }
+    return normalized;
   }
 }

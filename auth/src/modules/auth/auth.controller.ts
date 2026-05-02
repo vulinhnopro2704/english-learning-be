@@ -8,6 +8,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -47,6 +48,8 @@ interface GoogleCallbackUser {
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly jwtService: JwtService,
@@ -64,7 +67,10 @@ export class AuthController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Start Google OAuth2 login flow' })
-  async googleAuth() {
+  async googleAuth(@Req() req: Request) {
+    this.logger.log(
+      `Google OAuth start requested traceId=${req.header('x-trace-id') ?? 'unknown'}`,
+    );
     return;
   }
 
@@ -77,15 +83,29 @@ export class AuthController {
   ) {
     try {
       const profile = req.user as GoogleCallbackUser;
+      this.logger.log(
+        `Google OAuth callback received providerAccountId=${profile?.providerAccountId ?? 'unknown'} email=${profile?.email ?? 'unknown'} traceId=${req.header('x-trace-id') ?? 'unknown'}`,
+      );
       const result = await this.authService.loginWithGoogle(profile);
       this.authService.setTokenCookies(
         res,
         result.accessToken,
         result.refreshToken,
       );
+      this.logger.log(
+        `Google OAuth callback success userId=${result.user.id} redirect=${this.authService.getOAuthRedirectUrl(true)}`,
+      );
       return res.redirect(this.authService.getOAuthRedirectUrl(true));
-    } catch {
-      return res.redirect(this.authService.getOAuthRedirectUrl(false, 'OAUTH_FAILED'));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown OAuth callback error';
+      this.logger.error(
+        `Google OAuth callback failed: ${message}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      return res.redirect(
+        this.authService.getOAuthRedirectUrl(false, 'OAUTH_FAILED'),
+      );
     }
   }
 
