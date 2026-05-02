@@ -6,6 +6,7 @@ import {
 import { setupApiDocs } from '@english-learning/nest-api-docs';
 import { setupApiErrorHandling } from '@english-learning/nest-error-handler';
 import cookieParser from 'cookie-parser';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
@@ -16,7 +17,14 @@ async function bootstrap() {
   });
   app.useLogger(appLogger);
 
-  // Cookie parser
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
   app.use(cookieParser());
 
   app.use(
@@ -27,8 +35,7 @@ async function bootstrap() {
 
   setupApiErrorHandling(app);
 
-  // CORS with credentials
-  const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3001')
+  const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:5173')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);

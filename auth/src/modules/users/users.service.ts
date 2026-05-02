@@ -88,7 +88,7 @@ export class UsersService {
 
   async create(dto: CreateUserDto) {
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email: dto.email.trim().toLowerCase() },
     });
     if (existingUser) {
       throw new ApiException({
@@ -102,7 +102,7 @@ export class UsersService {
     const user = await this.prisma.user.create({
       data: {
         id: uuidv7(),
-        email: dto.email,
+        email: dto.email.trim().toLowerCase(),
         password: hashedPassword,
         name: dto.name,
         role: dto.role,

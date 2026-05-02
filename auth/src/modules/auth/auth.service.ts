@@ -6,49 +6,70 @@ import { PrismaService } from '../db/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { VerifyEmailDto } from './dtos/verify-email.dto';
+import { ResendVerificationDto } from './dtos/resend-verification.dto';
 import { hash, compare } from 'bcryptjs';
+import { randomBytes, createHash } from 'crypto';
 import { uuidv7 } from 'uuidv7';
 import type { Response } from 'express';
+import { AuthProvider, UserRole } from '../../generated/prisma/client';
+import { MailService } from './mail.service';
+
+interface GoogleAuthProfile {
+  provider: 'GOOGLE';
+  providerAccountId: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+  accessToken?: string;
+  refreshToken?: string;
+}
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-
   private readonly accessSecret: string;
   private readonly refreshSecret: string;
   private readonly accessExpiration: string;
   private readonly refreshExpiration: string;
-  private readonly cookieDomain: string;
+  private readonly cookieDomain?: string;
   private readonly isProduction: boolean;
+  private readonly appPublicBaseUrl: string;
+  private readonly emailVerificationTtlMinutes: number;
+  private readonly passwordResetTtlMinutes: number;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
+    private readonly mailService: MailService,
   ) {
-    this.accessSecret =
-      this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
-    this.refreshSecret =
-      this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
-    this.accessExpiration = this.configService.getOrThrow<string>(
-      'JWT_ACCESS_EXPIRATION',
+    this.accessSecret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
+    this.refreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+    this.accessExpiration = this.configService.getOrThrow<string>('JWT_ACCESS_EXPIRATION');
+    this.refreshExpiration = this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRATION');
+    this.cookieDomain = this.normalizeCookieDomain(this.configService.get<string>('COOKIE_DOMAIN'));
+    this.isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    this.appPublicBaseUrl = this.configService
+      .get<string>('APP_PUBLIC_BASE_URL', 'http://localhost:5173')
+      .replace(/\/+$/, '');
+    this.emailVerificationTtlMinutes = Number(
+      this.configService.get<string>('EMAIL_VERIFICATION_TOKEN_TTL_MINUTES', '60'),
     );
-    this.refreshExpiration = this.configService.getOrThrow<string>(
-      'JWT_REFRESH_EXPIRATION',
+    this.passwordResetTtlMinutes = Number(
+      this.configService.get<string>('PASSWORD_RESET_TOKEN_TTL_MINUTES', '30'),
     );
-    this.cookieDomain = this.configService.get<string>(
-      'COOKIE_DOMAIN',
-      'localhost',
-    );
-    this.isProduction =
-      this.configService.get<string>('NODE_ENV') === 'production';
   }
 
   async register(dto: RegisterDto) {
+    const normalizedEmail = this.normalizeEmail(dto.email);
+
     try {
       const existingUser = await this.prisma.user.findUnique({
-        where: { email: dto.email },
+        where: { email: normalizedEmail },
       });
       if (existingUser) {
         throw new ApiException({
@@ -59,42 +80,63 @@ export class AuthService {
       }
 
       const hashedPassword = await hash(dto.password, 12);
+      const verification = this.createOpaqueToken();
+
       const user = await this.prisma.user.create({
         data: {
           id: uuidv7(),
-          email: dto.email,
+          email: normalizedEmail,
           password: hashedPassword,
           name: dto.name,
+          emailVerificationTokenHash: verification.hash,
+          emailVerificationSentAt: new Date(),
+          accounts: {
+            create: {
+              id: uuidv7(),
+              provider: AuthProvider.EMAIL,
+              providerAccountId: normalizedEmail,
+            },
+          },
         },
       });
 
-      const tokens = await this.generateTokens(user.id, user.email, user.role);
+      await this.mailService.sendEmailVerification(
+        user.email,
+        `${this.appPublicBaseUrl}/verify-email?token=${encodeURIComponent(verification.raw)}`,
+      );
+
       this.logger.log(`User registered: ${user.email}`);
 
       return {
         user: this.sanitizeUser(user),
-        ...tokens,
       };
     } catch (error) {
       const err = error as Error;
-      this.logger.error(
-        `Register failed for ${dto.email}: ${err.message}`,
-        err.stack,
-      );
+      this.logger.error(`Register failed for ${normalizedEmail}: ${err.message}`, err.stack);
       throw error;
     }
   }
 
   async login(dto: LoginDto) {
+    const normalizedEmail = this.normalizeEmail(dto.email);
+
     try {
       const user = await this.prisma.user.findUnique({
-        where: { email: dto.email },
+        where: { email: normalizedEmail },
       });
       if (!user || !user.password) {
         throw new ApiException({
           statusCode: HttpStatus.UNAUTHORIZED,
           errorCode: 'INVALID_CREDENTIALS',
           message: 'Invalid credentials',
+        });
+      }
+
+      if (!user.emailVerifiedAt) {
+        throw new ApiException({
+          statusCode: HttpStatus.FORBIDDEN,
+          errorCode: 'EMAIL_NOT_VERIFIED',
+          message: 'Please verify your email before logging in',
         });
       }
 
@@ -121,19 +163,202 @@ export class AuthService {
       };
     } catch (error) {
       const err = error as Error;
-      this.logger.error(
-        `Login failed for ${dto.email}: ${err.message}`,
-        err.stack,
-      );
+      this.logger.error(`Login failed for ${normalizedEmail}: ${err.message}`, err.stack);
       throw error;
     }
   }
 
-  async logout(
-    userId: string,
-    accessJti: string,
-    refreshJti: string,
-  ): Promise<void> {
+  async loginWithGoogle(profile: GoogleAuthProfile) {
+    const normalizedEmail = this.normalizeEmail(profile.email);
+    if (!normalizedEmail) {
+      throw new ApiException({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        errorCode: 'GOOGLE_EMAIL_MISSING',
+        message: 'Google account email is missing',
+      });
+    }
+
+    const existingAccount = await this.prisma.authAccount.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: AuthProvider.GOOGLE,
+          providerAccountId: profile.providerAccountId,
+        },
+      },
+      include: { user: true },
+    });
+
+    let user = existingAccount?.user ?? null;
+
+    if (!user) {
+      user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+
+      if (!user) {
+        user = await this.prisma.user.create({
+          data: {
+            id: uuidv7(),
+            email: normalizedEmail,
+            name: profile.name,
+            avatar: profile.avatar,
+            emailVerifiedAt: new Date(),
+          },
+        });
+      }
+
+      await this.prisma.authAccount.create({
+        data: {
+          id: uuidv7(),
+          userId: user.id,
+          provider: AuthProvider.GOOGLE,
+          providerAccountId: profile.providerAccountId,
+          accessToken: profile.accessToken,
+          refreshToken: profile.refreshToken,
+        },
+      });
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        name: user.name ?? profile.name,
+        avatar: user.avatar ?? profile.avatar,
+        emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
+        lastLoginAt: new Date(),
+      },
+    });
+
+    const tokens = await this.generateTokens(updatedUser.id, updatedUser.email, updatedUser.role);
+
+    return {
+      user: this.sanitizeUser(updatedUser),
+      ...tokens,
+    };
+  }
+
+  async resendVerification(dto: ResendVerificationDto): Promise<{ message: string }> {
+    const normalizedEmail = this.normalizeEmail(dto.email);
+    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+
+    if (!user || user.emailVerifiedAt) {
+      return { message: 'If your email exists, verification mail has been sent' };
+    }
+
+    const verification = this.createOpaqueToken();
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerificationTokenHash: verification.hash,
+        emailVerificationSentAt: new Date(),
+      },
+    });
+
+    await this.mailService.sendEmailVerification(
+      user.email,
+      `${this.appPublicBaseUrl}/verify-email?token=${encodeURIComponent(verification.raw)}`,
+    );
+
+    return { message: 'If your email exists, verification mail has been sent' };
+  }
+
+  async verifyEmail(dto: VerifyEmailDto): Promise<{ message: string }> {
+    const tokenHash = this.hashToken(dto.token);
+    const user = await this.prisma.user.findFirst({
+      where: { emailVerificationTokenHash: tokenHash },
+    });
+
+    if (!user || !user.emailVerificationSentAt) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'TOKEN_INVALID',
+        message: 'Verification token is invalid',
+      });
+    }
+
+    if (this.isExpired(user.emailVerificationSentAt, this.emailVerificationTtlMinutes)) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'TOKEN_EXPIRED',
+        message: 'Verification token has expired',
+      });
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerifiedAt: new Date(),
+        emailVerificationTokenHash: null,
+        emailVerificationSentAt: null,
+      },
+    });
+
+    return { message: 'Email verified successfully' };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const normalizedEmail = this.normalizeEmail(dto.email);
+    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+
+    if (!user) {
+      return { message: 'If your email exists, reset instructions have been sent' };
+    }
+
+    const reset = this.createOpaqueToken();
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetTokenHash: reset.hash,
+        passwordResetSentAt: new Date(),
+      },
+    });
+
+    await this.mailService.sendPasswordReset(
+      user.email,
+      `${this.appPublicBaseUrl}/reset-password?token=${encodeURIComponent(reset.raw)}`,
+    );
+
+    return { message: 'If your email exists, reset instructions have been sent' };
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    const tokenHash = this.hashToken(dto.token);
+
+    const user = await this.prisma.user.findFirst({
+      where: { passwordResetTokenHash: tokenHash },
+    });
+
+    if (!user || !user.passwordResetSentAt) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'TOKEN_INVALID',
+        message: 'Reset token is invalid',
+      });
+    }
+
+    if (this.isExpired(user.passwordResetSentAt, this.passwordResetTtlMinutes)) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'TOKEN_EXPIRED',
+        message: 'Reset token has expired',
+      });
+    }
+
+    const newPasswordHash = await hash(dto.password, 12);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: newPasswordHash,
+        passwordResetTokenHash: null,
+        passwordResetSentAt: null,
+      },
+    });
+
+    return { message: 'Password has been reset successfully' };
+  }
+
+  async logout(userId: string, accessJti: string, refreshJti: string): Promise<void> {
     const accessTtl = this.parseDurationToSeconds(this.accessExpiration);
     const refreshTtl = this.parseDurationToSeconds(this.refreshExpiration);
 
@@ -157,7 +382,6 @@ export class AuthService {
       });
     }
 
-    // Blacklist the old refresh token
     const refreshTtl = this.parseDurationToSeconds(this.refreshExpiration);
     await this.redisService.blacklistToken(userId, oldRefreshJti, refreshTtl);
 
@@ -184,14 +408,12 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
-  async generateTokens(userId: string, email: string, role: string) {
+  async generateTokens(userId: string, email: string, role: UserRole) {
     const accessJti = uuidv7();
     const refreshJti = uuidv7();
 
     const accessExpiresIn = this.parseDurationToSeconds(this.accessExpiration);
-    const refreshExpiresIn = this.parseDurationToSeconds(
-      this.refreshExpiration,
-    );
+    const refreshExpiresIn = this.parseDurationToSeconds(this.refreshExpiration);
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
@@ -207,15 +429,11 @@ export class AuthService {
     return { accessToken, refreshToken, accessJti, refreshJti };
   }
 
-  setTokenCookies(
-    res: Response,
-    accessToken: string,
-    refreshToken: string,
-  ): void {
+  setTokenCookies(res: Response, accessToken: string, refreshToken: string): void {
     const commonOptions = {
       httpOnly: true,
       secure: this.isProduction,
-      sameSite: 'strict' as const,
+      sameSite: 'lax' as const,
       domain: this.isProduction ? this.cookieDomain : undefined,
       path: '/',
     };
@@ -235,7 +453,7 @@ export class AuthService {
     const commonOptions = {
       httpOnly: true,
       secure: this.isProduction,
-      sameSite: 'strict' as const,
+      sameSite: 'lax' as const,
       domain: this.isProduction ? this.cookieDomain : undefined,
       path: '/',
     };
@@ -244,26 +462,38 @@ export class AuthService {
     res.clearCookie('refresh_token', commonOptions);
   }
 
+  getOAuthRedirectUrl(success: boolean, errorCode?: string): string {
+    const successUrl = this.configService.getOrThrow<string>('GOOGLE_OAUTH_SUCCESS_REDIRECT_URL');
+    const failureUrl = this.configService.getOrThrow<string>('GOOGLE_OAUTH_FAILURE_REDIRECT_URL');
+
+    const url = new URL(success ? successUrl : failureUrl);
+    if (!success && errorCode) {
+      url.searchParams.set('error', errorCode);
+    }
+    return url.toString();
+  }
+
   private sanitizeUser(user: {
     id: string;
     email: string;
     name: string | null;
     avatar: string | null;
-    role: string;
+    role: UserRole;
+    emailVerifiedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
     lastLoginAt: Date | null;
   }) {
-    const { ...sanitized } = user;
     return {
-      id: sanitized.id,
-      email: sanitized.email,
-      name: sanitized.name,
-      avatar: sanitized.avatar,
-      role: sanitized.role,
-      createdAt: sanitized.createdAt,
-      updatedAt: sanitized.updatedAt,
-      lastLoginAt: sanitized.lastLoginAt,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      role: user.role,
+      emailVerifiedAt: user.emailVerifiedAt,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      lastLoginAt: user.lastLoginAt,
     };
   }
 
@@ -286,5 +516,29 @@ export class AuthService {
       default:
         throw new Error(`Unknown duration unit: ${unit}`);
     }
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  private hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private createOpaqueToken(): { raw: string; hash: string } {
+    const raw = randomBytes(32).toString('hex');
+    return { raw, hash: this.hashToken(raw) };
+  }
+
+  private isExpired(issuedAt: Date, ttlMinutes: number): boolean {
+    return Date.now() > issuedAt.getTime() + ttlMinutes * 60 * 1000;
+  }
+
+  private normalizeCookieDomain(domain?: string): string | undefined {
+    if (!domain) {
+      return undefined;
+    }
+    return domain.split(':')[0]?.trim() || undefined;
   }
 }

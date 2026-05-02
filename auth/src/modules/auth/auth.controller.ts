@@ -17,9 +17,14 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { ApiStandardErrorResponses } from '@english-learning/nest-api-docs';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { VerifyEmailDto } from './dtos/verify-email.dto';
+import { ResendVerificationDto } from './dtos/resend-verification.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import {
@@ -28,6 +33,16 @@ import {
 } from './decorators/current-user.decorator';
 import type { Request, Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
+
+interface GoogleCallbackUser {
+  provider: 'GOOGLE';
+  providerAccountId: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+  accessToken?: string;
+  refreshToken?: string;
+}
 
 @ApiTags('auth')
 @Controller('auth')
@@ -41,17 +56,37 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   @ApiStandardErrorResponses({ statuses: [409, 422, 500] })
-  async register(
-    @Body() dto: RegisterDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async register(@Body() dto: RegisterDto) {
     const result = await this.authService.register(dto);
-    this.authService.setTokenCookies(
-      res,
-      result.accessToken,
-      result.refreshToken,
-    );
     return { user: result.user };
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Start Google OAuth2 login flow' })
+  async googleAuth() {
+    return;
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Google OAuth2 callback' })
+  async googleAuthCallback(
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const profile = req.user as GoogleCallbackUser;
+      const result = await this.authService.loginWithGoogle(profile);
+      this.authService.setTokenCookies(
+        res,
+        result.accessToken,
+        result.refreshToken,
+      );
+      return res.redirect(this.authService.getOAuthRedirectUrl(true));
+    } catch {
+      return res.redirect(this.authService.getOAuthRedirectUrl(false, 'OAUTH_FAILED'));
+    }
   }
 
   @Post('login')
@@ -72,6 +107,30 @@ export class AuthController {
     return { user: result.user };
   }
 
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmail(dto);
+  }
+
+  @Post('verify-email/resend')
+  @HttpCode(HttpStatus.OK)
+  async resendVerifyEmail(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerification(dto);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
+  }
+
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -85,7 +144,6 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    // Decode the refresh token jti from the cookie
     const cookies = req.cookies as Record<string, string> | undefined;
     const refreshTokenCookie = cookies?.refresh_token;
     let refreshJti = '';
