@@ -172,8 +172,13 @@ export class AuthController {
         const decoded: { jti?: string } | null =
           this.jwtService.decode(refreshTokenCookie);
         refreshJti = decoded?.jti ?? '';
-      } catch {
-        // ignore decode errors during logout
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown decode error';
+        this.logger.error(
+          `Failed to decode refresh token during logout: ${message}`,
+          error instanceof Error ? error.stack : undefined,
+        );
       }
     }
 
@@ -202,8 +207,13 @@ export class AuthController {
         const decoded: { jti?: string } | null =
           this.jwtService.decode(accessTokenCookie);
         accessJti = decoded?.jti ?? '';
-      } catch {
-        // ignore decode errors during refresh
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown decode error';
+        this.logger.error(
+          `Failed to decode access token during refresh: ${message}`,
+          error instanceof Error ? error.stack : undefined,
+        );
       }
     }
 

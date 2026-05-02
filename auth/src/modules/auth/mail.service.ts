@@ -17,12 +17,18 @@ export class MailService {
     await this.sendEmail(email, 'Reset your password', html);
   }
 
-  private async sendEmail(to: string, subject: string, html: string): Promise<void> {
+  private async sendEmail(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<void> {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
     const from = this.configService.get<string>('MAIL_FROM_ADDRESS');
 
     if (!apiKey || !from) {
-      this.logger.warn(`Skip sending email to ${to}: RESEND_API_KEY or MAIL_FROM_ADDRESS missing`);
+      this.logger.warn(
+        `Skip sending email to ${to}: RESEND_API_KEY or MAIL_FROM_ADDRESS missing`,
+      );
       return;
     }
 

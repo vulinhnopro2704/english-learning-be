@@ -252,6 +252,22 @@ export class GatewayProxyService {
       return false;
     }
 
+    if (path === '/auth/verify-email' && normalizedMethod === 'POST') {
+      return false;
+    }
+
+    if (path === '/auth/verify-email/resend' && normalizedMethod === 'POST') {
+      return false;
+    }
+
+    if (path === '/auth/forgot-password' && normalizedMethod === 'POST') {
+      return false;
+    }
+
+    if (path === '/auth/reset-password' && normalizedMethod === 'POST') {
+      return false;
+    }
+
     if (
       path.startsWith(this.authDocsPrefix) ||
       path.startsWith(this.learnDocsPrefix) ||
