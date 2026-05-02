@@ -408,6 +408,8 @@ export class GatewayProxyService {
         method: req.method,
         headers,
         body,
+        // Preserve upstream 3xx responses (OAuth, SSO, etc.) for the client.
+        redirect: 'manual',
       });
 
       this.copyResponseHeaders(response, res, req);
