@@ -362,15 +362,25 @@ export class AuthService {
     const accessTtl = this.parseDurationToSeconds(this.accessExpiration);
     const refreshTtl = this.parseDurationToSeconds(this.refreshExpiration);
 
-    await Promise.all([
-      this.redisService.blacklistToken(userId, accessJti, accessTtl),
-      this.redisService.blacklistToken(userId, refreshJti, refreshTtl),
-    ]);
+    const blacklistTasks: Promise<void>[] = [];
+    if (accessJti) {
+      blacklistTasks.push(
+        this.redisService.blacklistToken(userId, accessJti, accessTtl),
+      );
+    }
+    if (refreshJti) {
+      blacklistTasks.push(
+        this.redisService.blacklistToken(userId, refreshJti, refreshTtl),
+      );
+    }
+    if (blacklistTasks.length > 0) {
+      await Promise.all(blacklistTasks);
+    }
 
     this.logger.log(`User logged out: ${userId}`);
   }
 
-  async refreshTokens(userId: string, oldRefreshJti: string) {
+  async refreshTokens(userId: string, oldRefreshJti: string, oldAccessJti?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -383,7 +393,21 @@ export class AuthService {
     }
 
     const refreshTtl = this.parseDurationToSeconds(this.refreshExpiration);
-    await this.redisService.blacklistToken(userId, oldRefreshJti, refreshTtl);
+    const accessTtl = this.parseDurationToSeconds(this.accessExpiration);
+    const blacklistTasks: Promise<void>[] = [];
+    if (oldRefreshJti) {
+      blacklistTasks.push(
+        this.redisService.blacklistToken(userId, oldRefreshJti, refreshTtl),
+      );
+    }
+    if (oldAccessJti) {
+      blacklistTasks.push(
+        this.redisService.blacklistToken(userId, oldAccessJti, accessTtl),
+      );
+    }
+    if (blacklistTasks.length > 0) {
+      await Promise.all(blacklistTasks);
+    }
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
     this.logger.log(`Tokens refreshed for user: ${user.email}`);

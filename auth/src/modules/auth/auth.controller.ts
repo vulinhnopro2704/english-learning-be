@@ -171,9 +171,23 @@ export class AuthController {
   @ApiStandardErrorResponses({ statuses: [401, 500] })
   async refresh(
     @CurrentUser() user: CurrentUserPayload,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.refreshTokens(user.id, user.jti);
+    const cookies = req.cookies as Record<string, string> | undefined;
+    const accessTokenCookie = cookies?.access_token;
+    let accessJti = '';
+    if (accessTokenCookie) {
+      try {
+        const decoded: { jti?: string } | null =
+          this.jwtService.decode(accessTokenCookie);
+        accessJti = decoded?.jti ?? '';
+      } catch {
+        // ignore decode errors during refresh
+      }
+    }
+
+    const result = await this.authService.refreshTokens(user.id, user.jti, accessJti);
     this.authService.setTokenCookies(
       res,
       result.accessToken,

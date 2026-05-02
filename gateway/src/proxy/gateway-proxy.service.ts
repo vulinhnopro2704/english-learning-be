@@ -35,6 +35,8 @@ export class GatewayProxyService {
   private readonly rateLimitMax: number;
   private readonly trustXForwardedFor: boolean;
   private readonly envIpBlacklist: Set<string>;
+  private readonly isProduction: boolean;
+  private readonly cookieDomain?: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -67,6 +69,12 @@ export class GatewayProxyService {
     this.trustXForwardedFor =
       (this.configService.get<string>('TRUST_X_FORWARDED_FOR') ?? 'true') ===
       'true';
+    this.isProduction =
+      (this.configService.get<string>('NODE_ENV') ?? 'development') ===
+      'production';
+    this.cookieDomain = this.normalizeCookieDomain(
+      this.configService.get<string>('COOKIE_DOMAIN'),
+    );
 
     const blacklistRaw = this.configService.get<string>('IP_BLACKLIST') ?? '';
     this.envIpBlacklist = new Set(
@@ -402,7 +410,7 @@ export class GatewayProxyService {
         body,
       });
 
-      this.copyResponseHeaders(response, res);
+      this.copyResponseHeaders(response, res, req);
       res.status(response.status);
 
       const responseText = await response.text();
@@ -546,6 +554,7 @@ export class GatewayProxyService {
   private copyResponseHeaders(
     upstream: globalThis.Response,
     res: Response,
+    req: Request,
   ): void {
     upstream.headers.forEach((value, name) => {
       const lowerName = name.toLowerCase();
@@ -560,8 +569,46 @@ export class GatewayProxyService {
     });
 
     const setCookies = upstream.headers.getSetCookie();
+    const shouldClearAuthCookies =
+      req.path === '/auth/refresh' &&
+      req.method.toUpperCase() === 'POST' &&
+      upstream.status === HttpStatus.UNAUTHORIZED;
+
+    if (shouldClearAuthCookies) {
+      setCookies.push(...this.buildClearTokenCookies());
+    }
+
     if (setCookies.length > 0) {
       res.setHeader('set-cookie', setCookies);
     }
+  }
+
+  private buildClearTokenCookies(): string[] {
+    const base = [
+      'HttpOnly',
+      `SameSite=Lax`,
+      'Path=/',
+      'Expires=Thu, 01 Jan 1970 00:00:00 GMT',
+      'Max-Age=0',
+    ];
+
+    if (this.isProduction) {
+      base.push('Secure');
+    }
+
+    if (this.cookieDomain) {
+      base.push(`Domain=${this.cookieDomain}`);
+    }
+
+    const attrs = base.join('; ');
+    return [`access_token=; ${attrs}`, `refresh_token=; ${attrs}`];
+  }
+
+  private normalizeCookieDomain(rawDomain?: string): string | undefined {
+    const domain = rawDomain?.trim();
+    if (!domain) {
+      return undefined;
+    }
+    return domain.replace(/:\d+$/, '');
   }
 }
