@@ -236,6 +236,14 @@ export class GatewayProxyService {
       return false;
     }
 
+    if (path === '/auth/google' && normalizedMethod === 'GET') {
+      return false;
+    }
+
+    if (path === '/auth/google/callback' && normalizedMethod === 'GET') {
+      return false;
+    }
+
     if (
       path.startsWith(this.authDocsPrefix) ||
       path.startsWith(this.learnDocsPrefix) ||
