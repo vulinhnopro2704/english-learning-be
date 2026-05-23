@@ -56,8 +56,8 @@ const providerBadGatewayExample = {
 
 const serviceUnavailableExample = {
   statusCode: 503,
-  errorCode: 'LLM_PROVIDER_ERROR',
-  message: 'Gemini API key is not configured',
+  errorCode: 'OLLAMA_AUTH_ERROR',
+  message: 'Ollama API key is not configured',
 };
 
 const rateLimitedExample = {

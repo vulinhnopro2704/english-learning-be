@@ -1,26 +1,14 @@
 import { NestFactory } from '@nestjs/core';
+import { Logger } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
-import {
-  AppLogger,
-  createRequestLoggerMiddleware,
-} from '@english-learning/logger';
 import { setupApiDocs } from '@english-learning/nest-api-docs';
 import { setupApiErrorHandling } from '@english-learning/nest-error-handler';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const appLogger = new AppLogger();
-  const app = await NestFactory.create(AppModule, {
-    logger: appLogger,
-  });
-  app.useLogger(appLogger);
+  const app = await NestFactory.create(AppModule);
 
   app.use(cookieParser());
-  app.use(
-    createRequestLoggerMiddleware({
-      logger: appLogger,
-    }),
-  );
 
   setupApiErrorHandling(app);
 
@@ -50,20 +38,16 @@ async function bootstrap() {
     swaggerPath,
   });
 
+  const logger = new Logger('Bootstrap');
   const port = process.env.PORT ?? 3005;
   await app.listen(port);
-  appLogger.log(
-    `Application is running on: http://localhost:${port}`,
-    'Bootstrap',
-  );
+  logger.log(`Application is running on: http://localhost:${port}`);
   if (swaggerEnabled) {
-    appLogger.log(
+    logger.log(
       `API Docs (Scalar): http://localhost:${port}/${swaggerPath}`,
-      'Bootstrap',
     );
-    appLogger.log(
+    logger.log(
       `Swagger UI: http://localhost:${port}/${swaggerPath}/swagger`,
-      'Bootstrap',
     );
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../db/prisma.service';
 import { ApiException } from '@english-learning/nest-error-handler';
+import { OllamaService } from '../ollama/ollama.service';
 import {
   StartRoleplayResult,
   ChatRoleplayResult,
@@ -15,8 +15,8 @@ export class RoleplayService {
   private readonly logger = new Logger(RoleplayService.name);
 
   constructor(
-    private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly ollamaService: OllamaService,
   ) {}
 
   async getScenarios(filters?: any) {
@@ -67,13 +67,26 @@ export class RoleplayService {
       }
     `;
 
-    const rawResponse = await this.generateText(prompt);
-    
+    this.logger.log(
+      `[Roleplay] Generating scenario — topic=${dto.topic} level=${dto.level}`,
+    );
+
+    const result = await this.ollamaService.generate({
+      modelProfile: 'chat',
+      prompt,
+      json: true,
+    });
+
+    const rawResponse = result.response;
+
     let generatedData: any;
     try {
       const sanitized = rawResponse.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
       generatedData = JSON.parse(sanitized);
     } catch (e) {
+      this.logger.error(
+        `[Roleplay] Failed to parse generated scenario — rawPreview=${rawResponse.slice(0, 500)}`,
+      );
       throw new ApiException({
         statusCode: HttpStatus.BAD_GATEWAY,
         errorCode: 'LLM_PARSE_ERROR',
@@ -146,7 +159,7 @@ export class RoleplayService {
     });
 
     // We make the first call to LLM to get the opening message
-    const llmResponse = await this.callGemini(systemPrompt, []);
+    const llmResponse = await this.callOllama(systemPrompt, []);
 
     // Save AI opening message
     await this.prisma.message.create({
@@ -208,8 +221,8 @@ export class RoleplayService {
     });
 
     const chatHistory = [...pastMessages, newUserMsg].map((msg) => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }],
+      role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+      content: msg.content,
     }));
 
     // 3. System prompt with updated task status
@@ -220,7 +233,7 @@ export class RoleplayService {
     });
 
     // 4. Call LLM
-    const llmResponse = await this.callGemini(systemPrompt, chatHistory);
+    const llmResponse = await this.callOllama(systemPrompt, chatHistory);
 
     // 5. Update Evaluation
     const currentGrammarFeedback = (session.sessionEvaluation.grammarFeedback || []) as string[];
@@ -293,8 +306,17 @@ export class RoleplayService {
       Provide a concise summary highlighting strengths and weaknesses.
     `;
 
+    this.logger.log(
+      `[Roleplay] Generating RAG summary — sessionId=${sessionId} messageCount=${messages.length}`,
+    );
+
     // A separate call to generate the summary
-    const summaryResponse = await this.generateText(prompt);
+    const result = await this.ollamaService.generate({
+      modelProfile: 'chat',
+      prompt,
+    });
+
+    const summaryResponse = result.response;
 
     // TODO: Convert `summaryResponse` and `grammarErrors` into embeddings
     // e.g., const embedding = await getEmbedding(summaryResponse);
@@ -310,111 +332,77 @@ export class RoleplayService {
     const tasks = scenario.requiredTasks as string[];
     
     return `
-      Bạn là một AI Tutor dạy tiếng Anh thông qua giao tiếp nhập vai (Role-play). Bạn đang trò chuyện trực tiếp với người học.
+      You are an AI English Tutor who teaches through role-play conversations. You are speaking directly with the learner.
 
-      ## 1. Thông Tin Ngữ Cảnh (Context)
-      - Tên người dùng: ${user.name}
-      - Trình độ hiện tại: ${user.englishLevel}
-      - Tình huống nhập vai (Scenario): ${scenario.description}
-      - Vai trò của AI (AI Persona): ${scenario.aiPersona}
-      - Vai trò của người dùng (User Persona): ${scenario.userPersona}
+      ## 1. Context
+      - User name: ${user.name}
+      - Current level: ${user.englishLevel}
+      - Role-play scenario: ${scenario.description}
+      - AI persona: ${scenario.aiPersona}
+      - User persona: ${scenario.userPersona}
 
-      ## 2. Nhiệm Vụ Của Người Dùng (User's Objectives)
-      Trong cuộc hội thoại này, người dùng cần hoàn thành 3 nhiệm vụ sau. Bạn phải theo dõi sát sao lời nói của họ để đánh giá xem họ đã hoàn thành nhiệm vụ nào chưa.
-      1. [Task_1]: ${tasks[0] || 'N/A'} (Trạng thái hiện tại: ${taskStatus.task_1_completed})
-      2. [Task_2]: ${tasks[1] || 'N/A'} (Trạng thái hiện tại: ${taskStatus.task_2_completed})
-      3. [Task_3]: ${tasks[2] || 'N/A'} (Trạng thái hiện tại: ${taskStatus.task_3_completed})
+      ## 2. User's Objectives
+      In this conversation, the user must complete 3 tasks. You must closely monitor their speech to evaluate whether each task has been accomplished.
+      1. [Task_1]: ${tasks[0] || 'N/A'} (Current status: ${taskStatus.task_1_completed})
+      2. [Task_2]: ${tasks[1] || 'N/A'} (Current status: ${taskStatus.task_2_completed})
+      3. [Task_3]: ${tasks[2] || 'N/A'} (Current status: ${taskStatus.task_3_completed})
 
-      ## 3. Quy Tắc Hoạt Động (Core Rules)
-      - Tự nhiên & Ngắn gọn: Vì đây là hội thoại bằng giọng nói, câu trả lời của AI phải ngắn gọn (2-3 câu), tự nhiên, đối đáp. KHÔNG viết các đoạn văn dài.
-      - Giữ đúng vai diễn: Không bao giờ phá vỡ vai diễn. Không nói "Tôi là AI". Hãy hành xử đúng với tính cách của AI.
-      - Cá nhân hóa: Gọi tên người dùng đôi khi.
-      - Dẫn dắt khéo léo: Đặt câu hỏi mở để dẫn dắt hoàn thành nhiệm vụ.
-      - Sửa lỗi (Correction): Ghi chú lỗi ngữ pháp/từ vựng vào "grammar_feedback", không ngắt lời.
+      ## 3. Core Rules
+      - Natural & Concise: Since this is a voice conversation, your responses must be short (2-3 sentences), natural, and conversational. DO NOT write long paragraphs.
+      - Stay in character: Never break character. Never say "I am an AI". Always behave according to your assigned persona.
+      - Personalize: Occasionally address the user by name.
+      - Guide skillfully: Ask open-ended questions to guide the user toward completing their tasks.
+      - Correction: Note any grammar or vocabulary errors in the "grammar_feedback" field without interrupting the conversation flow.
 
-      ## 4. Cấu Trúc Trả Về (Output Format)
-      Bạn BẮT BUỘC phải trả về dữ liệu DƯỚI DẠNG JSON HỢP LỆ (Valid JSON). Tuyệt đối không chứa bất kỳ văn bản nào ngoài JSON.
+      ## 4. Output Format
+      You MUST return data as VALID JSON only. Do not include any text outside the JSON object.
       {
-        "ai_spoken_response": "Câu nói của bạn trong vai diễn.",
+        "ai_spoken_response": "Your in-character spoken response.",
         "task_evaluation": {
           "task_1_completed": true/false,
           "task_2_completed": true/false,
           "task_3_completed": true/false
         },
-        "grammar_feedback": "Ghi chú lỗi hoặc null.",
+        "grammar_feedback": "Grammar/vocabulary error notes, or null if none.",
         "scenario_completed": true/false
       }
     `;
   }
 
-  private async callGemini(systemPrompt: string, history: any[]): Promise<RoleplayLlmResponse> {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    const model = this.configService.get<string>('GEMINI_MODEL') ?? 'gemini-2.0-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  private async callOllama(
+    systemPrompt: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  ): Promise<RoleplayLlmResponse> {
+    // Build messages: if history is empty, trigger the first response
+    const messages = history.length > 0
+      ? history
+      : [{ role: 'user' as const, content: 'Hello!' }];
 
-    const contents: any[] = [];
-    // If history is empty, it means we are just starting and need the opening message
-    if (history.length > 0) {
-      contents.push(...history);
-    } else {
-      contents.push({ role: 'user', parts: [{ text: 'Hello!' }] }); // Trigger the first response
-    }
+    this.logger.log(
+      `[Roleplay] Calling Ollama — messageCount=${messages.length} systemPromptLength=${systemPrompt.length}`,
+    );
 
-    const payload = {
-      systemInstruction: {
-        parts: [{ text: systemPrompt }]
-      },
-      contents,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 0.5,
-      },
-    };
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+    const result = await this.ollamaService.chat({
+      modelProfile: 'chat',
+      messages,
+      system: systemPrompt,
+      json: true,
     });
 
-    if (!response.ok) {
-      throw new ApiException({
-        statusCode: HttpStatus.BAD_GATEWAY,
-        errorCode: 'LLM_PROVIDER_ERROR',
-        message: 'Failed to call Gemini API',
-      });
-    }
+    const rawText = result.content;
 
-    const data = await response.json();
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-    
     try {
       const sanitized = rawText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
       return JSON.parse(sanitized) as RoleplayLlmResponse;
     } catch {
+      this.logger.error(
+        `[Roleplay] Failed to parse JSON from Ollama — rawPreview=${rawText.slice(0, 500)}`,
+      );
       throw new ApiException({
         statusCode: HttpStatus.BAD_GATEWAY,
         errorCode: 'LLM_PARSE_ERROR',
         message: 'Failed to parse JSON from LLM',
       });
     }
-  }
-
-  private async generateText(prompt: string): Promise<string> {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    const model = this.configService.get<string>('GEMINI_MODEL') ?? 'gemini-2.0-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
-      }),
-    });
-
-    if (!response.ok) return "Failed to generate summary";
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
   }
 }
