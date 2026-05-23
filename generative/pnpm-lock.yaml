@@ -39,8 +39,8 @@ importers:
         specifier: ^7.8.0
         version: 7.8.0(prisma@7.8.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@6.0.3))(typescript@6.0.3)
       '@scalar/nestjs-api-reference':
-        specifier: ^1.1.19
-        version: 1.1.19
+        specifier: 1.1.18
+        version: 1.1.18
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -1011,24 +1011,24 @@ packages:
       '@types/react':
         optional: true
 
-  '@scalar/client-side-rendering@0.1.12':
-    resolution: {integrity: sha512-prwHK4ozTU268BHZ/5OstoKB23JSidDuvddAOp0bVz9c29ZxsyzzxPtPcVgF7X16LiZnS1OzY030FoDCM+iC9Q==}
+  '@scalar/client-side-rendering@0.1.11':
+    resolution: {integrity: sha512-0Iugq4wtkH8tLMezyabD7VxEXx66KpUxZ2zlw4BCmQKbQbcupnV2KxfgahTk6LuDBMkiUyFPj9YTFeLAAMoYmQ==}
     engines: {node: '>=22'}
 
   '@scalar/helpers@0.8.0':
     resolution: {integrity: sha512-gmOC6VravNB9VDl6wnt/GOj4K/hn48tj5bpW4AM4MhH8Ubil6uu7g1DSoKHwltu8Ks79KEtR6JmOrROi9R7jaQ==}
     engines: {node: '>=22'}
 
-  '@scalar/nestjs-api-reference@1.1.19':
-    resolution: {integrity: sha512-XHm0Ohhq6N7sSw980DA34gwXxjNoJC+bl8xFw4QNv32gTsEibb8psZbgte0KOwPbD8M0H814VLrfwQNLQQbnfQ==}
+  '@scalar/nestjs-api-reference@1.1.18':
+    resolution: {integrity: sha512-6Ae076btRVGyZ48wo2abjln3zgXOBcM7X224SYQNO86P2pS2msiZ19/ZN5FTPWmJ1nCGonSskYvlIYyexzz0Bw==}
     engines: {node: '>=22'}
 
-  '@scalar/schemas@0.3.2':
-    resolution: {integrity: sha512-iadXBgJ02XUU5C5s6/xh/PmGLzUPd7X8upXIvPWBXDcQ4FHACNgkG8PPZ/beYM8UPDDkTUPM3ygEs0G6jKwGjQ==}
+  '@scalar/schemas@0.3.1':
+    resolution: {integrity: sha512-vTAhka3M9EGVXx909d6MGvekCnUt2Lz/Hz4MIoM7oLP9LxjwPm0ZMX6PWSYtZrxDji9ASqfwd/9jcIKMf7jPlA==}
     engines: {node: '>=22'}
 
-  '@scalar/types@0.12.2':
-    resolution: {integrity: sha512-EzLkubCb7xioiTm9eYnmn/032akaq4kkrrdclgV2uezwtniR8ErQICjhMl2AjBWL6nstHiFZ9RnPZm2Z2/KM0Q==}
+  '@scalar/types@0.12.1':
+    resolution: {integrity: sha512-qbUGuoRdzMUEDZmXuES9uZYnOw54wx+UgxE6fOwpaHVTyaCC/jcZultbcTLMiFFmgRinSoZjm/EJtSVtNknD2Q==}
     engines: {node: '>=22'}
 
   '@scalar/validation@0.6.0':
@@ -4058,7 +4058,7 @@ snapshots:
       '@english-learning/api-error-types': 0.1.5
       '@nestjs/common': 11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/swagger': 11.4.4(@nestjs/common@11.1.23(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.23)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
-      '@scalar/nestjs-api-reference': 1.1.19
+      '@scalar/nestjs-api-reference': 1.1.18
     transitivePeerDependencies:
       - '@fastify/static'
       - '@nestjs/core'
@@ -4850,24 +4850,24 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  '@scalar/client-side-rendering@0.1.12':
+  '@scalar/client-side-rendering@0.1.11':
     dependencies:
-      '@scalar/schemas': 0.3.2
-      '@scalar/types': 0.12.2
+      '@scalar/schemas': 0.3.1
+      '@scalar/types': 0.12.1
       '@scalar/validation': 0.6.0
 
   '@scalar/helpers@0.8.0': {}
 
-  '@scalar/nestjs-api-reference@1.1.19':
+  '@scalar/nestjs-api-reference@1.1.18':
     dependencies:
-      '@scalar/client-side-rendering': 0.1.12
+      '@scalar/client-side-rendering': 0.1.11
 
-  '@scalar/schemas@0.3.2':
+  '@scalar/schemas@0.3.1':
     dependencies:
       '@scalar/helpers': 0.8.0
       '@scalar/validation': 0.6.0
 
-  '@scalar/types@0.12.2':
+  '@scalar/types@0.12.1':
     dependencies:
       '@scalar/helpers': 0.8.0
       nanoid: 5.1.7
