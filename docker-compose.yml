@@ -171,7 +171,7 @@ services:
       test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-changeme}', 'ping']
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 4
     networks:
       - app-network
 
