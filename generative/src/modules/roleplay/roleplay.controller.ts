@@ -1,9 +1,9 @@
-import { Controller, Post, Get, Query, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Query, Body, HttpCode, HttpStatus, UseGuards, Param, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RoleplayService } from './roleplay.service';
-import { StartRoleplayDto, ChatRoleplayDto, SummarizeRoleplayDto } from './dtos/roleplay.dto';
+import { StartRoleplayDto, ChatRoleplayDto, SummarizeRoleplayDto, ChatVoiceRoleplayDto } from './dtos/roleplay.dto';
 import { CreateScenarioDto, GenerateScenarioDto } from './dtos/scenario.dto';
-import { StartRoleplayResult, ChatRoleplayResult } from './roleplay.types';
+import { StartRoleplayResult, ChatRoleplayResult, ChatVoiceRoleplayResult } from './roleplay.types';
 import { TrustedHeadersAuthGuard } from '../../common/auth/trusted-headers-auth.guard';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 
@@ -11,6 +11,8 @@ import { CurrentUser } from '../../common/auth/current-user.decorator';
 @ApiBearerAuth()
 @Controller('roleplay')
 export class RoleplayController {
+  private readonly logger = new Logger(RoleplayController.name);
+
   constructor(private readonly roleplayService: RoleplayService) {}
 
   @ApiOperation({ summary: 'Get available scenarios' })
@@ -51,9 +53,9 @@ export class RoleplayController {
   @HttpCode(HttpStatus.OK)
   async startSession(
     @Body() dto: StartRoleplayDto,
-    @CurrentUser('id') userId: string,
+    @CurrentUser() user: any,
   ): Promise<StartRoleplayResult> {
-    return this.roleplayService.startSession(dto, userId);
+    return this.roleplayService.startSession(dto, user.id, user.email);
   }
 
   @ApiOperation({ summary: 'Chat with the AI in a role-play session' })
@@ -62,6 +64,35 @@ export class RoleplayController {
   @HttpCode(HttpStatus.OK)
   async chat(@Body() dto: ChatRoleplayDto): Promise<ChatRoleplayResult> {
     return this.roleplayService.chat(dto);
+  }
+
+  @ApiOperation({ summary: 'Chat with AI using voice in a role-play session' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'AI responded and voice synthesized successfully' })
+  @Post('chat-voice')
+  @HttpCode(HttpStatus.OK)
+  async chatVoice(@Body() dto: ChatVoiceRoleplayDto): Promise<ChatVoiceRoleplayResult> {
+    try {
+      this.logger.log(`Received chat-voice request for session=${dto.sessionId}, mimeType=${dto.mimeType}, audioLength=${dto.audioBase64?.length}`);
+      return await this.roleplayService.chatVoice(dto);
+    } catch (error) {
+      this.logger.error(`Error occurred in chatVoice: ${(error as Error).message}`, (error as Error).stack);
+      throw error;
+    }
+  }
+
+  @ApiOperation({ summary: 'Get role-play session history for current user' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Session history retrieved successfully' })
+  @Get('history')
+  @UseGuards(TrustedHeadersAuthGuard)
+  async getSessionHistory(@CurrentUser('id') userId: string) {
+    return this.roleplayService.getSessionHistory(userId);
+  }
+
+  @ApiOperation({ summary: 'Get details of a specific role-play session' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Session details retrieved successfully' })
+  @Get('sessions/:sessionId')
+  async getSessionDetails(@Param('sessionId') sessionId: string) {
+    return this.roleplayService.getSessionDetails(sessionId);
   }
 
   @ApiOperation({ summary: 'Generate RAG summary for a completed session' })

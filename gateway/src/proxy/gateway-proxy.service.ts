@@ -86,80 +86,85 @@ export class GatewayProxyService {
   }
 
   async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
-    if (this.shouldBypass(req)) {
-      next();
-      return;
-    }
+    try {
+      if (this.shouldBypass(req)) {
+        next();
+        return;
+      }
 
-    const clientIp = this.getClientIp(req);
+      const clientIp = this.getClientIp(req);
 
-    if (await this.isBlockedIp(clientIp)) {
-      res.status(HttpStatus.FORBIDDEN).json(
-        createApiErrorResponse({
-          statusCode: HttpStatus.FORBIDDEN,
-          errorCode: 'FORBIDDEN',
-          message: 'IP address is blocked',
-          traceId: this.getTraceId(req),
-        }),
-      );
-      return;
-    }
-
-    const isLimited = await this.isRateLimited(clientIp);
-    if (isLimited) {
-      res.setHeader('Retry-After', `${this.rateLimitWindowSec}`);
-      res.status(HttpStatus.TOO_MANY_REQUESTS).json(
-        createApiErrorResponse({
-          statusCode: HttpStatus.TOO_MANY_REQUESTS,
-          errorCode: 'TOO_MANY_REQUESTS',
-          message: 'Too many requests',
-          traceId: this.getTraceId(req),
-        }),
-      );
-      return;
-    }
-
-    const targetBase = this.resolveTargetBase(req.path);
-
-    let forwardedIdentity: AccessTokenPayload | null = null;
-    if (this.requiresAuth(req.method, req.path)) {
-      try {
-        forwardedIdentity = await this.verifyAccessToken(req);
-      } catch (error) {
-        const errorResponse =
-          error instanceof ApiException ? error.getResponse() : undefined;
-        const errorCode =
-          typeof errorResponse === 'object' &&
-          errorResponse !== null &&
-          typeof (errorResponse as { errorCode?: unknown }).errorCode ===
-            'string'
-            ? (errorResponse as { errorCode: string }).errorCode
-            : 'UNAUTHORIZED';
-        const message =
-          typeof errorResponse === 'object' &&
-          errorResponse !== null &&
-          typeof (errorResponse as { message?: unknown }).message === 'string'
-            ? (errorResponse as { message: string }).message
-            : 'Unauthorized';
-        res.status(HttpStatus.UNAUTHORIZED).json(
+      if (await this.isBlockedIp(clientIp)) {
+        res.status(HttpStatus.FORBIDDEN).json(
           createApiErrorResponse({
-            statusCode: HttpStatus.UNAUTHORIZED,
-            errorCode,
-            message,
+            statusCode: HttpStatus.FORBIDDEN,
+            errorCode: 'FORBIDDEN',
+            message: 'IP address is blocked',
             traceId: this.getTraceId(req),
           }),
         );
         return;
       }
-    }
 
-    await this.forwardRequest(
-      req,
-      res,
-      targetBase,
-      forwardedIdentity,
-      clientIp,
-    );
+      const isLimited = await this.isRateLimited(clientIp);
+      if (isLimited) {
+        res.setHeader('Retry-After', `${this.rateLimitWindowSec}`);
+        res.status(HttpStatus.TOO_MANY_REQUESTS).json(
+          createApiErrorResponse({
+            statusCode: HttpStatus.TOO_MANY_REQUESTS,
+            errorCode: 'TOO_MANY_REQUESTS',
+            message: 'Too many requests',
+            traceId: this.getTraceId(req),
+          }),
+        );
+        return;
+      }
+
+      const targetBase = this.resolveTargetBase(req.path);
+
+      let forwardedIdentity: AccessTokenPayload | null = null;
+      if (this.requiresAuth(req.method, req.path)) {
+        try {
+          forwardedIdentity = await this.verifyAccessToken(req);
+        } catch (error) {
+          const errorResponse =
+            error instanceof ApiException ? error.getResponse() : undefined;
+          const errorCode =
+            typeof errorResponse === 'object' &&
+            errorResponse !== null &&
+            typeof (errorResponse as { errorCode?: unknown }).errorCode ===
+              'string'
+              ? (errorResponse as { errorCode: string }).errorCode
+              : 'UNAUTHORIZED';
+          const message =
+            typeof errorResponse === 'object' &&
+            errorResponse !== null &&
+            typeof (errorResponse as { message?: unknown }).message === 'string'
+              ? (errorResponse as { message: string }).message
+              : 'Unauthorized';
+          res.status(HttpStatus.UNAUTHORIZED).json(
+            createApiErrorResponse({
+              statusCode: HttpStatus.UNAUTHORIZED,
+              errorCode,
+              message,
+              traceId: this.getTraceId(req),
+            }),
+          );
+          return;
+        }
+      }
+
+      await this.forwardRequest(
+        req,
+        res,
+        targetBase,
+        forwardedIdentity,
+        clientIp,
+      );
+    } catch (error) {
+      console.error('[GatewayProxyService:handle] Caught error:', error);
+      throw error;
+    }
   }
 
   private shouldBypass(req: Request): boolean {

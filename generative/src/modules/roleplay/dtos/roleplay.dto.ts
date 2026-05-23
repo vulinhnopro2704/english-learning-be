@@ -26,3 +26,20 @@ export class SummarizeRoleplayDto {
   @IsNotEmpty()
   sessionId!: string;
 }
+
+export class ChatVoiceRoleplayDto {
+  @ApiProperty({ example: 'session-id-123' })
+  @IsString()
+  @IsNotEmpty()
+  sessionId!: string;
+
+  @ApiProperty({ example: 'base64-audio-data...' })
+  @IsString()
+  @IsNotEmpty()
+  audioBase64!: string;
+
+  @ApiProperty({ example: 'audio/webm' })
+  @IsString()
+  @IsNotEmpty()
+  mimeType!: string;
+}

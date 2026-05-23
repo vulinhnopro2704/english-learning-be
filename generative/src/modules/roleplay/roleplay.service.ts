@@ -6,9 +6,12 @@ import {
   StartRoleplayResult,
   ChatRoleplayResult,
   RoleplayLlmResponse,
+  ChatVoiceRoleplayResult,
 } from './roleplay.types';
-import { StartRoleplayDto, ChatRoleplayDto, SummarizeRoleplayDto } from './dtos/roleplay.dto';
+import { StartRoleplayDto, ChatRoleplayDto, SummarizeRoleplayDto, ChatVoiceRoleplayDto } from './dtos/roleplay.dto';
 import { CreateScenarioDto, GenerateScenarioDto } from './dtos/scenario.dto';
+import { TtsService } from '../tts/tts.service';
+import { SttService } from '../stt/stt.service';
 
 @Injectable()
 export class RoleplayService {
@@ -17,6 +20,8 @@ export class RoleplayService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ollamaService: OllamaService,
+    private readonly ttsService: TtsService,
+    private readonly sttService: SttService,
   ) {}
 
   async getScenarios(filters?: any) {
@@ -81,7 +86,14 @@ export class RoleplayService {
 
     let generatedData: any;
     try {
-      const sanitized = rawResponse.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+      let sanitized = rawResponse.trim();
+      const startIdx = sanitized.indexOf('{');
+      const endIdx = sanitized.lastIndexOf('}');
+      if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+        sanitized = sanitized.slice(startIdx, endIdx + 1);
+      } else {
+        sanitized = sanitized.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+      }
       generatedData = JSON.parse(sanitized);
     } catch (e) {
       this.logger.error(
@@ -110,18 +122,22 @@ export class RoleplayService {
     });
   }
 
-  async startSession(dto: StartRoleplayDto, userId: string): Promise<StartRoleplayResult> {
+  async startSession(dto: StartRoleplayDto, userId: string, userEmail?: string): Promise<StartRoleplayResult> {
     const { scenarioId } = dto;
 
-    const user = await this.prisma.user.findUnique({
+    let user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
     if (!user) {
-      throw new ApiException({
-        statusCode: HttpStatus.NOT_FOUND,
-        errorCode: 'USER_NOT_FOUND',
-        message: 'User not found',
+      const name = userEmail ? userEmail.split('@')[0] : 'Learner';
+      user = await this.prisma.user.create({
+        data: {
+          id: userId,
+          name,
+          englishLevel: 'A2',
+        },
       });
+      this.logger.log(`[Roleplay] Automatically synchronized user id=${userId} email=${userEmail} into generative schema`);
     }
 
     const scenario = await this.prisma.scenario.findUnique({
@@ -170,9 +186,17 @@ export class RoleplayService {
       },
     });
 
+    let audioResult: any = null;
+    try {
+      audioResult = await this.ttsService.synthesize(llmResponse.ai_spoken_response);
+    } catch (e) {
+      this.logger.error(`[Roleplay:TTS] Synthesis failed in startSession: ${(e as any).message}`);
+    }
+
     return {
       sessionId: session.id,
       ai_first_message: llmResponse.ai_spoken_response,
+      audio: audioResult,
     };
   }
 
@@ -260,6 +284,13 @@ export class RoleplayService {
       },
     });
 
+    let audioResult: any = null;
+    try {
+      audioResult = await this.ttsService.synthesize(llmResponse.ai_spoken_response);
+    } catch (e) {
+      this.logger.error(`[Roleplay:TTS] Synthesis failed in chat: ${(e as any).message}`);
+    }
+
     if (llmResponse.scenario_completed) {
       await this.prisma.session.update({
         where: { id: sessionId },
@@ -269,7 +300,10 @@ export class RoleplayService {
       // this.summarizeForRag({ sessionId });
     }
 
-    return llmResponse;
+    return {
+      ...llmResponse,
+      audio: audioResult,
+    };
   }
 
   async summarizeForRag(dto: SummarizeRoleplayDto): Promise<void> {
@@ -392,11 +426,19 @@ export class RoleplayService {
     const rawText = result.content;
 
     try {
-      const sanitized = rawText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+      let sanitized = rawText.trim();
+      const startIdx = sanitized.indexOf('{');
+      const endIdx = sanitized.lastIndexOf('}');
+      if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+        sanitized = sanitized.slice(startIdx, endIdx + 1);
+      } else {
+        sanitized = sanitized.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+      }
       return JSON.parse(sanitized) as RoleplayLlmResponse;
-    } catch {
+    } catch (error) {
       this.logger.error(
         `[Roleplay] Failed to parse JSON from Ollama — rawPreview=${rawText.slice(0, 500)}`,
+        (error as Error).stack,
       );
       throw new ApiException({
         statusCode: HttpStatus.BAD_GATEWAY,
@@ -404,5 +446,64 @@ export class RoleplayService {
         message: 'Failed to parse JSON from LLM',
       });
     }
+  }
+
+  async chatVoice(dto: ChatVoiceRoleplayDto): Promise<ChatVoiceRoleplayResult> {
+    const { sessionId, audioBase64, mimeType } = dto;
+
+    this.logger.log(`[Roleplay] Transcribing voice input for session=${sessionId} mimeType=${mimeType}`);
+    const transcribeResult = await this.sttService.transcribe({
+      audioBase64,
+      mimeType,
+    });
+
+    const userMessage = transcribeResult.text;
+    this.logger.log(`[Roleplay] Transcribed successfully: "${userMessage}"`);
+
+    // Reuse standard chat logic to evaluate and get LLM response
+    const chatResult = await this.chat({ sessionId, userMessage });
+
+    return {
+      user_spoken_transcript: userMessage,
+      ai_spoken_response: chatResult.ai_spoken_response,
+      task_evaluation: chatResult.task_evaluation,
+      grammar_feedback: chatResult.grammar_feedback,
+      scenario_completed: chatResult.scenario_completed,
+      audio: chatResult.audio,
+    };
+  }
+
+  async getSessionHistory(userId: string) {
+    return this.prisma.session.findMany({
+      where: { userId },
+      include: {
+        scenario: true,
+        sessionEvaluation: true,
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+  }
+
+  async getSessionDetails(sessionId: string) {
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        scenario: true,
+        sessionEvaluation: true,
+        messages: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'SESSION_NOT_FOUND',
+        message: 'Session not found',
+      });
+    }
+
+    return session;
   }
 }

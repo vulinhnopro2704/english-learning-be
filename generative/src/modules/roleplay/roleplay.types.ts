@@ -14,6 +14,12 @@ export interface RoleplayLlmResponse {
 export interface StartRoleplayResult {
   sessionId: string;
   ai_first_message: string;
+  audio?: {
+    url: string | null;
+    mimeType: string;
+    provider: string;
+    status: 'completed' | 'skipped' | 'failed';
+  } | null;
 }
 
 export interface ChatRoleplayResult {
@@ -21,4 +27,24 @@ export interface ChatRoleplayResult {
   task_evaluation: TaskEvaluation;
   grammar_feedback: string | null;
   scenario_completed: boolean;
+  audio?: {
+    url: string | null;
+    mimeType: string;
+    provider: string;
+    status: 'completed' | 'skipped' | 'failed';
+  } | null;
+}
+
+export interface ChatVoiceRoleplayResult {
+  user_spoken_transcript: string;
+  ai_spoken_response: string;
+  task_evaluation: TaskEvaluation;
+  grammar_feedback: string | null;
+  scenario_completed: boolean;
+  audio?: {
+    url: string | null;
+    mimeType: string;
+    provider: string;
+    status: 'completed' | 'skipped' | 'failed';
+  } | null;
 }
