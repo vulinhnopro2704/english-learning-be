@@ -110,8 +110,8 @@ export class RoleplayService {
     });
   }
 
-  async startSession(dto: StartRoleplayDto): Promise<StartRoleplayResult> {
-    const { userId, scenarioId } = dto;
+  async startSession(dto: StartRoleplayDto, userId: string): Promise<StartRoleplayResult> {
+    const { scenarioId } = dto;
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
