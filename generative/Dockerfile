@@ -2,7 +2,7 @@
 FROM node:22-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
-COPY generative/package.json generative/pnpm-lock.yaml ./generative/
+COPY generative/package.json generative/pnpm-lock.yaml generative/pnpm-workspace.yaml ./generative/
 WORKDIR /app/generative
 RUN pnpm install --frozen-lockfile
 
@@ -13,6 +13,7 @@ WORKDIR /app
 COPY --from=deps /app/generative/node_modules ./generative/node_modules
 COPY generative ./generative
 WORKDIR /app/generative
+ENV CI=true
 RUN npx prisma generate
 RUN pnpm build
 RUN pnpm prune --prod
