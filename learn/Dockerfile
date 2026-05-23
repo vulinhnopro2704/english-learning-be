@@ -2,7 +2,7 @@
 FROM node:22-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
-COPY learn/package.json learn/pnpm-lock.yaml ./learn/
+COPY learn/package.json learn/pnpm-lock.yaml learn/pnpm-workspace.yaml ./learn/
 WORKDIR /app/learn
 RUN pnpm install --frozen-lockfile
 
@@ -13,6 +13,7 @@ WORKDIR /app
 COPY --from=deps /app/learn/node_modules ./learn/node_modules
 COPY learn ./learn
 WORKDIR /app/learn
+ENV CI=true
 RUN npx prisma generate
 RUN pnpm build
 RUN pnpm prune --prod

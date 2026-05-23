@@ -2,7 +2,7 @@
 FROM node:22-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
-COPY auth/package.json auth/pnpm-lock.yaml ./auth/
+COPY auth/package.json auth/pnpm-lock.yaml auth/pnpm-workspace.yaml ./auth/
 WORKDIR /app/auth
 RUN pnpm install --frozen-lockfile
 
@@ -13,6 +13,7 @@ WORKDIR /app
 COPY --from=deps /app/auth/node_modules ./auth/node_modules
 COPY auth ./auth
 WORKDIR /app/auth
+ENV CI=true
 RUN npx prisma generate
 RUN pnpm build
 RUN pnpm prune --prod

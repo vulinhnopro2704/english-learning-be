@@ -3,7 +3,7 @@ FROM node:22-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
-COPY storage/package.json storage/pnpm-lock.yaml ./storage/
+COPY storage/package.json storage/pnpm-lock.yaml storage/pnpm-workspace.yaml ./storage/
 WORKDIR /app/storage
 RUN pnpm install --frozen-lockfile
 
@@ -16,6 +16,7 @@ COPY --from=deps /app/storage/node_modules ./storage/node_modules
 COPY storage ./storage
 
 WORKDIR /app/storage
+ENV CI=true
 RUN npx prisma generate
 RUN pnpm build
 RUN pnpm prune --prod
