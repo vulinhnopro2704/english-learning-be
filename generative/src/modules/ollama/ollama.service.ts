@@ -49,16 +49,12 @@ export class OllamaService implements OnModuleInit {
    */
   async chat(options: OllamaChatOptions): Promise<OllamaChatResult> {
     const model = this.resolveModel(options.modelProfile);
-    const temperature =
-      options.temperature ?? this.config.defaultTemperature;
+    const temperature = options.temperature ?? this.config.defaultTemperature;
     const startTime = Date.now();
 
     // Build messages array with optional system prompt
     const messages = [...options.messages];
-    if (
-      options.system &&
-      !messages.some((m) => m.role === 'system')
-    ) {
+    if (options.system && !messages.some((m) => m.role === 'system')) {
       messages.unshift({ role: 'system', content: options.system });
     }
 
@@ -104,8 +100,7 @@ export class OllamaService implements OnModuleInit {
     options: OllamaGenerateOptions,
   ): Promise<OllamaGenerateResult> {
     const model = this.resolveModel(options.modelProfile);
-    const temperature =
-      options.temperature ?? this.config.defaultTemperature;
+    const temperature = options.temperature ?? this.config.defaultTemperature;
     const startTime = Date.now();
 
     this.logger.log(
@@ -147,9 +142,7 @@ export class OllamaService implements OnModuleInit {
    * Resolve model name from profile key.
    */
   private resolveModel(profile: 'essay' | 'chat'): string {
-    return profile === 'essay'
-      ? this.config.essayModel
-      : this.config.chatModel;
+    return profile === 'essay' ? this.config.essayModel : this.config.chatModel;
   }
 
   /**
@@ -174,8 +167,7 @@ export class OllamaService implements OnModuleInit {
       this.configService.get<string>('OLLAMA_ESSAY_MODEL') ??
       'gpt-oss:120b-cloud';
     const chatModel =
-      this.configService.get<string>('OLLAMA_CHAT_MODEL') ??
-      'qwen3.5:cloud';
+      this.configService.get<string>('OLLAMA_CHAT_MODEL') ?? 'qwen3.5:cloud';
     const defaultTemperature = parseFloat(
       this.configService.get<string>('OLLAMA_TEMPERATURE') ?? '0.5',
     );
@@ -221,9 +213,7 @@ export class OllamaService implements OnModuleInit {
         message: error.message,
         statusCode: ollamaError.status_code,
         body:
-          typeof ollamaError.cause === 'string'
-            ? ollamaError.cause
-            : undefined,
+          typeof ollamaError.cause === 'string' ? ollamaError.cause : undefined,
       };
     }
 

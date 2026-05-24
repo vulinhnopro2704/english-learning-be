@@ -31,6 +31,7 @@ import {
   UploadSignatureResponseDto,
 } from './dto/file-response.dto';
 import { IngestRemoteAudioDto } from './dto/ingest-remote-audio.dto';
+import { IngestBase64AudioDto } from './dto/ingest-base64-audio.dto';
 import { ListFilesQueryDto } from './dto/list-files-query.dto';
 import {
   DownloadUrlQueryDto,
@@ -82,6 +83,20 @@ export class FilesController {
     @CurrentUserDecorator() user: CurrentUser,
   ) {
     return this.filesService.ingestRemoteAudio(dto, user);
+  }
+
+  @Post('ingest-base64')
+  @ApiOperation({
+    summary: 'Upload base64 audio to Cloudinary and persist metadata',
+  })
+  @ApiBody({ type: IngestBase64AudioDto })
+  @ApiCreatedResponse({ type: FileResponseDto })
+  @ApiStandardErrorResponses({ statuses: [400, 401, 409, 422, 500] })
+  ingestBase64Audio(
+    @Body() dto: IngestBase64AudioDto,
+    @CurrentUserDecorator() user: CurrentUser,
+  ) {
+    return this.filesService.ingestBase64Audio(dto, user);
   }
 
   @Get(':id/download-url')

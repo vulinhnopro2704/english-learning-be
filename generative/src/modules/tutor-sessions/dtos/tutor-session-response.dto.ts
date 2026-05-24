@@ -142,7 +142,6 @@ export class TutorCorrectionResponseDto {
   shortReason?: string;
 }
 
-
 export class TutorInteractionResponseDto {
   @ApiProperty({
     example: '9a3d0f93-01bc-4e7b-ac0f-0179b9f40ca6',

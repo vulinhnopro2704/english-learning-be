@@ -9,6 +9,7 @@ import { FileType, Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFileDto } from './dto/create-file.dto';
 import { IngestRemoteAudioDto } from './dto/ingest-remote-audio.dto';
+import { IngestBase64AudioDto } from './dto/ingest-base64-audio.dto';
 import { ListFilesQueryDto } from './dto/list-files-query.dto';
 import {
   DownloadUrlQueryDto,
@@ -163,6 +164,55 @@ export class FilesService {
           sourceUrl: dto.sourceUrl,
           sourceProvider: 'dictionary',
           contentType,
+          ...(dto.metadata ?? {}),
+        },
+      },
+      user,
+    );
+  }
+
+  async ingestBase64Audio(dto: IngestBase64AudioDto, user: CurrentUser) {
+    let base64Data = dto.audioBase64;
+    if (base64Data.startsWith('data:')) {
+      const parts = base64Data.split(',');
+      base64Data = parts[1] || parts[0];
+    }
+    const audioBuffer = Buffer.from(base64Data, 'base64');
+    
+    const maxSizeMb = Number(
+      this.configService.get<string>('MAX_FILE_SIZE_MB') ?? '10',
+    );
+    const maxSizeBytes = maxSizeMb * 1024 * 1024;
+    if (audioBuffer.byteLength > maxSizeBytes) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'FILE_SIZE_LIMIT_EXCEEDED',
+        message: `Audio file exceeds MAX_FILE_SIZE_MB (${maxSizeMb}MB)`,
+      });
+    }
+
+    const format = this.resolveAudioFormat(dto.mimeType, 'audio.mp3');
+    const sourceHash = createHash('sha1').update(base64Data.slice(0, 50) + Date.now().toString()).digest('hex');
+    const publicId = `${dto.folder}/roleplay-${sourceHash.slice(0, 12)}`;
+
+    const uploaded = await this.cloudinaryService.uploadBuffer({
+      buffer: audioBuffer,
+      folder: dto.folder,
+      resourceType: 'raw',
+      publicId,
+      format,
+    });
+
+    return this.createFile(
+      {
+        publicId: uploaded.publicId,
+        secureUrl: uploaded.secureUrl,
+        type: 'file',
+        format: uploaded.format ?? format,
+        size: uploaded.bytes,
+        metadata: {
+          sourceProvider: 'roleplay',
+          contentType: dto.mimeType,
           ...(dto.metadata ?? {}),
         },
       },

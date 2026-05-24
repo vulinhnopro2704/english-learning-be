@@ -67,12 +67,15 @@ model Session {
 }
 
 model Message {
-  id        String   @id @default(uuid())
-  sessionId String   @map("session_id")
-  role      String   // "user" or "ai"
-  content   String
-  createdAt DateTime @default(now()) @map("created_at")
-  session   Session  @relation(fields: [sessionId], references: [id])
+  id              String   @id @default(uuid())
+  sessionId       String   @map("session_id")
+  role            String   // "user" or "ai"
+  content         String
+  audioUrl        String?  @map("audio_url")
+  translation     String?
+  grammarFeedback String?  @map("grammar_feedback")
+  createdAt       DateTime @default(now()) @map("created_at")
+  session         Session  @relation(fields: [sessionId], references: [id])
 
   @@map("messages")
   @@schema("generative")

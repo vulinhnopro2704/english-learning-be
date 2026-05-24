@@ -8,7 +8,12 @@ import {
   RoleplayLlmResponse,
   ChatVoiceRoleplayResult,
 } from './roleplay.types';
-import { StartRoleplayDto, ChatRoleplayDto, SummarizeRoleplayDto, ChatVoiceRoleplayDto } from './dtos/roleplay.dto';
+import {
+  StartRoleplayDto,
+  ChatRoleplayDto,
+  SummarizeRoleplayDto,
+  ChatVoiceRoleplayDto,
+} from './dtos/roleplay.dto';
 import { CreateScenarioDto, GenerateScenarioDto } from './dtos/scenario.dto';
 import { TtsService } from '../tts/tts.service';
 import { SttService } from '../stt/stt.service';
@@ -92,10 +97,13 @@ export class RoleplayService {
       if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
         sanitized = sanitized.slice(startIdx, endIdx + 1);
       } else {
-        sanitized = sanitized.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+        sanitized = sanitized
+          .replace(/^```json\s*/i, '')
+          .replace(/```$/i, '')
+          .trim();
       }
       generatedData = JSON.parse(sanitized);
-    } catch (e) {
+    } catch {
       this.logger.error(
         `[Roleplay] Failed to parse generated scenario — rawPreview=${rawResponse.slice(0, 500)}`,
       );
@@ -122,7 +130,11 @@ export class RoleplayService {
     });
   }
 
-  async startSession(dto: StartRoleplayDto, userId: string, userEmail?: string): Promise<StartRoleplayResult> {
+  async startSession(
+    dto: StartRoleplayDto,
+    userId: string,
+    userEmail?: string,
+  ): Promise<StartRoleplayResult> {
     const { scenarioId } = dto;
 
     let user = await this.prisma.user.findUnique({
@@ -137,7 +149,9 @@ export class RoleplayService {
           englishLevel: 'A2',
         },
       });
-      this.logger.log(`[Roleplay] Automatically synchronized user id=${userId} email=${userEmail} into generative schema`);
+      this.logger.log(
+        `[Roleplay] Automatically synchronized user id=${userId} email=${userEmail} into generative schema`,
+      );
     }
 
     const scenario = await this.prisma.scenario.findUnique({
@@ -167,7 +181,6 @@ export class RoleplayService {
       },
     });
 
-    const tasks = scenario.requiredTasks as unknown as string[];
     const systemPrompt = this.buildSystemPrompt(user, scenario, {
       task_1_completed: false,
       task_2_completed: false,
@@ -188,9 +201,13 @@ export class RoleplayService {
 
     let audioResult: any = null;
     try {
-      audioResult = await this.ttsService.synthesize(llmResponse.ai_spoken_response);
+      audioResult = await this.ttsService.synthesize(
+        llmResponse.ai_spoken_response,
+      );
     } catch (e) {
-      this.logger.error(`[Roleplay:TTS] Synthesis failed in startSession: ${(e as any).message}`);
+      this.logger.error(
+        `[Roleplay:TTS] Synthesis failed in startSession: ${(e as any).message}`,
+      );
     }
 
     return {
@@ -250,17 +267,22 @@ export class RoleplayService {
     }));
 
     // 3. System prompt with updated task status
-    const systemPrompt = this.buildSystemPrompt(session.user, session.scenario, {
-      task_1_completed: session.sessionEvaluation.task1Completed,
-      task_2_completed: session.sessionEvaluation.task2Completed,
-      task_3_completed: session.sessionEvaluation.task3Completed,
-    });
+    const systemPrompt = this.buildSystemPrompt(
+      session.user,
+      session.scenario,
+      {
+        task_1_completed: session.sessionEvaluation.task1Completed,
+        task_2_completed: session.sessionEvaluation.task2Completed,
+        task_3_completed: session.sessionEvaluation.task3Completed,
+      },
+    );
 
     // 4. Call LLM
     const llmResponse = await this.callOllama(systemPrompt, chatHistory);
 
     // 5. Update Evaluation
-    const currentGrammarFeedback = (session.sessionEvaluation.grammarFeedback || []) as string[];
+    const currentGrammarFeedback = (session.sessionEvaluation.grammarFeedback ||
+      []) as string[];
     if (llmResponse.grammar_feedback) {
       currentGrammarFeedback.push(llmResponse.grammar_feedback);
     }
@@ -286,9 +308,13 @@ export class RoleplayService {
 
     let audioResult: any = null;
     try {
-      audioResult = await this.ttsService.synthesize(llmResponse.ai_spoken_response);
+      audioResult = await this.ttsService.synthesize(
+        llmResponse.ai_spoken_response,
+      );
     } catch (e) {
-      this.logger.error(`[Roleplay:TTS] Synthesis failed in chat: ${(e as any).message}`);
+      this.logger.error(
+        `[Roleplay:TTS] Synthesis failed in chat: ${(e as any).message}`,
+      );
     }
 
     if (llmResponse.scenario_completed) {
@@ -354,17 +380,19 @@ export class RoleplayService {
 
     // TODO: Convert `summaryResponse` and `grammarErrors` into embeddings
     // e.g., const embedding = await getEmbedding(summaryResponse);
-    
+
     // TODO: Save to Vector DB (Pinecone, pgvector, etc.)
     // await vectorDb.save(session.userId, embedding, metadata);
 
-    this.logger.log(`Summary for session ${sessionId} generated and ready for Vector DB.`);
+    this.logger.log(
+      `Summary for session ${sessionId} generated and ready for Vector DB.`,
+    );
     this.logger.debug(`Summary: ${summaryResponse}`);
   }
 
   private buildSystemPrompt(user: any, scenario: any, taskStatus: any): string {
     const tasks = scenario.requiredTasks as string[];
-    
+
     return `
       You are an AI English Tutor who teaches through role-play conversations. You are speaking directly with the learner.
 
@@ -408,9 +436,10 @@ export class RoleplayService {
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
   ): Promise<RoleplayLlmResponse> {
     // Build messages: if history is empty, trigger the first response
-    const messages = history.length > 0
-      ? history
-      : [{ role: 'user' as const, content: 'Hello!' }];
+    const messages =
+      history.length > 0
+        ? history
+        : [{ role: 'user' as const, content: 'Hello!' }];
 
     this.logger.log(
       `[Roleplay] Calling Ollama — messageCount=${messages.length} systemPromptLength=${systemPrompt.length}`,
@@ -432,7 +461,10 @@ export class RoleplayService {
       if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
         sanitized = sanitized.slice(startIdx, endIdx + 1);
       } else {
-        sanitized = sanitized.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+        sanitized = sanitized
+          .replace(/^```json\s*/i, '')
+          .replace(/```$/i, '')
+          .trim();
       }
       return JSON.parse(sanitized) as RoleplayLlmResponse;
     } catch (error) {
@@ -451,7 +483,9 @@ export class RoleplayService {
   async chatVoice(dto: ChatVoiceRoleplayDto): Promise<ChatVoiceRoleplayResult> {
     const { sessionId, audioBase64, mimeType } = dto;
 
-    this.logger.log(`[Roleplay] Transcribing voice input for session=${sessionId} mimeType=${mimeType}`);
+    this.logger.log(
+      `[Roleplay] Transcribing voice input for session=${sessionId} mimeType=${mimeType}`,
+    );
     const transcribeResult = await this.sttService.transcribe({
       audioBase64,
       mimeType,
@@ -505,5 +539,68 @@ export class RoleplayService {
     }
 
     return session;
+  }
+
+  async translateMessage(text: string): Promise<string> {
+    const systemPrompt = `You are an expert English-Vietnamese translator. Translate the following English text to Vietnamese. Provide only the translation, no extra text or explanation.`;
+    
+    // Call LLM for translation
+    const response = await this.ollamaService.chat({
+      modelProfile: 'chat',
+      messages: [{ role: 'user', content: text }],
+      system: systemPrompt,
+    });
+    
+    return response.content.trim();
+  }
+
+  async suggestReplies(sessionId: string): Promise<string[]> {
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: { scenario: true }
+    });
+
+    if (!session) {
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'SESSION_NOT_FOUND',
+        message: 'Session not found',
+      });
+    }
+
+    const messages = await this.prisma.message.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: 'desc' },
+      take: 5
+    });
+
+    const recentContext = messages.reverse().map(m => `${m.role === 'user' ? 'User' : 'Tutor'}: ${m.content}`).join('\n');
+
+    const systemPrompt = `You are a helpful English Tutor. The user is in a roleplay scenario: "${session.scenario.title}".
+Here is the recent conversation:
+${recentContext}
+
+Based on this, suggest exactly 3 short, natural English replies the User could say next.
+Provide the output strictly as a JSON array of 3 strings. Example: ["Suggestion 1", "Suggestion 2", "Suggestion 3"]. Do not include any other text.`;
+
+    const response = await this.ollamaService.chat({
+      modelProfile: 'chat',
+      messages: [],
+      system: systemPrompt,
+    });
+
+    try {
+      let sanitized = response.content;
+      const startIdx = sanitized.indexOf('[');
+      const endIdx = sanitized.lastIndexOf(']');
+      if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+        sanitized = sanitized.slice(startIdx, endIdx + 1);
+      }
+      const parsed = JSON.parse(sanitized);
+      if (Array.isArray(parsed)) return parsed;
+      return [];
+    } catch {
+      return [];
+    }
   }
 }

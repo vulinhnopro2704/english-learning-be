@@ -10,7 +10,7 @@ export class PrismaService extends PrismaClient {
     if (!connectionString) {
       throw new Error('DATABASE_URL environment variable is not set');
     }
-    
+
     const pool = new Pool({ connectionString });
     const adapter = new PrismaPg(pool, { schema: 'generative' });
     super({ adapter });

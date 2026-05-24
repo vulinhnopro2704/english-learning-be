@@ -46,12 +46,8 @@ async function bootstrap() {
   await app.listen(port);
   logger.log(`Application is running on: http://localhost:${port}`);
   if (swaggerEnabled) {
-    logger.log(
-      `API Docs (Scalar): http://localhost:${port}/${swaggerPath}`,
-    );
-    logger.log(
-      `Swagger UI: http://localhost:${port}/${swaggerPath}/swagger`,
-    );
+    logger.log(`API Docs (Scalar): http://localhost:${port}/${swaggerPath}`);
+    logger.log(`Swagger UI: http://localhost:${port}/${swaggerPath}/swagger`);
   }
 }
 void bootstrap().catch((err) => {
