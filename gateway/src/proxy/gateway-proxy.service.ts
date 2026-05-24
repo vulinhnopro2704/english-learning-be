@@ -123,9 +123,11 @@ export class GatewayProxyService {
       const targetBase = this.resolveTargetBase(req.path);
 
       let forwardedIdentity: AccessTokenPayload | null = null;
+      let userProfile: any | null = null;
       if (this.requiresAuth(req.method, req.path)) {
         try {
           forwardedIdentity = await this.verifyAccessToken(req);
+          userProfile = await this.redisService.getUserProfile(forwardedIdentity.sub);
         } catch (error) {
           const errorResponse =
             error instanceof ApiException ? error.getResponse() : undefined;
@@ -159,6 +161,7 @@ export class GatewayProxyService {
         res,
         targetBase,
         forwardedIdentity,
+        userProfile,
         clientIp,
       );
     } catch (error) {
@@ -410,6 +413,7 @@ export class GatewayProxyService {
     res: Response,
     targetBase: string,
     identity: AccessTokenPayload | null,
+    userProfile: any | null,
     clientIp: string,
   ): Promise<void> {
     const targetPath = this.rewriteTargetPath(req.path);
@@ -419,7 +423,7 @@ export class GatewayProxyService {
       targetBase,
     );
 
-    const headers = this.buildForwardHeaders(req, identity, clientIp);
+    const headers = this.buildForwardHeaders(req, identity, userProfile, clientIp);
     const hasBody = !['GET', 'HEAD'].includes(req.method.toUpperCase());
 
     const body = hasBody ? this.buildRequestBody(req, headers) : undefined;
@@ -507,6 +511,7 @@ export class GatewayProxyService {
   private buildForwardHeaders(
     req: Request,
     identity: AccessTokenPayload | null,
+    userProfile: any | null,
     clientIp: string,
   ): Headers {
     const headers = new Headers();
@@ -543,6 +548,21 @@ export class GatewayProxyService {
       headers.set('x-user-role', identity.role ?? 'user');
       headers.set('x-user-email', identity.email);
       headers.set('x-user-jti', identity.jti);
+    }
+
+    if (userProfile) {
+      if (userProfile.name) {
+        headers.set('x-user-name', encodeURIComponent(userProfile.name));
+      }
+      if (userProfile.gender) {
+        headers.set('x-user-gender', userProfile.gender);
+      }
+      if (Array.isArray(userProfile.hobbies) && userProfile.hobbies.length > 0) {
+        headers.set('x-user-hobbies', encodeURIComponent(userProfile.hobbies.join(',')));
+      }
+      if (userProfile.funFact) {
+        headers.set('x-user-fun-fact', encodeURIComponent(userProfile.funFact));
+      }
     }
 
     headers.set('x-forwarded-for', clientIp);

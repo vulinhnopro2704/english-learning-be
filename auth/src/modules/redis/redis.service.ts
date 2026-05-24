@@ -46,6 +46,17 @@ export class RedisService implements OnModuleDestroy {
     return result === 1;
   }
 
+  async cacheUserProfile(userId: string, profile: any): Promise<void> {
+    const key = `USER_PROFILE_${userId}`;
+    // Cache profile for 1 hour
+    await this.client.set(key, JSON.stringify(profile), 'EX', 3600);
+  }
+
+  async deleteUserProfile(userId: string): Promise<void> {
+    const key = `USER_PROFILE_${userId}`;
+    await this.client.del(key);
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.client.quit();
   }

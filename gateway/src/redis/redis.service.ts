@@ -53,6 +53,16 @@ export class RedisService implements OnModuleDestroy {
     return setResult === 1;
   }
 
+  async getUserProfile(userId: string): Promise<any | null> {
+    const data = await this.client.get(`USER_PROFILE_${userId}`);
+    if (!data) return null;
+    try {
+      return JSON.parse(data);
+    } catch {
+      return null;
+    }
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.client.quit();
   }

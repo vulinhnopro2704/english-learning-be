@@ -8,6 +8,8 @@ import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { UpdateProfileDto } from './dtos/update-profile.dto';
+import { ChangePasswordDto } from './dtos/change-password.dto';
 import { VerifyEmailDto } from './dtos/verify-email.dto';
 import { ResendVerificationDto } from './dtos/resend-verification.dto';
 import { hash, compare } from 'bcryptjs';
@@ -119,8 +121,11 @@ export class AuthService {
 
       this.logger.log(`User registered: ${user.email}`);
 
+      const sanitizedUser = this.sanitizeUser(user);
+      await this.redisService.cacheUserProfile(user.id, sanitizedUser);
+
       return {
-        user: this.sanitizeUser(user),
+        user: sanitizedUser,
       };
     } catch (error) {
       const err = error as Error;
@@ -172,8 +177,11 @@ export class AuthService {
       const tokens = await this.generateTokens(user.id, user.email, user.role);
       this.logger.log(`User logged in: ${user.email}`);
 
+      const sanitizedUser = this.sanitizeUser(user);
+      await this.redisService.cacheUserProfile(user.id, sanitizedUser);
+
       return {
-        user: this.sanitizeUser(user),
+        user: sanitizedUser,
         ...tokens,
       };
     } catch (error) {
@@ -272,8 +280,11 @@ export class AuthService {
         `Google login success userId=${updatedUser.id} email=${updatedUser.email}`,
       );
 
+      const sanitizedUser = this.sanitizeUser(updatedUser);
+      await this.redisService.cacheUserProfile(updatedUser.id, sanitizedUser);
+
       return {
-        user: this.sanitizeUser(updatedUser),
+        user: sanitizedUser,
         ...tokens,
       };
     } catch (error) {
@@ -452,6 +463,7 @@ export class AuthService {
     }
 
     this.logger.log(`User logged out: ${userId}`);
+    await this.redisService.deleteUserProfile(userId);
   }
 
   async refreshTokens(
@@ -507,7 +519,61 @@ export class AuthService {
         message: 'User not found',
       });
     }
-    return this.sanitizeUser(user);
+    const sanitizedUser = this.sanitizeUser(user);
+    await this.redisService.cacheUserProfile(user.id, sanitizedUser);
+    return sanitizedUser;
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const dataToUpdate: any = {};
+    if (dto.name !== undefined) dataToUpdate.name = dto.name;
+    if (dto.phoneNumber !== undefined) dataToUpdate.phoneNumber = dto.phoneNumber;
+    if (dto.dateOfBirth !== undefined) dataToUpdate.dateOfBirth = new Date(dto.dateOfBirth);
+    if (dto.gender !== undefined) dataToUpdate.gender = dto.gender;
+    if (dto.hobbies !== undefined) dataToUpdate.hobbies = dto.hobbies;
+    if (dto.funFact !== undefined) dataToUpdate.funFact = dto.funFact;
+    if (dto.avatar !== undefined) dataToUpdate.avatar = dto.avatar;
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: dataToUpdate,
+    });
+
+    const sanitizedUser = this.sanitizeUser(user);
+    await this.redisService.cacheUserProfile(user.id, sanitizedUser);
+
+    return sanitizedUser;
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.password) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'INVALID_CREDENTIALS',
+        message: 'Invalid current password',
+      });
+    }
+
+    const isPasswordValid = await compare(dto.oldPassword, user.password);
+    if (!isPasswordValid) {
+      throw new ApiException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        errorCode: 'INVALID_CREDENTIALS',
+        message: 'Invalid current password',
+      });
+    }
+
+    const newPasswordHash = await hash(dto.newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: newPasswordHash },
+    });
+
+    return { message: 'Password changed successfully' };
   }
 
   async generateTokens(userId: string, email: string, role: UserRole) {
@@ -595,6 +661,11 @@ export class AuthService {
     createdAt: Date;
     updatedAt: Date;
     lastLoginAt: Date | null;
+    phoneNumber?: string | null;
+    dateOfBirth?: Date | null;
+    gender?: string | null;
+    hobbies?: string[];
+    funFact?: string | null;
   }) {
     return {
       id: user.id,
@@ -602,6 +673,11 @@ export class AuthService {
       name: user.name,
       avatar: user.avatar,
       role: user.role,
+      phoneNumber: user.phoneNumber,
+      dateOfBirth: user.dateOfBirth,
+      gender: user.gender,
+      hobbies: user.hobbies ?? [],
+      funFact: user.funFact,
       emailVerifiedAt: user.emailVerifiedAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

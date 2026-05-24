@@ -24,6 +24,11 @@ model User {
   createdAt                  DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt                  DateTime  @updatedAt @db.Timestamptz(6)
   lastLoginAt                DateTime? @db.Timestamptz(6)
+  phoneNumber                String?   @db.VarChar(20)
+  dateOfBirth                DateTime? @db.Date
+  gender                     Gender?
+  hobbies                    String[]
+  funFact                    String?   @db.Text
 
   accounts AuthAccount[]
 
@@ -58,6 +63,15 @@ enum AuthProvider {
   GOOGLE
   FACEBOOK
   EMAIL
+
+  @@schema("auth")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
 
   @@schema("auth")
 }
