@@ -97,4 +97,13 @@ export class GenerateScenarioDto {
   @IsBoolean()
   @IsOptional()
   isPublic?: boolean;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'Whether to generate a cover image for the scenario (placeholder — not yet implemented)',
+  })
+  @IsBoolean()
+  @IsOptional()
+  generateImage?: boolean;
 }
