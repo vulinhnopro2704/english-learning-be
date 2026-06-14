@@ -1,0 +1,919 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-06-07T12:00:00.000Z" agent="Antigravity" version="21.6.8" type="device">
+  <diagram id="auth-logic" name="Auth Logical Architecture">
+    <mxGraphModel dx="1422" dy="798" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Table User -->
+        <mxCell id="class_User" value="User" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="50" y="50" width="320" height="630" as="geometry" />
+        </mxCell>
+        <!-- User Rows -->
+        <mxCell id="row_class_User_0" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="30" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_0" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_0">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_0" value="id: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_0">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_1" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="60" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_1" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_1">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_1" value="email: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_1">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_2" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="90" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_2" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_2">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_2" value="name: string | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_2">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_3" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="120" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_3" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_3">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_3" value="password: string | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_3">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_4" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="150" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_4" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_4">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_4" value="avatar: string | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_4">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_5" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="180" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_5" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_5">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_5" value="role: UserRole" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_5">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_6" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="210" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_6" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_6">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_6" value="emailVerifiedAt: Date | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_6">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_7" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="240" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_7" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_7">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_7" value="emailVerificationTokenHash: string | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_7">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_8" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="270" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_8" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_8">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_8" value="emailVerificationSentAt: Date | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_8">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_9" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="300" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_9" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_9">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_9" value="passwordResetTokenHash: string | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_9">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_10" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="330" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_10" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_10">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_10" value="passwordResetSentAt: Date | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_10">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_11" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="360" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_11" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_11">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_11" value="createdAt: Date" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_11">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_12" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="390" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_12" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_12">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_12" value="updatedAt: Date" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_12">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_13" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="420" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_13" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_13">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_13" value="lastLoginAt: Date | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_13">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_14" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="450" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_14" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_14">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_14" value="phoneNumber: string | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_14">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_15" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="480" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_15" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_15">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_15" value="dateOfBirth: Date | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_15">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_16" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="510" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_16" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_16">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_16" value="gender: Gender | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_16">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_17" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="540" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_17" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_17">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_17" value="hobbies: string[]" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_17">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_18" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="570" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_18" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_18">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_18" value="funFact: string | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_18">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_User_19" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_User">
+          <mxGeometry y="600" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_User_19" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_User_19">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_User_19" value="accounts: AuthAccount[]" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_User_19">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Table AuthAccount -->
+        <mxCell id="class_AuthAccount" value="AuthAccount" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="50" y="720" width="320" height="240" as="geometry" />
+        </mxCell>
+        <!-- AuthAccount Rows -->
+        <mxCell id="row_class_AuthAccount_0" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthAccount">
+          <mxGeometry y="30" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthAccount_0" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthAccount_0">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthAccount_0" value="id: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthAccount_0">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthAccount_1" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthAccount">
+          <mxGeometry y="60" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthAccount_1" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthAccount_1">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthAccount_1" value="userId: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthAccount_1">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthAccount_2" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthAccount">
+          <mxGeometry y="90" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthAccount_2" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthAccount_2">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthAccount_2" value="provider: AuthProvider" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthAccount_2">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthAccount_3" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthAccount">
+          <mxGeometry y="120" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthAccount_3" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthAccount_3">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthAccount_3" value="providerAccountId: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthAccount_3">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthAccount_4" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthAccount">
+          <mxGeometry y="150" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthAccount_4" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthAccount_4">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthAccount_4" value="accessToken: string | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthAccount_4">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthAccount_5" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthAccount">
+          <mxGeometry y="180" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthAccount_5" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthAccount_5">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthAccount_5" value="refreshToken: string | null" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthAccount_5">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthAccount_6" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthAccount">
+          <mxGeometry y="210" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthAccount_6" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthAccount_6">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthAccount_6" value="user: User" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthAccount_6">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Table AuthService -->
+        <mxCell id="class_AuthService" value="AuthService" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="430" y="50" width="340" height="900" as="geometry" />
+        </mxCell>
+        <!-- AuthService Rows -->
+        <!-- Properties -->
+        <mxCell id="row_class_AuthService_0" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="30" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_0" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_0">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_0" value="logger: Logger" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_0">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_1" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="60" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_1" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_1">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_1" value="accessSecret: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_1">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_2" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="90" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_2" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_2">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_2" value="refreshSecret: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_2">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_3" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="120" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_3" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_3">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_3" value="accessExpiration: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_3">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_4" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="150" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_4" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_4">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_4" value="refreshExpiration: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_4">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_5" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="180" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_5" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_5">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_5" value="cookieDomain?: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_5">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_6" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="210" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_6" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_6">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_6" value="isProduction: boolean" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_6">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_7" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="240" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_7" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_7">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_7" value="appPublicBaseUrl: string" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_7">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_8" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="270" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_8" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_8">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_8" value="emailVerificationTtlMinutes: number" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_8">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_9" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="300" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_9" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_9">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_9" value="passwordResetTtlMinutes: number" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_9">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_10" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="330" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_10" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_10">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_10" value="prisma: PrismaService" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_10">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_11" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="360" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_11" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_11">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_11" value="tokenService: TokenService" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_11">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_12" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="390" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_12" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_12">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_12" value="redisService: RedisService" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_12">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_13" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="420" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_13" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_13">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_13" value="mailService: MailService" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_13">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Methods -->
+        <mxCell id="row_class_AuthService_14" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="450" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_14" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_14">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_14" value="register(dto: RegisterDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_14">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_15" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="480" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_15" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_15">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_15" value="login(dto: LoginDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_15">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_16" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="510" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_16" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_16">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_16" value="loginWithGoogle(profile: GoogleAuthProfile): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_16">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_17" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="540" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_17" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_17">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_17" value="resendVerification(dto: ResendVerificationDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_17">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_18" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="570" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_18" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_18">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_18" value="verifyEmail(dto: VerifyEmailDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_18">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_19" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="600" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_19" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_19">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_19" value="forgotPassword(dto: ForgotPasswordDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_19">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_20" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="630" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_20" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_20">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_20" value="resetPassword(dto: ResetPasswordDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_20">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_21" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="660" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_21" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_21">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_21" value="logout(userId: string, aJti: string, rJti: string): Promise&lt;void&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_21">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_22" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="690" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_22" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_22">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_22" value="refreshTokens(uId: string, oRJti: string, oAJti?: string): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_22">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_23" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="720" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_23" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_23">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_23" value="getMe(userId: string): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_23">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_24" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="750" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_24" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_24">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_24" value="updateProfile(userId: string, dto: UpdateProfileDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_24">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_25" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="780" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_25" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_25">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_25" value="changePassword(userId: string, dto: ChangePasswordDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_25">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_26" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="810" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_26" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_26">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_26" value="generateTokens(userId: string, email: string, role: UserRole): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_26">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_27" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="840" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_27" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_27">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_27" value="setTokenCookies(res: Response, accessT: string, refreshT: string): void" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_27">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_AuthService_28" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_AuthService">
+          <mxGeometry y="870" width="340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_AuthService_28" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_AuthService_28">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_AuthService_28" value="clearTokenCookies(res: Response): void" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_AuthService_28">
+          <mxGeometry x="30" width="310" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Table UsersService -->
+        <mxCell id="class_UsersService" value="UsersService" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="830" y="50" width="320" height="210" as="geometry" />
+        </mxCell>
+        <!-- UsersService Rows -->
+        <mxCell id="row_class_UsersService_0" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_UsersService">
+          <mxGeometry y="30" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_UsersService_0" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_UsersService_0">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_UsersService_0" value="prisma: PrismaService" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_UsersService_0">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_UsersService_1" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_UsersService">
+          <mxGeometry y="60" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_UsersService_1" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_UsersService_1">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_UsersService_1" value="findAll(filter: UserFilterDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_UsersService_1">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_UsersService_2" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_UsersService">
+          <mxGeometry y="90" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_UsersService_2" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_UsersService_2">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_UsersService_2" value="findById(id: string): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_UsersService_2">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_UsersService_3" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_UsersService">
+          <mxGeometry y="120" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_UsersService_3" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_UsersService_3">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_UsersService_3" value="create(dto: CreateUserDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_UsersService_3">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_UsersService_4" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_UsersService">
+          <mxGeometry y="150" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_UsersService_4" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_UsersService_4">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_UsersService_4" value="update(id: string, dto: UpdateUserDto): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_UsersService_4">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_UsersService_5" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_UsersService">
+          <mxGeometry y="180" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_UsersService_5" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_UsersService_5">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_UsersService_5" value="remove(id: string): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_UsersService_5">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Table TokenService -->
+        <mxCell id="class_TokenService" value="TokenService" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="830" y="300" width="320" height="150" as="geometry" />
+        </mxCell>
+        <!-- TokenService Rows -->
+        <mxCell id="row_class_TokenService_0" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_TokenService">
+          <mxGeometry y="30" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_TokenService_0" value=" " style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_TokenService_0">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_TokenService_0" value="(NestJS JwtService wrapper)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;fontStyle=2;" vertex="1" parent="row_class_TokenService_0">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_TokenService_1" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_TokenService">
+          <mxGeometry y="60" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_TokenService_1" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_TokenService_1">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_TokenService_1" value="signAsync(payload: any, opt: any): Promise&lt;string&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_TokenService_1">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_TokenService_2" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_TokenService">
+          <mxGeometry y="90" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_TokenService_2" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_TokenService_2">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_TokenService_2" value="verifyAsync(token: string, opt: any): Promise&lt;any&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_TokenService_2">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_TokenService_3" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_TokenService">
+          <mxGeometry y="120" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_TokenService_3" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_TokenService_3">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_TokenService_3" value="decode(token: string): any" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_TokenService_3">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Table MailService -->
+        <mxCell id="class_MailService" value="MailService" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="830" y="490" width="320" height="150" as="geometry" />
+        </mxCell>
+        <!-- MailService Rows -->
+        <mxCell id="row_class_MailService_0" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_MailService">
+          <mxGeometry y="30" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_MailService_0" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_MailService_0">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_MailService_0" value="logger: Logger" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_MailService_0">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_MailService_1" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_MailService">
+          <mxGeometry y="60" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_MailService_1" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_MailService_1">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_MailService_1" value="sendEmailVerification(em: string, url: string): Promise&lt;void&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_MailService_1">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_MailService_2" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_MailService">
+          <mxGeometry y="90" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_MailService_2" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_MailService_2">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_MailService_2" value="sendPasswordReset(em: string, url: string): Promise&lt;void&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_MailService_2">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_MailService_3" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_MailService">
+          <mxGeometry y="120" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_MailService_3" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_MailService_3">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_MailService_3" value="sendEmail(to: string, sub: string, html: string): Promise&lt;void&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_MailService_3">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Table RedisService -->
+        <mxCell id="class_RedisService" value="RedisService" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="830" y="680" width="320" height="240" as="geometry" />
+        </mxCell>
+        <!-- RedisService Rows -->
+        <mxCell id="row_class_RedisService_0" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_RedisService">
+          <mxGeometry y="30" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_RedisService_0" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_RedisService_0">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_RedisService_0" value="client: Redis" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_RedisService_0">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_RedisService_1" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_RedisService">
+          <mxGeometry y="60" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_RedisService_1" value="-" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_RedisService_1">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_RedisService_1" value="logger: Logger" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_RedisService_1">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_RedisService_2" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_RedisService">
+          <mxGeometry y="90" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_RedisService_2" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_RedisService_2">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_RedisService_2" value="blacklistToken(userId, jti, ttl): Promise&lt;void&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_RedisService_2">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_RedisService_3" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_RedisService">
+          <mxGeometry y="120" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_RedisService_3" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_RedisService_3">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_RedisService_3" value="isTokenBlacklisted(userId, jti): Promise&lt;boolean&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_RedisService_3">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_RedisService_4" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_RedisService">
+          <mxGeometry y="150" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_RedisService_4" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_RedisService_4">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_RedisService_4" value="cacheUserProfile(userId, profile): Promise&lt;void&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_RedisService_4">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_RedisService_5" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_RedisService">
+          <mxGeometry y="180" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_RedisService_5" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_RedisService_5">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_RedisService_5" value="deleteUserProfile(userId): Promise&lt;void&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_RedisService_5">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_RedisService_6" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_RedisService">
+          <mxGeometry y="210" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_RedisService_6" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_RedisService_6">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_RedisService_6" value="onModuleDestroy(): Promise&lt;void&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_RedisService_6">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Table PrismaService -->
+        <mxCell id="class_PrismaService" value="PrismaService" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="830" y="960" width="320" height="120" as="geometry" />
+        </mxCell>
+        <!-- PrismaService Rows -->
+        <mxCell id="row_class_PrismaService_0" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_PrismaService">
+          <mxGeometry y="30" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_PrismaService_0" value=" " style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_PrismaService_0">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_PrismaService_0" value="(inherits PrismaClient)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;fontStyle=2;" vertex="1" parent="row_class_PrismaService_0">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_PrismaService_1" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_PrismaService">
+          <mxGeometry y="60" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_PrismaService_1" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_PrismaService_1">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_PrismaService_1" value="onModuleInit(): Promise&lt;void&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_PrismaService_1">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="row_class_PrismaService_2" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="class_PrismaService">
+          <mxGeometry y="90" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_l_row_class_PrismaService_2" value="+" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;align=center;" vertex="1" parent="row_class_PrismaService_2">
+          <mxGeometry width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_r_row_class_PrismaService_2" value="onModuleDestroy(): Promise&lt;void&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_class_PrismaService_2">
+          <mxGeometry x="30" width="290" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Connections (UML Standard) -->
+        
+        <!-- Composition User -> AuthAccount -->
+        <mxCell id="con_User_AuthAccount" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=diamond;endFill=1;endSize=12;exitX=0.5;exitY=0;entryX=0.5;entryY=1;strokeWidth=1.5;" edge="1" parent="1" source="class_AuthAccount" target="class_User">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Multiplicity Labels for Composition -->
+        <mxCell id="lbl_User_mult" value="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="685" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_AuthAccount_mult" value="*" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="725" width="30" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Dependency/Usage: AuthService -> TokenService -->
+        <mxCell id="dep_AuthService_TokenService" value="«use»" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=open;endFill=0;dashed=1;exitX=1;exitY=0.3;entryX=0;entryY=0.5;" edge="1" parent="1" source="class_AuthService" target="class_TokenService">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Dependency/Usage: AuthService -> RedisService -->
+        <mxCell id="dep_AuthService_RedisService" value="«use»" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=open;endFill=0;dashed=1;exitX=1;exitY=0.7;entryX=0;entryY=0.5;" edge="1" parent="1" source="class_AuthService" target="class_RedisService">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Dependency/Usage: AuthService -> MailService -->
+        <mxCell id="dep_AuthService_MailService" value="«use»" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=open;endFill=0;dashed=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="class_AuthService" target="class_MailService">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Dependency/Usage: AuthService -> PrismaService -->
+        <mxCell id="dep_AuthService_PrismaService" value="«use»" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=open;endFill=0;dashed=1;exitX=1;exitY=0.9;entryX=0;entryY=0.5;" edge="1" parent="1" source="class_AuthService" target="class_PrismaService">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Dependency/Usage: UsersService -> PrismaService (Routed around middle services) -->
+        <mxCell id="dep_UsersService_PrismaService" value="«use»" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=open;endFill=0;dashed=1;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="class_UsersService" target="class_PrismaService">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1180" y="155" />
+              <mxPoint x="1180" y="1020" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Dependency/Usage: UsersService -> User (Routed above AuthService) -->
+        <mxCell id="dep_UsersService_User" value="«use»" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=open;endFill=0;dashed=1;exitX=0.5;exitY=0;entryX=0.5;entryY=0;" edge="1" parent="1" source="class_UsersService" target="class_User">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="990" y="20" />
+              <mxPoint x="210" y="20" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Dependency/Usage: AuthService -> User -->
+        <mxCell id="dep_AuthService_User" value="«use»" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=open;endFill=0;dashed=1;exitX=0;exitY=0.2;entryX=1;entryY=0.5;" edge="1" parent="1" source="class_AuthService" target="class_User">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Dependency/Usage: AuthService -> AuthAccount -->
+        <mxCell id="dep_AuthService_AuthAccount" value="«use»" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=open;endFill=0;dashed=1;exitX=0;exitY=0.8;entryX=1;entryY=0.5;" edge="1" parent="1" source="class_AuthService" target="class_AuthAccount">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

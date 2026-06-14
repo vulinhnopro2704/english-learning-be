@@ -1,0 +1,195 @@
+<mxfile host="65bd71144e">
+    <diagram id="system-architecture" name="System Architecture">
+        <mxGraphModel dx="1314" dy="1898" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="960" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="dev" value="Lập trình viên&#xa;(Developer)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="80" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="github_repo" value="GitHub&#xa;Repository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="630" y="80" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="gh_actions" value="GitHub Actions&#xa;(CI/CD Workflow)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="850" y="80" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="ghcr_registry" value="GitHub Container&#xa;Registry (GHCR.io)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1120" y="80" width="150" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="vercel_group" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;Vercel Cloud Platform&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;Frontend Application&lt;/span&gt;&lt;br style=&quot;color: rgb(63, 63, 63); scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251);&quot;&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;(React / Next.js)&lt;/span&gt;&lt;/div&gt;" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="10" y="-20" width="240" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="vps_group" value="VPS Host (Ubuntu Server)" style="shape=swimlane;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=left;spacingLeft=10;fontStyle=1;fontSize=13;collapsible=0;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="170" width="1040" height="430" as="geometry"/>
+                </mxCell>
+                <mxCell id="gateway_service" value="API Gateway&#xa;(NestJS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                    <mxGeometry x="360" y="50" width="140" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="redis_service" value="Redis Cache&#xa;&amp; Rate Limiter" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                    <mxGeometry x="20" y="260" width="140" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="auth_service" value="Auth Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                    <mxGeometry x="190" y="190" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="storage_service" value="Storage Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                    <mxGeometry x="680" y="220" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="fsrs_service" value="FSRS-AI Service&#xa;(Python + FastAPI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                    <mxGeometry x="530" y="340" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="generative_service" value="Generative Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                    <mxGeometry x="860" y="210" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="learn_service" value="Learn Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                    <mxGeometry x="365" y="220" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge11" value="Port 3003" style="endArrow=classic;html=1;rounded=1;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="vps_group" source="gateway_service" target="storage_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="430" y="160"/>
+                            <mxPoint x="760" y="160"/>
+                        </Array>
+                        <mxPoint x="414.98" y="10" as="sourcePoint"/>
+                        <mxPoint x="794.98" y="240" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="9" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="vps_group" source="auth_service">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="90" y="261" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="90" y="225"/>
+                            <mxPoint x="90" y="261"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="10" value="Blacklist JWT" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="vps_group">
+                    <mxGeometry x="90" y="200" width="100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="neon_group" value="Neon Serverless Database Platform" style="shape=swimlane;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=left;spacingLeft=10;fontStyle=1;fontSize=13;collapsible=0;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="620" width="1040" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="auth_db" value="auth_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
+                    <mxGeometry x="215" y="50" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="storage_db" value="storage_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
+                    <mxGeometry x="705" y="50" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="learn_db" value="learn_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
+                    <mxGeometry x="390" y="50" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="fsrs_db" value="fsrs_ai_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
+                    <mxGeometry x="555" y="50" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="generative_db" value="generative_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
+                    <mxGeometry x="885" y="50" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="openai_group" value="&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;Third-party: Ollama &lt;br&gt;Cloud, ElevenLabs&lt;br&gt;(STT, TTS), CDN Cloudinary&lt;/span&gt;" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1150" y="340" width="220" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge1" value="Push" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=12;fontColor=#000000;" parent="1" source="dev" target="github_repo" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge2" value="Trigger" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=12;fontColor=#000000;" parent="1" source="github_repo" target="gh_actions" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge3" value="Build &amp; Push" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=12;fontColor=#000000;" parent="1" source="gh_actions" target="ghcr_registry" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge4" value="Deploy Web App" style="endArrow=classic;html=1;dashed=1;rounded=1;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.922;entryY=0.377;entryDx=0;entryDy=0;entryPerimeter=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="gh_actions" target="vercel_group" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge5" value="SSH Deploy Backend" style="endArrow=classic;html=1;dashed=1;rounded=1;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.846;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="gh_actions" target="vps_group" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge6" value="Pull Docker Images" style="endArrow=classic;html=1;dashed=1;rounded=1;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1.001;entryY=0.05;entryDx=0;entryDy=0;entryPerimeter=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="ghcr_registry" target="vps_group" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge7" value="HTTPS Requests (Port 3000)" style="endArrow=classic;html=1;rounded=1;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.55;exitY=0.95;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;exitPerimeter=0;" parent="1" source="vercel_group" target="gateway_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="142" y="150"/>
+                            <mxPoint x="470" y="150"/>
+                        </Array>
+                        <mxPoint x="129.99999999999977" y="122.86017857142906" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge8" value="Check Limit" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;edgeStyle=orthogonalEdgeStyle;" parent="1" source="gateway_service" target="redis_service" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge9" value="Port 3001" style="endArrow=classic;html=1;rounded=1;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="gateway_service" target="auth_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="470" y="320"/>
+                            <mxPoint x="310" y="320"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge10" value="Port 3002" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="gateway_service" edge="1">
+                    <mxGeometry x="0.3333" relative="1" as="geometry">
+                        <mxPoint x="470" y="390" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="470" y="390"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge12" value="Port 3005" style="endArrow=classic;html=1;rounded=1;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="gateway_service" target="generative_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="470" y="320"/>
+                            <mxPoint x="980" y="320"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge13" value="Port 3004" style="endArrow=classic;html=1;rounded=1;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="gateway_service" target="fsrs_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="470" y="350"/>
+                            <mxPoint x="645" y="350"/>
+                            <mxPoint x="645" y="510"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge14" value="Cache" style="endArrow=classic;html=1;rounded=1;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="learn_service" target="redis_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="370" y="470"/>
+                            <mxPoint x="370" y="470"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge15" value="FSRS-AI Call" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;" parent="1" source="learn_service" target="fsrs_service" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge18" value="HTTPS API" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;entryX=0.068;entryY=0.43;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="generative_service" target="openai_group" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1169.9999999999998" y="404.2857142857142" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge19" value="Postgres" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="auth_service" target="auth_db" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge20" value="Postgres" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="storage_service" target="storage_db" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge21" value="Postgres" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="learn_service" target="learn_db" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge22" value="Postgres" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="fsrs_service" target="fsrs_db" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="generative_service" target="generative_db">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.13;entryY=0.77;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="storage_service" target="openai_group">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="HTTPS API" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="6">
+                    <mxGeometry x="-0.3839" y="3" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

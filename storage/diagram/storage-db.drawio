@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-06-07T12:00:00.000Z" agent="Mozilla/5.0" version="21.6.8" type="device">
+  <diagram id="storage-db" name="Storage DB Schema">
+    <mxGraphModel dx="1422" dy="798" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Table files -->
+        <mxCell id="table_files" value="&lt;b&gt;storage.files&lt;/b&gt;" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="50" y="50" width="260" height="330" as="geometry" />
+        </mxCell>
+        
+        <!-- Row: id -->
+        <mxCell id="row_files_id" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="table_files">
+          <mxGeometry y="30" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_k_files_id" value="PK" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=1;overflow=hidden;fontStyle=1;" vertex="1" parent="row_files_id">
+          <mxGeometry width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_n_files_id" value="&lt;u&gt;id&lt;/u&gt; : uuid" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=1;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_files_id">
+          <mxGeometry x="40" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Row: public_id -->
+        <mxCell id="row_files_public_id" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="table_files">
+          <mxGeometry y="60" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_k_files_public_id" value="UQ" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=1;overflow=hidden;fontStyle=1;" vertex="1" parent="row_files_public_id">
+          <mxGeometry width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_n_files_public_id" value="public_id : varchar(255)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_files_public_id">
+          <mxGeometry x="40" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Row: secure_url -->
+        <mxCell id="row_files_secure_url" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="table_files">
+          <mxGeometry y="90" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_k_files_secure_url" value="" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=1;overflow=hidden;" vertex="1" parent="row_files_secure_url">
+          <mxGeometry width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_n_files_secure_url" value="secure_url : text" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_files_secure_url">
+          <mxGeometry x="40" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Row: type -->
+        <mxCell id="row_files_type" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="table_files">
+          <mxGeometry y="120" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_k_files_type" value="" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=1;overflow=hidden;" vertex="1" parent="row_files_type">
+          <mxGeometry width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_n_files_type" value="type : FileType [Enum]" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_files_type">
+          <mxGeometry x="40" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Row: format -->
+        <mxCell id="row_files_format" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="table_files">
+          <mxGeometry y="150" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_k_files_format" value="" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=1;overflow=hidden;" vertex="1" parent="row_files_format">
+          <mxGeometry width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_n_files_format" value="format : varchar(20) [Null]" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_files_format">
+          <mxGeometry x="40" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Row: size -->
+        <mxCell id="row_files_size" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="table_files">
+          <mxGeometry y="180" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_k_files_size" value="" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=1;overflow=hidden;" vertex="1" parent="row_files_size">
+          <mxGeometry width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_n_files_size" value="size : integer" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_files_size">
+          <mxGeometry x="40" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Row: owner_id -->
+        <mxCell id="row_files_owner_id" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="table_files">
+          <mxGeometry y="210" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_k_files_owner_id" value="" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=1;overflow=hidden;" vertex="1" parent="row_files_owner_id">
+          <mxGeometry width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_n_files_owner_id" value="owner_id : uuid" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_files_owner_id">
+          <mxGeometry x="40" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Row: metadata -->
+        <mxCell id="row_files_metadata" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="table_files">
+          <mxGeometry y="240" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_k_files_metadata" value="" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=1;overflow=hidden;" vertex="1" parent="row_files_metadata">
+          <mxGeometry width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_n_files_metadata" value="metadata : jsonb [Null]" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_files_metadata">
+          <mxGeometry x="40" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Row: created_at -->
+        <mxCell id="row_files_created_at" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="table_files">
+          <mxGeometry y="270" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_k_files_created_at" value="" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=1;overflow=hidden;" vertex="1" parent="row_files_created_at">
+          <mxGeometry width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_n_files_created_at" value="created_at : timestamptz(6)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_files_created_at">
+          <mxGeometry x="40" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Row: updated_at -->
+        <mxCell id="row_files_updated_at" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="table_files">
+          <mxGeometry y="300" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_k_files_updated_at" value="" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=1;overflow=hidden;" vertex="1" parent="row_files_updated_at">
+          <mxGeometry width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_n_files_updated_at" value="updated_at : timestamptz(6)" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;" vertex="1" parent="row_files_updated_at">
+          <mxGeometry x="40" width="220" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Enum FileType -->
+        <mxCell id="enum_FileType" value="&lt;b&gt;«enum»&lt;br&gt;FileType&lt;/b&gt;" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="400" y="50" width="180" height="120" as="geometry" />
+        </mxCell>
+        <!-- Enum Values -->
+        <mxCell id="row_enum_val1" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;" vertex="1" parent="enum_FileType">
+          <mxGeometry y="30" width="180" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_enum_val1" value="IMAGE" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=center;overflow=hidden;" vertex="1" parent="row_enum_val1">
+          <mxGeometry width="180" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="row_enum_val2" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;" vertex="1" parent="enum_FileType">
+          <mxGeometry y="60" width="180" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_enum_val2" value="VIDEO" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=center;overflow=hidden;" vertex="1" parent="row_enum_val2">
+          <mxGeometry width="180" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="row_enum_val3" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;" vertex="1" parent="enum_FileType">
+          <mxGeometry y="90" width="180" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cell_enum_val3" value="FILE" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=center;overflow=hidden;" vertex="1" parent="row_enum_val3">
+          <mxGeometry width="180" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Table Indexes & Constraints -->
+        <mxCell id="box_indexes" value="&lt;b&gt;Indexes &amp; Constraints&lt;/b&gt;&lt;hr/&gt;&lt;div style=&quot;text-align: left; margin: 4px;&quot;&gt;&lt;b&gt;Unique Index:&lt;/b&gt;&lt;br/&gt;• files_public_id_key ON public_id&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Composite Indexes:&lt;/b&gt;&lt;br/&gt;• idx_files_owner_created&lt;br/&gt;  (owner_id ASC, created_at DESC)&lt;br/&gt;• idx_files_type_created&lt;br/&gt;  (type ASC, created_at DESC)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#f5f5f5;strokeColor=#666666;align=center;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="400" y="200" width="280" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Connection: type to FileType -->
+        <mxCell id="edge_type_enum" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;dashed=1;strokeWidth=1;strokeColor=#d6b656;" edge="1" parent="1" source="row_files_type" target="enum_FileType">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

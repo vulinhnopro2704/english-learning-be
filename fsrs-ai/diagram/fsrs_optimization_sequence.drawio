@@ -1,0 +1,210 @@
+<mxfile host="65bd71144e">
+    <diagram id="fsrs-optimization-sequence" name="FSRS Optimization Sequence">
+        <mxGraphModel dx="1418" dy="1206" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="950" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="lifeline_client" value="Người dùng /&#xa;Quản trị viên" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;strokeColor=#000000;fillColor=#ffffff;fontColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="40" width="100" height="1260" as="geometry"/>
+                </mxCell>
+                <mxCell id="lifeline_gateway" value="Cổng kết nối API&#xa;(API Gateway)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;strokeColor=#000000;fillColor=#ffffff;fontColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="220" y="40" width="120" height="1260" as="geometry"/>
+                </mxCell>
+                <mxCell id="lifeline_router" value="Bộ điều tuyến FSRS-AI&#xa;(Router)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;strokeColor=#000000;fillColor=#ffffff;fontColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="40" width="120" height="910" as="geometry"/>
+                </mxCell>
+                <mxCell id="lifeline_opt" value="Dịch vụ Tối ưu hóa&#xa;(Optimizer Service)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;strokeColor=#000000;fillColor=#ffffff;fontColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="580" y="40" width="120" height="910" as="geometry"/>
+                </mxCell>
+                <mxCell id="lifeline_db" value="Cơ sở dữ liệu FSRS" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;strokeColor=#000000;fillColor=#ffffff;fontColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="40" width="120" height="1260" as="geometry"/>
+                </mxCell>
+                <mxCell id="lifeline_worker" value="Tác vụ nền&lt;br&gt;(Background Task)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;strokeColor=#000000;fillColor=#ffffff;fontColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="930" y="40" width="140" height="1260" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_client" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="105" y="110" width="10" height="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_gateway" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="275" y="110" width="10" height="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_router" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="455" y="230" width="10" height="660" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_opt" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="635" y="270" width="10" height="480" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_db_1" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="815" y="310" width="10" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_db_2" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="815" y="650" width="10" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_db_3" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="815" y="950" width="10" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_db_4" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="815" y="1150" width="10" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_worker" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="995" y="800" width="10" height="410" as="geometry"/>
+                </mxCell>
+                <mxCell id="alt_frame" value="alt [Nếu cải thiện &gt;= 2%]" style="shape=umlFrame;whiteSpace=wrap;html=1;width=190;height=30;boundedLbl=1;verticalAlign=top;align=left;spacingLeft=5;strokeWidth=1;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="610" width="620" height="240" as="geometry"/>
+                </mxCell>
+                <mxCell id="alt_frame_sep" value="" style="strokeColor=#000000;dashed=1;endArrow=none;html=1;rounded=0;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="420" y="780" as="sourcePoint"/>
+                        <mxPoint x="1040" y="780" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="alt_frame_label" value="[Ngược lại]" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#000000;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="785" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="loop_frame" value="loop [Lặp qua từng thẻ học]" style="shape=umlFrame;whiteSpace=wrap;html=1;width=200;height=30;boundedLbl=1;verticalAlign=top;align=left;spacingLeft=5;strokeWidth=1;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="740" y="1030" width="460" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg1" value="1. POST /api/v1/fsrs/optimize (Yêu cầu tối ưu)" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;endFill=1;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="115" y="120" as="sourcePoint"/>
+                        <mxPoint x="275" y="120" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg2" value="1.1. Xác thực quyền người dùng" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="285" y="160" as="sourcePoint"/>
+                        <mxPoint x="285" y="200" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="315" y="160"/>
+                            <mxPoint x="315" y="200"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg3" value="1.2. Chuyển tiếp yêu cầu tối ưu" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;endFill=1;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="285" y="240" as="sourcePoint"/>
+                        <mxPoint x="455" y="240" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg4" value="1.2.1. optimize_parameters(user_id)" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;endFill=1;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="465" y="280" as="sourcePoint"/>
+                        <mxPoint x="635" y="280" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg5" value="1.2.1.1. SELECT FSRSConfig &amp; ReviewLogs" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;endFill=1;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="645" y="320" as="sourcePoint"/>
+                        <mxPoint x="815" y="320" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg6" value="1.2.1.2. Trả về cấu hình &amp; danh sách logs" style="verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="815" y="360" as="sourcePoint"/>
+                        <mxPoint x="645" y="360" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg7" value="1.2.1.3. Kiểm tra điều kiện tối ưu (min_logs, cooldown)" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="645" y="400" as="sourcePoint"/>
+                        <mxPoint x="645" y="440" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="675" y="400"/>
+                            <mxPoint x="675" y="440"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg8" value="1.2.1.4. Tính toán trọng số tối ưu (weights) qua FSRS Optimizer" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="645" y="480" as="sourcePoint"/>
+                        <mxPoint x="645" y="520" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="675" y="480"/>
+                            <mxPoint x="675" y="520"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg9" value="1.2.1.5. Tính toán Log Loss &amp; so sánh tỷ lệ cải thiện" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="645" y="560" as="sourcePoint"/>
+                        <mxPoint x="645" y="600" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="675" y="560"/>
+                            <mxPoint x="675" y="600"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg10" value="1.2.1.6. INSERT FSRSModelVersion &amp; UPDATE FSRSConfig" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;endFill=1;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="645" y="660" as="sourcePoint"/>
+                        <mxPoint x="815" y="660" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg11" value="1.2.1.7. Xác nhận lưu mô hình thành công" style="verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="815" y="700" as="sourcePoint"/>
+                        <mxPoint x="645" y="700" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg12" value="1.2.1.8. Trả về trạng thái tối ưu (accepted=true)" style="verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="635" y="740" as="sourcePoint"/>
+                        <mxPoint x="465" y="740" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg13" value="1.2.2. Kích hoạt lập lịch lại thẻ học (Bất đồng bộ)" style="verticalAlign=bottom;endArrow=open;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="465" y="810" as="sourcePoint"/>
+                        <mxPoint x="995" y="810" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg14" value="1.3. Trả về phản hồi 200 OK (Kèm kết quả)" style="verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="455" y="880" as="sourcePoint"/>
+                        <mxPoint x="285" y="880" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg15" value="1.4. Trả kết quả tối ưu về cho người dùng" style="verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="275" y="920" as="sourcePoint"/>
+                        <mxPoint x="115" y="920" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg16" value="2. SELECT CardMemoryStates &amp; ReviewLogs" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;endFill=1;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="995" y="960" as="sourcePoint"/>
+                        <mxPoint x="825" y="960" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg17" value="2.1. Trả về danh sách thẻ &amp; logs" style="verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="825" y="1000" as="sourcePoint"/>
+                        <mxPoint x="995" y="1000" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg18" value="2.2. Mô phỏng lịch sử &amp; Giới hạn độ lệch (cap 30%)" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;edgeStyle=orthogonalEdgeStyle;curved=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1005" y="1060" as="sourcePoint"/>
+                        <mxPoint x="1005" y="1110" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="1035" y="1060"/>
+                            <mxPoint x="1035" y="1110"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg19" value="2.3. UPDATE CardMemoryStates (Lưu lịch học mới)" style="verticalAlign=bottom;endArrow=block;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;endFill=1;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="995" y="1160" as="sourcePoint"/>
+                        <mxPoint x="825" y="1160" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg20" value="2.4. Xác nhận hoàn thành transaction nền (commit)" style="verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;shadow=0;strokeWidth=1;strokeColor=#000000;fontColor=#000000;rounded=0;fontStyle=1;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="825" y="1200" as="sourcePoint"/>
+                        <mxPoint x="995" y="1200" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

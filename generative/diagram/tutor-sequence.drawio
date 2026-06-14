@@ -1,127 +1,164 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="app.diagrams.net" modified="2023-10-01T12:00:00.000Z" agent="Mozilla/5.0" version="21.6.8" type="device">
-  <diagram id="Tutor-seq" name="Tutor Sequence">
-    <mxGraphModel dx="1422" dy="798" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <!-- Lifeline User -->
-        <mxCell id="ll_User" value="User" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#f5f5f5;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="50" y="40" width="100" height="900" as="geometry" />
-        </mxCell>
-        <!-- Lifeline FE -->
-        <mxCell id="ll_FE" value="Frontend" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#d5e8d4;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="300" y="40" width="100" height="900" as="geometry" />
-        </mxCell>
-        <!-- Lifeline BE -->
-        <mxCell id="ll_BE" value="Backend
-(Generative)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#dae8fc;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="550" y="40" width="100" height="900" as="geometry" />
-        </mxCell>
-        <!-- Lifeline Logic -->
-        <mxCell id="ll_Logic" value="Speech &amp; LLM
-Logic" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#ffe6cc;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="800" y="40" width="100" height="900" as="geometry" />
-        </mxCell>
-        <!-- Lifeline DB -->
-        <mxCell id="ll_DB" value="Database" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#e1d5e7;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="1050" y="40" width="100" height="900" as="geometry" />
-        </mxCell>
-        <mxCell id="msg_0" value="Nhập Text hoặc Ghi âm Audio" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="100" y="100" as="sourcePoint" />
-            <mxPoint x="350" y="100" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_1" value="Xử lý Audio/Text đầu vào" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="350" y="150" as="sourcePoint" />
-            <mxPoint x="350" y="170" as="targetPoint" />
-            <Array as="points">
-              <mxPoint x="410" y="150" />
-              <mxPoint x="410" y="170" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_2" value="POST /tutor/chat { session_id, message, type }" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="350" y="200" as="sourcePoint" />
-            <mxPoint x="600" y="200" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_3" value="Lấy lịch sử hội thoại (Session, Messages)" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="600" y="250" as="sourcePoint" />
-            <mxPoint x="1100" y="250" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_4" value="Trả về context" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="1100" y="300" as="sourcePoint" />
-            <mxPoint x="600" y="300" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_5" value="[Nếu là Audio] Gọi STT (Speech-to-Text)" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="600" y="350" as="sourcePoint" />
-            <mxPoint x="850" y="350" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_6" value="Trả về Text transcript" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="850" y="400" as="sourcePoint" />
-            <mxPoint x="600" y="400" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_7" value="Gửi LLM (System Prompt + History + User Message)" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="600" y="450" as="sourcePoint" />
-            <mxPoint x="850" y="450" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_8" value="Stream AI Response" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="850" y="500" as="sourcePoint" />
-            <mxPoint x="600" y="500" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_9" value="Lưu tin nhắn của User &amp; AI" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="600" y="550" as="sourcePoint" />
-            <mxPoint x="1100" y="550" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_10" value="OK" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="1100" y="600" as="sourcePoint" />
-            <mxPoint x="600" y="600" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_11" value="[Nếu Mode=Audio] Gọi TTS (Text-to-Speech)" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="600" y="650" as="sourcePoint" />
-            <mxPoint x="850" y="650" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_12" value="Trả về Audio stream/url" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="850" y="700" as="sourcePoint" />
-            <mxPoint x="600" y="700" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_13" value="Trả về JSON { text, audio_url }" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="600" y="750" as="sourcePoint" />
-            <mxPoint x="350" y="750" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="msg_14" value="Hiển thị Text / Phát Audio" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;fontStyle=0;labelBackgroundColor=#ffffff;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="350" y="800" as="sourcePoint" />
-            <mxPoint x="100" y="800" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram id="Tutor-seq" name="Tutor Sequence">
+        <mxGraphModel dx="709" dy="603" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="900" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="ll_User" value="Người dùng" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;fontStyle=1;align=center;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="40" width="100" height="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="ll_FE" value="Giao diện&#xa;(Frontend)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;fontStyle=1;align=center;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="40" width="100" height="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="ll_BE" value="Hệ thống xử lý&#xa;(Backend)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;fontStyle=1;align=center;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="550" y="40" width="100" height="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="ll_Logic" value="Xử lý Giọng nói&#xa;&amp; LLM" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;fontStyle=1;align=center;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="800" y="40" width="100" height="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="ll_DB" value="Cơ sở dữ liệu" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;fontStyle=1;align=center;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1050" y="40" width="100" height="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_fe" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="345" y="90" width="10" height="730" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_be" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="595" y="190" width="10" height="570" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_logic_stt" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="845" y="340" width="10" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_logic_llm" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="845" y="440" width="10" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_logic_tts" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="845" y="640" width="10" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_db_history" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="1095" y="240" width="10" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="act_db_save" value="" style="fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="1095" y="540" width="10" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="alt_stt" value="alt [Nếu là Audio]" style="shape=umlFrame;whiteSpace=wrap;html=1;width=120;height=25;boundedLbl=1;verticalAlign=top;align=left;spacingLeft=5;fillColor=none;strokeColor=#000000;strokeWidth=1;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="325" width="490" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="alt_stt_sep" value="" style="strokeColor=#000000;dashed=1;endArrow=none;html=1;rounded=0;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="420" y="405" as="sourcePoint"/>
+                        <mxPoint x="910" y="405" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="alt_stt_label" value="[Nếu là Text]" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#000000;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="410" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="alt_tts" value="alt [Nếu Mode = Audio]" style="shape=umlFrame;whiteSpace=wrap;html=1;width=170;height=25;boundedLbl=1;verticalAlign=top;align=left;spacingLeft=5;fillColor=none;strokeColor=#000000;strokeWidth=1;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="625" width="490" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="alt_tts_sep" value="" style="strokeColor=#000000;dashed=1;endArrow=none;html=1;rounded=0;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="420" y="705" as="sourcePoint"/>
+                        <mxPoint x="910" y="705" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="alt_tts_label" value="[Nếu Mode = Text]" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#000000;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="710" width="130" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg_0" value="1. Nhập Text hoặc Ghi âm Audio" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="100" y="100" as="sourcePoint"/>
+                        <mxPoint x="345" y="100" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_1" value="1.1. Xử lý Audio/Text đầu vào" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="355" y="130" as="sourcePoint"/>
+                        <mxPoint x="355" y="160" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="385" y="130"/>
+                            <mxPoint x="385" y="160"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_2" value="1.2. POST /tutor/chat { session_id, message, type }" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="355" y="200" as="sourcePoint"/>
+                        <mxPoint x="595" y="200" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_3" value="1.2.1. Lấy lịch sử hội thoại (Session, Messages)" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="605" y="250" as="sourcePoint"/>
+                        <mxPoint x="1095" y="250" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_4" value="1.2.2. Trả về context" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1095" y="300" as="sourcePoint"/>
+                        <mxPoint x="605" y="300" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_5" value="1.2.3. Gọi STT (Speech-to-Text)" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="605" y="350" as="sourcePoint"/>
+                        <mxPoint x="845" y="350" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_6" value="1.2.4. Trả về Text transcript" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="845" y="400" as="sourcePoint"/>
+                        <mxPoint x="605" y="400" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_7" value="1.2.5. Gửi LLM (System Prompt + History + User Message)" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="605" y="450" as="sourcePoint"/>
+                        <mxPoint x="845" y="450" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_8" value="1.2.6. Stream AI Response" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="845" y="500" as="sourcePoint"/>
+                        <mxPoint x="605" y="500" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_9" value="1.2.7. Lưu tin nhắn của User &amp; AI" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="605" y="550" as="sourcePoint"/>
+                        <mxPoint x="1095" y="550" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_10" value="1.2.8. OK" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1095" y="600" as="sourcePoint"/>
+                        <mxPoint x="605" y="600" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_11" value="1.2.9. Gọi TTS (Text-to-Speech)" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="605" y="650" as="sourcePoint"/>
+                        <mxPoint x="845" y="650" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_12" value="1.2.10. Trả về Audio stream/url" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="845" y="700" as="sourcePoint"/>
+                        <mxPoint x="605" y="700" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_13" value="1.3. Trả về JSON { text, audio_url }" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="595" y="760" as="sourcePoint"/>
+                        <mxPoint x="355" y="760" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="msg_14" value="1.4. Hiển thị Text / Phát Audio" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;fontStyle=1;strokeColor=#000000;fontColor=#000000;fontSize=13;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="345" y="810" as="sourcePoint"/>
+                        <mxPoint x="100" y="810" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>
