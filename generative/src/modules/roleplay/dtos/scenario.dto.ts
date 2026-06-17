@@ -5,7 +5,7 @@ import {
   IsBoolean,
   IsArray,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 export class CreateScenarioDto {
   @ApiProperty({
@@ -107,3 +107,5 @@ export class GenerateScenarioDto {
   @IsOptional()
   generateImage?: boolean;
 }
+
+export class UpdateScenarioDto extends PartialType(CreateScenarioDto) {}

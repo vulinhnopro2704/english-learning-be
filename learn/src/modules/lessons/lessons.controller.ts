@@ -33,6 +33,8 @@ import { LessonFilterDto } from './dtos/lesson-filter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { CurrentUserPayload } from '../auth/decorators/current-user.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('lessons')
 @ApiBearerAuth()
@@ -69,6 +71,8 @@ export class LessonsController {
   }
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'CONTENT_CREATOR')
   @ApiOperation({ summary: 'Create a new lesson' })
   @ApiCreatedEntityResponse({
     type: LessonResponseDto,
@@ -105,6 +109,8 @@ export class LessonsController {
   }
 
   @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'CONTENT_CREATOR')
   @ApiOperation({ summary: 'Update a lesson by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkEntityResponse({
@@ -121,6 +127,8 @@ export class LessonsController {
   }
 
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'CONTENT_CREATOR')
   @ApiOperation({ summary: 'Delete a lesson by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiMessageResponse('Lesson deleted')

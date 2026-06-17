@@ -14,7 +14,7 @@ import {
   SummarizeRoleplayDto,
   ChatVoiceRoleplayDto,
 } from './dtos/roleplay.dto';
-import { CreateScenarioDto, GenerateScenarioDto } from './dtos/scenario.dto';
+import { CreateScenarioDto, GenerateScenarioDto, UpdateScenarioDto } from './dtos/scenario.dto';
 import { TtsService } from '../tts/tts.service';
 import { SttService } from '../stt/stt.service';
 
@@ -128,6 +128,43 @@ export class RoleplayService {
         type: 'AI_GENERATED',
       },
     });
+  }
+
+  async updateScenario(id: string, dto: UpdateScenarioDto) {
+    const scenario = await this.prisma.scenario.findUnique({ where: { id } });
+    if (!scenario) {
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'SCENARIO_NOT_FOUND',
+        message: `Scenario with ID ${id} not found`,
+      });
+    }
+    return this.prisma.scenario.update({
+      where: { id },
+      data: {
+        title: dto.title,
+        description: dto.description,
+        aiPersona: dto.aiPersona,
+        userPersona: dto.userPersona,
+        requiredTasks: dto.requiredTasks,
+        level: dto.level,
+        topic: dto.topic,
+        isPublic: dto.isPublic,
+      },
+    });
+  }
+
+  async deleteScenario(id: string) {
+    const scenario = await this.prisma.scenario.findUnique({ where: { id } });
+    if (!scenario) {
+      throw new ApiException({
+        statusCode: HttpStatus.NOT_FOUND,
+        errorCode: 'SCENARIO_NOT_FOUND',
+        message: `Scenario with ID ${id} not found`,
+      });
+    }
+    await this.prisma.scenario.delete({ where: { id } });
+    return { message: 'Scenario deleted successfully' };
   }
 
   async startSession(

@@ -31,6 +31,8 @@ import { CourseFilterDto } from './dtos/course-filter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { CurrentUserPayload } from '../auth/decorators/current-user.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('courses')
 @ApiBearerAuth()
@@ -67,6 +69,8 @@ export class CoursesController {
   }
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'CONTENT_CREATOR')
   @ApiOperation({ summary: 'Create a new course' })
   @ApiCreatedEntityResponse({
     type: CourseResponseDto,
@@ -81,6 +85,8 @@ export class CoursesController {
   }
 
   @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'CONTENT_CREATOR')
   @ApiOperation({ summary: 'Update a course by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkEntityResponse({
@@ -97,6 +103,8 @@ export class CoursesController {
   }
 
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'CONTENT_CREATOR')
   @ApiOperation({ summary: 'Delete a course by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiMessageResponse('Course deleted')

@@ -2,6 +2,8 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
+  Delete,
   Query,
   Body,
   HttpCode,
@@ -23,7 +25,7 @@ import {
   SummarizeRoleplayDto,
   ChatVoiceRoleplayDto,
 } from './dtos/roleplay.dto';
-import { CreateScenarioDto, GenerateScenarioDto } from './dtos/scenario.dto';
+import { CreateScenarioDto, GenerateScenarioDto, UpdateScenarioDto } from './dtos/scenario.dto';
 import {
   StartRoleplayResult,
   ChatRoleplayResult,
@@ -31,6 +33,8 @@ import {
 } from './roleplay.types';
 import { TrustedHeadersAuthGuard } from '../../common/auth/trusted-headers-auth.guard';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
+import { RolesGuard } from '../../common/auth/roles.guard';
+import { Roles } from '../../common/auth/roles.decorator';
 
 @ApiTags('Role-Play')
 @ApiBearerAuth()
@@ -56,7 +60,8 @@ export class RoleplayController {
     description: 'Scenario created successfully',
   })
   @Post('scenarios')
-  @UseGuards(TrustedHeadersAuthGuard)
+  @UseGuards(TrustedHeadersAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.CREATED)
   async createScenario(
     @Body() dto: CreateScenarioDto,
@@ -71,13 +76,43 @@ export class RoleplayController {
     description: 'Scenario generated and saved successfully',
   })
   @Post('scenarios/generate')
-  @UseGuards(TrustedHeadersAuthGuard)
+  @UseGuards(TrustedHeadersAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.CREATED)
   async generateScenario(
     @Body() dto: GenerateScenarioDto,
     @CurrentUser('id') creatorId: string,
   ) {
     return this.roleplayService.generateScenario(dto, creatorId);
+  }
+
+  @ApiOperation({ summary: 'Update a scenario by ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Scenario updated successfully',
+  })
+  @Patch('scenarios/:id')
+  @UseGuards(TrustedHeadersAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.OK)
+  async updateScenario(
+    @Param('id') id: string,
+    @Body() dto: UpdateScenarioDto,
+  ) {
+    return this.roleplayService.updateScenario(id, dto);
+  }
+
+  @ApiOperation({ summary: 'Delete a scenario by ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Scenario deleted successfully',
+  })
+  @Delete('scenarios/:id')
+  @UseGuards(TrustedHeadersAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.OK)
+  async deleteScenario(@Param('id') id: string) {
+    return this.roleplayService.deleteScenario(id);
   }
 
   @ApiOperation({ summary: 'Start a role-play session' })

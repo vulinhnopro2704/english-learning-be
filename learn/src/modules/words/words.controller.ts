@@ -31,6 +31,8 @@ import { WordResponseDto } from './dtos/word-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { CurrentUserPayload } from '../auth/decorators/current-user.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('words')
 @ApiBearerAuth()
@@ -67,6 +69,8 @@ export class WordsController {
   }
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'CONTENT_CREATOR')
   @ApiOperation({ summary: 'Create a new word' })
   @ApiCreatedEntityResponse({
     type: WordResponseDto,
@@ -78,6 +82,8 @@ export class WordsController {
   }
 
   @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'CONTENT_CREATOR')
   @ApiOperation({ summary: 'Update a word by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkEntityResponse({
@@ -94,6 +100,8 @@ export class WordsController {
   }
 
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'CONTENT_CREATOR')
   @ApiOperation({ summary: 'Delete a word by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiMessageResponse('Word deleted')
