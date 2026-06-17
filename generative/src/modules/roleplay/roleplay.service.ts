@@ -506,7 +506,7 @@ export class RoleplayService {
       system: systemPrompt,
       json: true,
       options: {
-        num_predict: 150, // Limit response token length for faster generation
+        num_predict: 300, // Limit response token length for faster generation
       },
     });
 
