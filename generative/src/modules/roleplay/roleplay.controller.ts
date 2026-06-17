@@ -11,7 +11,9 @@ import {
   UseGuards,
   Param,
   Logger,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -226,5 +228,43 @@ export class RoleplayController {
     // Fire and forget or handle asynchronously
     this.roleplayService.summarizeForRag(dto).catch(console.error);
     return { message: 'Summarization job started in the background' };
+  }
+
+  @ApiOperation({ summary: 'Stream Text-to-Speech audio' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Audio stream' })
+  @Get('tts')
+  async getTts(
+    @Query('text') text: string,
+    @Query('voiceId') voiceId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    if (!text) {
+      res.status(HttpStatus.BAD_REQUEST).json({ message: 'Text query parameter is required' });
+      return;
+    }
+
+    try {
+      const ttsResponse = await this.roleplayService.synthesizeTtsStream(text, voiceId);
+
+      // Set headers
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Transfer-Encoding', 'chunked');
+
+      // If the stream is available in response.body, read it chunk-by-chunk
+      if (ttsResponse.body) {
+        const reader = ttsResponse.body.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+          res.write(Buffer.from(value));
+        }
+      }
+      res.end();
+    } catch (error) {
+      this.logger.error(`[RoleplayController] TTS streaming failed: ${(error as Error).message}`, (error as Error).stack);
+      res.status(HttpStatus.BAD_GATEWAY).json({ message: 'TTS streaming failed', error: (error as Error).message });
+    }
   }
 }

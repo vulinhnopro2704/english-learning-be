@@ -63,16 +63,21 @@ export class OllamaService implements OnModuleInit {
     );
 
     try {
-      const response = await this.client.chat({
+      const response = await this.withRetry(
+        'Chat',
         model,
-        messages,
-        format: options.json ? 'json' : undefined,
-        stream: false,
-        options: {
-          temperature,
-          ...options.options,
-        },
-      });
+        () =>
+          this.client.chat({
+            model,
+            messages,
+            format: options.json ? 'json' : undefined,
+            stream: false,
+            options: {
+              temperature,
+              ...options.options,
+            },
+          }),
+      );
 
       const durationMs = Date.now() - startTime;
       this.logger.log(
@@ -108,17 +113,22 @@ export class OllamaService implements OnModuleInit {
     );
 
     try {
-      const response = await this.client.generate({
+      const response = await this.withRetry(
+        'Generate',
         model,
-        prompt: options.prompt,
-        system: options.system,
-        format: options.json ? 'json' : undefined,
-        stream: false,
-        options: {
-          temperature,
-          ...options.options,
-        },
-      });
+        () =>
+          this.client.generate({
+            model,
+            prompt: options.prompt,
+            system: options.system,
+            format: options.json ? 'json' : undefined,
+            stream: false,
+            options: {
+              temperature,
+              ...options.options,
+            },
+          }),
+      );
 
       const durationMs = Date.now() - startTime;
       this.logger.log(
@@ -136,6 +146,48 @@ export class OllamaService implements OnModuleInit {
       this.logOllamaError('Generate', model, durationMs, error);
       throw this.classifyOllamaError(error);
     }
+  }
+
+  /**
+   * Helper wrapper to retry asynchronous operations with exponential backoff.
+   */
+  private async withRetry<T>(
+    operation: string,
+    model: string,
+    fn: () => Promise<T>,
+    retries = 3,
+    delayMs = 1000,
+    backoffFactor = 2,
+  ): Promise<T> {
+    let attempt = 0;
+    while (attempt < retries) {
+      try {
+        return await fn();
+      } catch (error) {
+        attempt++;
+        const isLastAttempt = attempt >= retries;
+        const details = this.extractErrorDetails(error);
+        const classified = this.classifyOllamaError(error);
+        const errResponse = classified.getResponse() as any;
+        const isRetryable =
+          errResponse?.errorCode !== 'OLLAMA_AUTH_ERROR' &&
+          errResponse?.errorCode !== 'OLLAMA_MODEL_NOT_FOUND';
+
+        if (isLastAttempt || !isRetryable) {
+          this.logger.error(
+            `[Ollama] ${operation} permanently failed — attempt=${attempt}/${retries} model=${model} error=${details.message}`,
+          );
+          throw error;
+        }
+
+        const waitTime = delayMs * Math.pow(backoffFactor, attempt - 1);
+        this.logger.warn(
+          `[Ollama] ${operation} failed, retrying in ${waitTime}ms — attempt=${attempt}/${retries} model=${model} error=${details.message}`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+    }
+    throw new Error('Unexpected retry loop termination');
   }
 
   /**

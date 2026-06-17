@@ -237,14 +237,23 @@ export class RoleplayService {
     });
 
     let audioResult: any = null;
-    try {
-      audioResult = await this.ttsService.synthesize(
-        llmResponse.ai_spoken_response,
-      );
-    } catch (e) {
-      this.logger.error(
-        `[Roleplay:TTS] Synthesis failed in startSession: ${(e as any).message}`,
-      );
+    if (!dto.skipTts) {
+      try {
+        audioResult = await this.ttsService.synthesize(
+          llmResponse.ai_spoken_response,
+        );
+      } catch (e) {
+        this.logger.error(
+          `[Roleplay:TTS] Synthesis failed in startSession: ${(e as any).message}`,
+        );
+      }
+    } else {
+      audioResult = {
+        url: null,
+        mimeType: 'audio/mpeg',
+        provider: 'elevenlabs',
+        status: 'skipped',
+      };
     }
 
     return {
@@ -344,14 +353,23 @@ export class RoleplayService {
     });
 
     let audioResult: any = null;
-    try {
-      audioResult = await this.ttsService.synthesize(
-        llmResponse.ai_spoken_response,
-      );
-    } catch (e) {
-      this.logger.error(
-        `[Roleplay:TTS] Synthesis failed in chat: ${(e as any).message}`,
-      );
+    if (!dto.skipTts) {
+      try {
+        audioResult = await this.ttsService.synthesize(
+          llmResponse.ai_spoken_response,
+        );
+      } catch (e) {
+        this.logger.error(
+          `[Roleplay:TTS] Synthesis failed in chat: ${(e as any).message}`,
+        );
+      }
+    } else {
+      audioResult = {
+        url: null,
+        mimeType: 'audio/mpeg',
+        provider: 'elevenlabs',
+        status: 'skipped',
+      };
     }
 
     if (llmResponse.scenario_completed) {
@@ -487,6 +505,9 @@ export class RoleplayService {
       messages,
       system: systemPrompt,
       json: true,
+      options: {
+        num_predict: 150, // Limit response token length for faster generation
+      },
     });
 
     const rawText = result.content;
@@ -532,7 +553,11 @@ export class RoleplayService {
     this.logger.log(`[Roleplay] Transcribed successfully: "${userMessage}"`);
 
     // Reuse standard chat logic to evaluate and get LLM response
-    const chatResult = await this.chat({ sessionId, userMessage });
+    const chatResult = await this.chat({
+      sessionId,
+      userMessage,
+      skipTts: dto.skipTts,
+    });
 
     return {
       user_spoken_transcript: userMessage,
@@ -639,5 +664,13 @@ Provide the output strictly as a JSON array of 3 strings. Example: ["Suggestion 
     } catch {
       return [];
     }
+  }
+
+  async synthesizeTts(text: string, voiceId?: string) {
+    return this.ttsService.synthesize(text, voiceId);
+  }
+
+  async synthesizeTtsStream(text: string, voiceId?: string): Promise<Response> {
+    return this.ttsService.synthesizeStream(text, voiceId);
   }
 }

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class StartRoleplayDto {
@@ -6,6 +6,11 @@ export class StartRoleplayDto {
   @IsString()
   @IsNotEmpty()
   scenarioId!: string;
+
+  @ApiProperty({ example: false, required: false })
+  @IsBoolean()
+  @IsOptional()
+  skipTts?: boolean;
 }
 
 export class ChatRoleplayDto {
@@ -18,6 +23,11 @@ export class ChatRoleplayDto {
   @IsString()
   @IsNotEmpty()
   userMessage!: string;
+
+  @ApiProperty({ example: false, required: false })
+  @IsBoolean()
+  @IsOptional()
+  skipTts?: boolean;
 }
 
 export class SummarizeRoleplayDto {
@@ -42,4 +52,9 @@ export class ChatVoiceRoleplayDto {
   @IsString()
   @IsNotEmpty()
   mimeType!: string;
+
+  @ApiProperty({ example: false, required: false })
+  @IsBoolean()
+  @IsOptional()
+  skipTts?: boolean;
 }
