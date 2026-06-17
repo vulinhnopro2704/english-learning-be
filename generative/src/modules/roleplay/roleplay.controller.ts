@@ -250,18 +250,26 @@ export class RoleplayController {
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Transfer-Encoding', 'chunked');
 
-      // If the stream is available in response.body, read it chunk-by-chunk
+      // Read stream and pipe it to express response
       if (ttsResponse.body) {
-        const reader = ttsResponse.body.getReader();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            break;
+        if (typeof (ttsResponse.body as any).getReader === 'function') {
+          const reader = (ttsResponse.body as any).getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
+            res.write(Buffer.from(value));
           }
-          res.write(Buffer.from(value));
+          res.end();
+        } else if (typeof (ttsResponse.body as any).pipe === 'function') {
+          (ttsResponse.body as any).pipe(res);
+        } else {
+          throw new Error('Response body has no readable stream interface');
         }
+      } else {
+        res.end();
       }
-      res.end();
     } catch (error) {
       this.logger.error(`[RoleplayController] TTS streaming failed: ${(error as Error).message}`, (error as Error).stack);
       res.status(HttpStatus.BAD_GATEWAY).json({ message: 'TTS streaming failed', error: (error as Error).message });
