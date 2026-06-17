@@ -7,6 +7,7 @@ import {
   ChatRoleplayResult,
   RoleplayLlmResponse,
   ChatVoiceRoleplayResult,
+  TaskEvaluation,
 } from './roleplay.types';
 import {
   StartRoleplayDto,
@@ -225,7 +226,11 @@ export class RoleplayService {
     });
 
     // We make the first call to LLM to get the opening message
-    const llmResponse = await this.callOllama(systemPrompt, []);
+    const llmResponse = await this.callOllama(systemPrompt, [], {
+      task_1_completed: false,
+      task_2_completed: false,
+      task_3_completed: false,
+    });
 
     // Save AI opening message
     await this.prisma.message.create({
@@ -324,7 +329,12 @@ export class RoleplayService {
     );
 
     // 4. Call LLM
-    const llmResponse = await this.callOllama(systemPrompt, chatHistory);
+    const currentStatus = {
+      task_1_completed: session.sessionEvaluation.task1Completed,
+      task_2_completed: session.sessionEvaluation.task2Completed,
+      task_3_completed: session.sessionEvaluation.task3Completed,
+    };
+    const llmResponse = await this.callOllama(systemPrompt, chatHistory, currentStatus);
 
     // 5. Update Evaluation
     const currentGrammarFeedback = (session.sessionEvaluation.grammarFeedback ||
@@ -489,6 +499,7 @@ export class RoleplayService {
   private async callOllama(
     systemPrompt: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
+    currentStatus?: TaskEvaluation,
   ): Promise<RoleplayLlmResponse> {
     // Build messages: if history is empty, trigger the first response
     const messages =
@@ -506,7 +517,7 @@ export class RoleplayService {
       system: systemPrompt,
       json: true,
       options: {
-        num_predict: 300, // Limit response token length for faster generation
+        num_predict: 600, // Limit response token length for faster generation
       },
     });
 
@@ -526,15 +537,21 @@ export class RoleplayService {
       }
       return JSON.parse(sanitized) as RoleplayLlmResponse;
     } catch (error) {
-      this.logger.error(
-        `[Roleplay] Failed to parse JSON from Ollama — rawPreview=${rawText.slice(0, 500)}`,
-        (error as Error).stack,
+      this.logger.warn(
+        `[Roleplay] Failed to parse JSON from Ollama, using fallback parser. Raw: ${rawText.slice(0, 200)}`,
       );
-      throw new ApiException({
-        statusCode: HttpStatus.BAD_GATEWAY,
-        errorCode: 'LLM_PARSE_ERROR',
-        message: 'Failed to parse JSON from LLM',
-      });
+      
+      const fallbackResponse = rawText.trim() || 'I see. Please go on.';
+      return {
+        ai_spoken_response: fallbackResponse,
+        task_evaluation: currentStatus ?? {
+          task_1_completed: false,
+          task_2_completed: false,
+          task_3_completed: false,
+        },
+        grammar_feedback: null,
+        scenario_completed: false,
+      };
     }
   }
 
