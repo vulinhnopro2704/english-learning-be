@@ -449,6 +449,29 @@ export class GatewayProxyService {
       this.copyResponseHeaders(response, res, req);
       res.status(response.status);
 
+      const contentType = response.headers.get('content-type') ?? '';
+      const isAudioOrVideo = contentType.includes('audio') || contentType.includes('video') || contentType.includes('octet-stream');
+      const isChunked = response.headers.get('transfer-encoding') === 'chunked';
+
+      if (response.body && (isAudioOrVideo || isChunked)) {
+        const contentLength = response.headers.get('content-length');
+        if (contentLength) {
+          res.setHeader('content-length', contentLength);
+        }
+        res.setHeader('content-type', contentType);
+
+        const reader = response.body.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+          res.write(Buffer.from(value));
+        }
+        res.end();
+        return;
+      }
+
       const responseText = await response.text();
       if (!responseText) {
         res.end();
