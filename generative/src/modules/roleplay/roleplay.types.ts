@@ -19,6 +19,7 @@ export interface StartRoleplayResult {
     mimeType: string;
     provider: string;
     status: 'completed' | 'skipped' | 'failed';
+    source: string;
   } | null;
 }
 
@@ -32,6 +33,7 @@ export interface ChatRoleplayResult {
     mimeType: string;
     provider: string;
     status: 'completed' | 'skipped' | 'failed';
+    source: string;
   } | null;
 }
 
@@ -46,5 +48,6 @@ export interface ChatVoiceRoleplayResult {
     mimeType: string;
     provider: string;
     status: 'completed' | 'skipped' | 'failed';
+    source: string;
   } | null;
 }

@@ -7,6 +7,7 @@ export interface TtsResult {
   mimeType: string;
   provider: string;
   status: 'completed' | 'skipped' | 'failed';
+  source: string;
 }
 
 @Injectable()
@@ -24,6 +25,7 @@ export class TtsService {
         mimeType: 'audio/mpeg',
         provider: 'elevenlabs',
         status: 'skipped',
+        source: 'Voice by elevenlabs.io',
       };
     }
 
@@ -78,6 +80,7 @@ export class TtsService {
       mimeType: 'audio/mpeg',
       provider: 'elevenlabs',
       status: 'completed',
+      source: 'Voice by elevenlabs.io',
     };
   }
 

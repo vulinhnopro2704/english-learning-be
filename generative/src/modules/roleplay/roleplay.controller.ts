@@ -249,6 +249,7 @@ export class RoleplayController {
       // Set headers
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Transfer-Encoding', 'chunked');
+      res.setHeader('X-Source', 'Voice by elevenlabs.io');
 
       // Read stream and pipe it to express response
       if (ttsResponse.body) {

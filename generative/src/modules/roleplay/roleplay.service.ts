@@ -258,6 +258,7 @@ export class RoleplayService {
         mimeType: 'audio/mpeg',
         provider: 'elevenlabs',
         status: 'skipped',
+        source: 'Voice by elevenlabs.io',
       };
     }
 
@@ -379,6 +380,7 @@ export class RoleplayService {
         mimeType: 'audio/mpeg',
         provider: 'elevenlabs',
         status: 'skipped',
+        source: 'Voice by elevenlabs.io',
       };
     }
 
