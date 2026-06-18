@@ -15,7 +15,11 @@ import {
   SummarizeRoleplayDto,
   ChatVoiceRoleplayDto,
 } from './dtos/roleplay.dto';
-import { CreateScenarioDto, GenerateScenarioDto, UpdateScenarioDto } from './dtos/scenario.dto';
+import {
+  CreateScenarioDto,
+  GenerateScenarioDto,
+  UpdateScenarioDto,
+} from './dtos/scenario.dto';
 import { TtsService } from '../tts/tts.service';
 import { SttService } from '../stt/stt.service';
 
@@ -335,7 +339,11 @@ export class RoleplayService {
       task_2_completed: session.sessionEvaluation.task2Completed,
       task_3_completed: session.sessionEvaluation.task3Completed,
     };
-    const llmResponse = await this.callOllama(systemPrompt, chatHistory, currentStatus);
+    const llmResponse = await this.callOllama(
+      systemPrompt,
+      chatHistory,
+      currentStatus,
+    );
 
     // 5. Update Evaluation
     const currentGrammarFeedback = (session.sessionEvaluation.grammarFeedback ||
@@ -471,7 +479,7 @@ export class RoleplayService {
       - User persona: ${scenario.userPersona}
 
       ## 2. User's Objectives
-      In this conversation, the user must complete 3 tasks. You must closely monitor their speech to evaluate whether each task has been accomplished.
+      The user has up to 3 tasks to complete. Monitor the conversation and evaluate their progress:
       1. [Task_1]: ${tasks[0] || 'N/A'} (Current status: ${taskStatus.task_1_completed})
       2. [Task_2]: ${tasks[1] || 'N/A'} (Current status: ${taskStatus.task_2_completed})
       3. [Task_3]: ${tasks[2] || 'N/A'} (Current status: ${taskStatus.task_3_completed})
@@ -482,18 +490,22 @@ export class RoleplayService {
       - Personalize: Occasionally address the user by name.
       - Guide skillfully: Ask open-ended questions to guide the user toward completing their tasks.
       - Correction: Note any grammar or vocabulary errors in the "grammar_feedback" field without interrupting the conversation flow.
+      - State Persistence: If a Task's current status is "true", it has already been completed in a previous turn. You MUST keep it as "true". Never change a completed task back to "false".
+      - N/A Tasks: If a task description is "N/A", its status must always be "false" and can be ignored.
+      - Scenario Completion: Set "scenario_completed" to true only when all non-N/A tasks are completed (status is true) and you are ending/wrapping up the conversation, or if the user explicitly says goodbye.
 
       ## 4. Output Format
       You MUST return data as VALID JSON only. Do not include any text outside the JSON object.
+      All JSON values for task status and scenario completion must be raw boolean types (true or false), not strings.
       {
         "ai_spoken_response": "Your in-character spoken response.",
         "task_evaluation": {
-          "task_1_completed": true/false,
-          "task_2_completed": true/false,
-          "task_3_completed": true/false
+          "task_1_completed": true,
+          "task_2_completed": false,
+          "task_3_completed": false
         },
         "grammar_feedback": "Grammar/vocabulary error notes, or null if none.",
-        "scenario_completed": true/false
+        "scenario_completed": false
       }
     `;
   }
@@ -540,9 +552,9 @@ export class RoleplayService {
       return JSON.parse(sanitized) as RoleplayLlmResponse;
     } catch (error) {
       this.logger.warn(
-        `[Roleplay] Failed to parse JSON from Ollama, using fallback parser. Raw: ${rawText.slice(0, 200)}`,
+        `[Roleplay] Failed to parse JSON from Ollama, using fallback parser. Error: ${error instanceof Error ? error.message : String(error)}. Raw: ${rawText.slice(0, 200)}`,
       );
-      
+
       const fallbackResponse = rawText.trim() || 'I see. Please go on.';
       return {
         ai_spoken_response: fallbackResponse,
@@ -624,21 +636,21 @@ export class RoleplayService {
 
   async translateMessage(text: string): Promise<string> {
     const systemPrompt = `You are an expert English-Vietnamese translator. Translate the following English text to Vietnamese. Provide only the translation, no extra text or explanation.`;
-    
+
     // Call LLM for translation
     const response = await this.ollamaService.chat({
       modelProfile: 'chat',
       messages: [{ role: 'user', content: text }],
       system: systemPrompt,
     });
-    
+
     return response.content.trim();
   }
 
   async suggestReplies(sessionId: string): Promise<string[]> {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
-      include: { scenario: true }
+      include: { scenario: true },
     });
 
     if (!session) {
@@ -652,10 +664,13 @@ export class RoleplayService {
     const messages = await this.prisma.message.findMany({
       where: { sessionId },
       orderBy: { createdAt: 'desc' },
-      take: 5
+      take: 5,
     });
 
-    const recentContext = messages.reverse().map(m => `${m.role === 'user' ? 'User' : 'Tutor'}: ${m.content}`).join('\n');
+    const recentContext = messages
+      .reverse()
+      .map((m) => `${m.role === 'user' ? 'User' : 'Tutor'}: ${m.content}`)
+      .join('\n');
 
     const systemPrompt = `You are a helpful English Tutor. The user is in a roleplay scenario: "${session.scenario.title}".
 Here is the recent conversation:

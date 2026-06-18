@@ -9,6 +9,7 @@ export interface OllamaConfig {
   essayModel: string;
   chatModel: string;
   defaultTemperature: number;
+  defaultNumCtx: number;
 }
 
 /**

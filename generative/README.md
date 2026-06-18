@@ -365,6 +365,7 @@ try {
 | `OLLAMA_ESSAY_MODEL` | No | `gpt-oss:120b-cloud` | Model for essay grading/tutor |
 | `OLLAMA_CHAT_MODEL` | No | `qwen3.5:cloud` | Model for roleplay/chat |
 | `OLLAMA_TEMPERATURE` | No | `0.5` | Default LLM temperature (0.0–1.0) |
+| `OLLAMA_NUM_CTX` | No | `4096` | Default context size (number of tokens) |
 | `ELEVENLABS_API_KEY` | Yes | — | ElevenLabs API key for TTS/STT |
 | `ELEVENLABS_VOICE_ID` | No | `EXAVITQu4vr4xnSDxMaL` | Default voice ID |
 | `ELEVENLABS_MODEL_ID` | No | `eleven_flash_v2_5` | TTS model |

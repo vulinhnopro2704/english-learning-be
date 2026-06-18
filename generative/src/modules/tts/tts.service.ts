@@ -91,7 +91,9 @@ export class TtsService {
   async synthesizeStream(text: string, voiceId?: string): Promise<Response> {
     const apiKey = this.configService.get<string>('ELEVENLABS_API_KEY');
     if (!apiKey) {
-      this.logger.warn('[ElevenLabs:TTS] Missing ELEVENLABS_API_KEY, cannot stream');
+      this.logger.warn(
+        '[ElevenLabs:TTS] Missing ELEVENLABS_API_KEY, cannot stream',
+      );
       throw new ApiException({
         statusCode: HttpStatus.BAD_REQUEST,
         errorCode: 'TTS_CONFIG_ERROR',

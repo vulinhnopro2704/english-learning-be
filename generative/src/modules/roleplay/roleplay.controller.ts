@@ -27,7 +27,11 @@ import {
   SummarizeRoleplayDto,
   ChatVoiceRoleplayDto,
 } from './dtos/roleplay.dto';
-import { CreateScenarioDto, GenerateScenarioDto, UpdateScenarioDto } from './dtos/scenario.dto';
+import {
+  CreateScenarioDto,
+  GenerateScenarioDto,
+  UpdateScenarioDto,
+} from './dtos/scenario.dto';
 import {
   StartRoleplayResult,
   ChatRoleplayResult,
@@ -196,9 +200,7 @@ export class RoleplayController {
     @Param('sessionId') sessionId: string,
     @Body() dto: { text: string },
   ): Promise<{ translation: string }> {
-    const translation = await this.roleplayService.translateMessage(
-      dto.text,
-    );
+    const translation = await this.roleplayService.translateMessage(dto.text);
     return { translation };
   }
 
@@ -239,12 +241,17 @@ export class RoleplayController {
     @Res() res: Response,
   ): Promise<void> {
     if (!text) {
-      res.status(HttpStatus.BAD_REQUEST).json({ message: 'Text query parameter is required' });
+      res
+        .status(HttpStatus.BAD_REQUEST)
+        .json({ message: 'Text query parameter is required' });
       return;
     }
 
     try {
-      const ttsResponse = await this.roleplayService.synthesizeTtsStream(text, voiceId);
+      const ttsResponse = await this.roleplayService.synthesizeTtsStream(
+        text,
+        voiceId,
+      );
 
       // Set headers
       res.setHeader('Content-Type', 'audio/mpeg');
@@ -272,8 +279,14 @@ export class RoleplayController {
         res.end();
       }
     } catch (error) {
-      this.logger.error(`[RoleplayController] TTS streaming failed: ${(error as Error).message}`, (error as Error).stack);
-      res.status(HttpStatus.BAD_GATEWAY).json({ message: 'TTS streaming failed', error: (error as Error).message });
+      this.logger.error(
+        `[RoleplayController] TTS streaming failed: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      res.status(HttpStatus.BAD_GATEWAY).json({
+        message: 'TTS streaming failed',
+        error: (error as Error).message,
+      });
     }
   }
 }

@@ -28,7 +28,7 @@ export class OllamaService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     this.logger.log(
-      `[Ollama] Initializing client — host=${this.config.host} essayModel=${this.config.essayModel} chatModel=${this.config.chatModel} defaultTemperature=${this.config.defaultTemperature}`,
+      `[Ollama] Initializing client — host=${this.config.host} essayModel=${this.config.essayModel} chatModel=${this.config.chatModel} defaultTemperature=${this.config.defaultTemperature} defaultNumCtx=${this.config.defaultNumCtx}`,
     );
 
     try {
@@ -63,20 +63,18 @@ export class OllamaService implements OnModuleInit {
     );
 
     try {
-      const response = await this.withRetry(
-        'Chat',
-        model,
-        () =>
-          this.client.chat({
-            model,
-            messages,
-            format: options.json ? 'json' : undefined,
-            stream: false,
-            options: {
-              temperature,
-              ...options.options,
-            },
-          }),
+      const response = await this.withRetry('Chat', model, () =>
+        this.client.chat({
+          model,
+          messages,
+          format: options.json ? 'json' : undefined,
+          stream: false,
+          options: {
+            temperature,
+            num_ctx: this.config.defaultNumCtx,
+            ...options.options,
+          },
+        }),
       );
 
       const durationMs = Date.now() - startTime;
@@ -113,21 +111,19 @@ export class OllamaService implements OnModuleInit {
     );
 
     try {
-      const response = await this.withRetry(
-        'Generate',
-        model,
-        () =>
-          this.client.generate({
-            model,
-            prompt: options.prompt,
-            system: options.system,
-            format: options.json ? 'json' : undefined,
-            stream: false,
-            options: {
-              temperature,
-              ...options.options,
-            },
-          }),
+      const response = await this.withRetry('Generate', model, () =>
+        this.client.generate({
+          model,
+          prompt: options.prompt,
+          system: options.system,
+          format: options.json ? 'json' : undefined,
+          stream: false,
+          options: {
+            temperature,
+            num_ctx: this.config.defaultNumCtx,
+            ...options.options,
+          },
+        }),
       );
 
       const durationMs = Date.now() - startTime;
@@ -223,8 +219,19 @@ export class OllamaService implements OnModuleInit {
     const defaultTemperature = parseFloat(
       this.configService.get<string>('OLLAMA_TEMPERATURE') ?? '0.5',
     );
+    const defaultNumCtx = parseInt(
+      this.configService.get<string>('OLLAMA_NUM_CTX') ?? '4096',
+      10,
+    );
 
-    return { host, apiKey, essayModel, chatModel, defaultTemperature };
+    return {
+      host,
+      apiKey,
+      essayModel,
+      chatModel,
+      defaultTemperature,
+      defaultNumCtx,
+    };
   }
 
   /**

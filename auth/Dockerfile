@@ -1,5 +1,7 @@
 # ── Stage 1: Install dependencies ──────────────────────────
 FROM node:22-alpine AS deps
+ENV NPM_CONFIG_FETCH_TIMEOUT=600000
+ENV NPM_CONFIG_FETCH_RETRIES=5
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 COPY auth/package.json auth/pnpm-lock.yaml auth/pnpm-workspace.yaml ./auth/
