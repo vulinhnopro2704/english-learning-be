@@ -301,12 +301,13 @@ export class RoleplayService {
       });
     }
 
-    // 1. Fetch last N messages
+    // 1. Fetch last N messages (newest first, then reversed for chronological order)
     const pastMessages = await this.prisma.message.findMany({
       where: { sessionId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: 20, // Limit context history
     });
+    pastMessages.reverse();
 
     // 2. Append new user message
     const newUserMsg = await this.prisma.message.create({
@@ -531,7 +532,7 @@ export class RoleplayService {
       system: systemPrompt,
       json: true,
       options: {
-        num_predict: 600, // Limit response token length for faster generation
+        num_predict: 1800, // Limit response token length for faster generation
       },
     });
 

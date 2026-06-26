@@ -4,43 +4,43 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="dev" value="Lập trình viên&#xa;(Developer)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                <mxCell id="dev" value="[1] Lập trình viên&#xa;(Developer)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="420" y="80" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="github_repo" value="GitHub&#xa;Repository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                <mxCell id="github_repo" value="[2] GitHub&#xa;Repository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="630" y="80" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="gh_actions" value="GitHub Actions&#xa;(CI/CD Workflow)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                <mxCell id="gh_actions" value="[3] GitHub Actions&#xa;(CI/CD Workflow)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="850" y="80" width="140" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="ghcr_registry" value="GitHub Container&#xa;Registry (GHCR.io)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                <mxCell id="ghcr_registry" value="[4] GitHub Container&#xa;Registry (GHCR.io)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="1120" y="80" width="150" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="vercel_group" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;Vercel Cloud Platform&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;Frontend Application&lt;/span&gt;&lt;br style=&quot;color: rgb(63, 63, 63); scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251);&quot;&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;(React / Next.js)&lt;/span&gt;&lt;/div&gt;" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                <mxCell id="vercel_group" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;[5] Vercel Cloud Platform&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;Frontend Application&lt;/span&gt;&lt;br style=&quot;color: rgb(63, 63, 63); scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251);&quot;&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;(React / Next.js)&lt;/span&gt;&lt;/div&gt;" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="10" y="-20" width="240" height="170" as="geometry"/>
                 </mxCell>
-                <mxCell id="vps_group" value="VPS Host (Ubuntu Server)" style="shape=swimlane;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=left;spacingLeft=10;fontStyle=1;fontSize=13;collapsible=0;" parent="1" vertex="1">
+                <mxCell id="vps_group" value="[6] VPS Host (Ubuntu Server)" style="shape=swimlane;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=left;spacingLeft=10;fontStyle=1;fontSize=13;collapsible=0;" parent="1" vertex="1">
                     <mxGeometry x="40" y="170" width="1040" height="430" as="geometry"/>
                 </mxCell>
-                <mxCell id="gateway_service" value="API Gateway&#xa;(NestJS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                <mxCell id="gateway_service" value="[6.1] API Gateway&#xa;(NestJS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
                     <mxGeometry x="360" y="50" width="140" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="redis_service" value="Redis Cache&#xa;&amp; Rate Limiter" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                <mxCell id="redis_service" value="[6.2] Redis Cache&#xa;&amp; Rate Limiter" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
                     <mxGeometry x="20" y="260" width="140" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="auth_service" value="Auth Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                <mxCell id="auth_service" value="[6.3] Auth Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
                     <mxGeometry x="190" y="190" width="160" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="storage_service" value="Storage Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                <mxCell id="storage_service" value="[6.6] Storage Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
                     <mxGeometry x="680" y="220" width="160" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="fsrs_service" value="FSRS-AI Service&#xa;(Python + FastAPI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                <mxCell id="fsrs_service" value="[6.5] FSRS-AI Service&#xa;(Python + FastAPI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
                     <mxGeometry x="530" y="340" width="160" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="generative_service" value="Generative Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                <mxCell id="generative_service" value="[6.7] Generative Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
                     <mxGeometry x="860" y="210" width="160" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="learn_service" value="Learn Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
+                <mxCell id="learn_service" value="[6.4] Learn Service&#xa;(NestJS + Prisma)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=13;" parent="vps_group" vertex="1">
                     <mxGeometry x="365" y="220" width="160" height="70" as="geometry"/>
                 </mxCell>
                 <mxCell id="edge11" value="Port 3003" style="endArrow=classic;html=1;rounded=1;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="vps_group" source="gateway_service" target="storage_service" edge="1">
@@ -65,25 +65,25 @@
                 <mxCell id="10" value="Blacklist JWT" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="vps_group">
                     <mxGeometry x="90" y="200" width="100" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="neon_group" value="Neon Serverless Database Platform" style="shape=swimlane;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=left;spacingLeft=10;fontStyle=1;fontSize=13;collapsible=0;" parent="1" vertex="1">
+                <mxCell id="neon_group" value="[7] Neon Serverless Database Platform" style="shape=swimlane;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=left;spacingLeft=10;fontStyle=1;fontSize=13;collapsible=0;" parent="1" vertex="1">
                     <mxGeometry x="40" y="620" width="1040" height="140" as="geometry"/>
                 </mxCell>
-                <mxCell id="auth_db" value="auth_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
+                <mxCell id="auth_db" value="[7.1] auth_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
                     <mxGeometry x="215" y="50" width="110" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="storage_db" value="storage_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
+                <mxCell id="storage_db" value="[7.4] storage_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
                     <mxGeometry x="705" y="50" width="110" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="learn_db" value="learn_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
+                <mxCell id="learn_db" value="[7.2] learn_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
                     <mxGeometry x="390" y="50" width="110" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="fsrs_db" value="fsrs_ai_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
+                <mxCell id="fsrs_db" value="[7.3] fsrs_ai_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
                     <mxGeometry x="555" y="50" width="110" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="generative_db" value="generative_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
+                <mxCell id="generative_db" value="[7.5] generative_db&#xa;(PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;align=center;fontStyle=1;fontSize=12;" parent="neon_group" vertex="1">
                     <mxGeometry x="885" y="50" width="110" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="openai_group" value="&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;Third-party: Ollama &lt;br&gt;Cloud, ElevenLabs&lt;br&gt;(STT, TTS), CDN Cloudinary&lt;/span&gt;" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                <mxCell id="openai_group" value="&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;[8] Third-party: Ollama &lt;br&gt;Cloud, ElevenLabs&lt;br&gt;(STT, TTS), CDN Cloudinary&lt;/span&gt;" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;strokeWidth=1;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="1150" y="340" width="220" height="180" as="geometry"/>
                 </mxCell>
                 <mxCell id="edge1" value="Push" style="endArrow=classic;html=1;rounded=0;strokeColor=#000000;strokeWidth=1;fontSize=12;fontColor=#000000;" parent="1" source="dev" target="github_repo" edge="1">
