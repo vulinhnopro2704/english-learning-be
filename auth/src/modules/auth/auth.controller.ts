@@ -109,7 +109,11 @@ export class AuthController {
       this.logger.log(
         `Google OAuth callback success userId=${result.user.id} redirect=${this.authService.getOAuthRedirectUrl(true)}`,
       );
-      return res.redirect(this.authService.getOAuthRedirectUrl(true));
+      let redirectUrl = this.authService.getOAuthRedirectUrl(true);
+      if (redirectUrl.startsWith('vlrc://')) {
+        redirectUrl = `${redirectUrl}?access_token=${result.accessToken}&refresh_token=${result.refreshToken}`;
+      }
+      return res.redirect(redirectUrl);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unknown OAuth callback error';
