@@ -30,6 +30,7 @@ import { ChangePasswordDto } from './dtos/change-password.dto';
 import { VerifyEmailDto } from './dtos/verify-email.dto';
 import { ResendVerificationDto } from './dtos/resend-verification.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import {
   CurrentUser,
@@ -68,28 +69,38 @@ export class AuthController {
   }
 
   @Get('google')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Start Google OAuth2 login flow' })
   async googleAuth(@Req() req: Request) {
     this.logger.log(
-      `Google OAuth start requested traceId=${req.header('x-trace-id') ?? 'unknown'}`,
+      `Google OAuth start requested traceId=${req.header('x-trace-id') ?? 'unknown'} platform=${req.query.platform ?? 'web'}`,
     );
     return;
   }
 
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth2 callback' })
   async googleAuthCallback(
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    const state = req.query.state as string;
     try {
       const profile = req.user as GoogleCallbackUser;
       this.logger.log(
-        `Google OAuth callback received providerAccountId=${profile?.providerAccountId ?? 'unknown'} email=${profile?.email ?? 'unknown'} traceId=${req.header('x-trace-id') ?? 'unknown'}`,
+        `Google OAuth callback received providerAccountId=${profile?.providerAccountId ?? 'unknown'} email=${profile?.email ?? 'unknown'} state=${state} traceId=${req.header('x-trace-id') ?? 'unknown'}`,
       );
       const result = await this.authService.loginWithGoogle(profile);
+
+      if (state === 'mobile') {
+        const redirectUrl = `vlrc://auth/callback?access_token=${result.accessToken}&refresh_token=${result.refreshToken}`;
+        this.logger.log(
+          `Google OAuth callback success userId=${result.user.id} redirecting to mobile app: ${redirectUrl}`,
+        );
+        return res.redirect(redirectUrl);
+      }
+
       this.authService.setTokenCookies(
         res,
         result.accessToken,
@@ -106,6 +117,11 @@ export class AuthController {
         `Google OAuth callback failed: ${message}`,
         error instanceof Error ? error.stack : undefined,
       );
+
+      if (state === 'mobile') {
+        return res.redirect(`vlrc://auth/callback?error=OAUTH_FAILED&message=${encodeURIComponent(message)}`);
+      }
+
       return res.redirect(
         this.authService.getOAuthRedirectUrl(false, 'OAUTH_FAILED'),
       );
