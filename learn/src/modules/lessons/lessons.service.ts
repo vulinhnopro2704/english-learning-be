@@ -283,10 +283,10 @@ export class LessonsService {
       number,
       { status: string; score: number; completedAt: Date | null }
     >();
-    if (this.isUserRole(user) && lessonIds.length > 0) {
+    if (user && lessonIds.length > 0) {
       const progressRows = await this.prisma.userLessonProgress.findMany({
         where: {
-          userId: user!.id,
+          userId: user.id,
           lessonId: { in: lessonIds },
         },
         select: {
@@ -397,7 +397,7 @@ export class LessonsService {
       });
     }
 
-    if (!this.isUserRole(user)) {
+    if (!user) {
       await this.redisService.setJson(
         cacheKey,
         lesson,
@@ -409,7 +409,7 @@ export class LessonsService {
     const progress = await this.prisma.userLessonProgress.findUnique({
       where: {
         userId_lessonId: {
-          userId: user!.id,
+          userId: user.id,
           lessonId: id,
         },
       },

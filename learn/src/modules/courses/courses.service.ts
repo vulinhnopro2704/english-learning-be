@@ -177,7 +177,7 @@ export class CoursesService {
     const hasMore = courses.length > take;
     const data = hasMore ? courses.slice(0, take) : courses;
 
-    if (!this.isUserRole(user) || data.length === 0) {
+    if (!user || data.length === 0) {
       const nextCursor =
         hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
 
@@ -204,7 +204,7 @@ export class CoursesService {
     const [courseProgressRows, completedLessons] = await Promise.all([
       this.prisma.userCourseProgress.findMany({
         where: {
-          userId: user!.id,
+          userId: user.id,
           courseId: { in: courseIds },
         },
         select: {
@@ -216,7 +216,7 @@ export class CoursesService {
       }),
       this.prisma.userLessonProgress.findMany({
         where: {
-          userId: user!.id,
+          userId: user.id,
           status: 'COMPLETED',
           lesson: { courseId: { in: courseIds } },
         },
@@ -360,7 +360,7 @@ export class CoursesService {
       });
     }
 
-    if (!this.isUserRole(user)) {
+    if (!user) {
       await this.redisService.setJson(
         cacheKey,
         course,
@@ -374,7 +374,7 @@ export class CoursesService {
       this.prisma.userCourseProgress.findUnique({
         where: {
           userId_courseId: {
-            userId: user!.id,
+            userId: user.id,
             courseId: id,
           },
         },
@@ -387,7 +387,7 @@ export class CoursesService {
       lessonIds.length > 0
         ? this.prisma.userLessonProgress.findMany({
             where: {
-              userId: user!.id,
+              userId: user.id,
               lessonId: { in: lessonIds },
             },
             select: {
