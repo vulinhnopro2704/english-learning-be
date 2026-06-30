@@ -169,6 +169,18 @@ async def get_due_cards(
     return [row[0] for row in result.all()]
 
 
+async def get_due_count(db: AsyncSession, user_id: UUID) -> int:
+    """Get the total count of due cards without limit."""
+    now = datetime.now(timezone.utc)
+    result = await db.execute(
+        select(func.count()).where(
+            CardMemoryState.user_id == user_id,
+            (CardMemoryState.next_review <= now) | (CardMemoryState.next_review.is_(None)),
+        )
+    )
+    return result.scalar() or 0
+
+
 async def review_card(
     db: AsyncSession,
     user_id: UUID,

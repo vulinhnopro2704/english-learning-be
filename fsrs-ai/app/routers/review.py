@@ -42,7 +42,8 @@ async def get_due_cards(
     """Lấy danh sách word IDs đến hạn ôn tập (spaced repetition)."""
     effective_user_id = resolve_user_id(request, user_id)
     word_ids = await fsrs_service.get_due_cards(db, effective_user_id, limit)
-    return DueCardsResponse(word_ids=word_ids, total=len(word_ids))
+    total_due = await fsrs_service.get_due_count(db, effective_user_id)
+    return DueCardsResponse(word_ids=word_ids, total=total_due)
 
 
 @router.post(
