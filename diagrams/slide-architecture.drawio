@@ -1,0 +1,183 @@
+<mxfile host="65bd71144e">
+    <diagram id="slide-architecture" name="System Architecture (Slide)">
+        <mxGraphModel dx="593" dy="1348" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1420" pageHeight="860" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="fe_browser" value="&lt;b&gt;Browser Web App&lt;/b&gt;&lt;div style=&quot;font-size: 11px;&quot;&gt;(React)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1e88e5;strokeWidth=2.5;align=center;fontSize=13;fontColor=#0d47a1;arcSize=15;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="270" width="160" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="mobile_capacitor" value="&lt;b&gt;Mobile App&lt;/b&gt;&lt;div style=&quot;font-size: 11px;&quot;&gt;(Capacitor)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ede7f6;strokeColor=#5e35b1;strokeWidth=2.5;align=center;fontSize=13;fontColor=#1a237e;arcSize=15;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="410" width="160" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="vps_host" value="VPS Host (Ubuntu Server)" style="shape=swimlane;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#90a4ae;strokeWidth=2;align=left;spacingLeft=15;fontStyle=1;fontSize=14;fontColor=#37474f;collapsible=0;dashed=0;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="90" width="750" height="660" as="geometry"/>
+                </mxCell>
+                <mxCell id="nginx" value="&lt;b&gt;Nginx&lt;/b&gt;&lt;div style=&quot;font-size: 11px;&quot;&gt;Reverse Proxy&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2f1;strokeColor=#00897b;strokeWidth=2.5;align=center;fontSize=13;fontColor=#004d40;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="30" y="270" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="gateway" value="&lt;b&gt;API Gateway&lt;/b&gt;&lt;div style=&quot;font-size: 11px;&quot;&gt;(NestJS)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#8e24aa;strokeWidth=2.5;align=center;fontSize=13;fontColor=#4a148c;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="180" y="270" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="redis" value="&lt;b&gt;Redis Cache&lt;/b&gt;&lt;div style=&quot;font-size: 11px;&quot;&gt;&amp;amp; Rate Limiter&lt;/div&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffebee;strokeColor=#e53935;strokeWidth=2.5;align=center;fontSize=12;fontColor=#c62828;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="180" y="130" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="auth_service" value="&lt;b&gt;Auth Service&lt;/b&gt;&lt;div style=&quot;font-size: 10px;&quot;&gt;(NestJS + Prisma)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffb300;strokeWidth=2.5;align=center;fontSize=12;fontColor=#5d4037;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="380" y="70" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="learn_service" value="&lt;b&gt;Learn Service&lt;/b&gt;&lt;div style=&quot;font-size: 10px;&quot;&gt;(NestJS + Prisma)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#fb8c00;strokeWidth=2.5;align=center;fontSize=12;fontColor=#e65100;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="380" y="180" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="storage_service" value="&lt;b&gt;Storage Service&lt;/b&gt;&lt;div style=&quot;font-size: 10px;&quot;&gt;(NestJS + Prisma)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;strokeWidth=2.5;align=center;fontSize=12;fontColor=#1b5e20;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="380" y="290" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="generative_service" value="&lt;b&gt;Generative Service&lt;/b&gt;&lt;div style=&quot;font-size: 10px;&quot;&gt;(NestJS + Prisma)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4ec;strokeColor=#d81b60;strokeWidth=2.5;align=center;fontSize=12;fontColor=#880e4f;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="380" y="400" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="fsrs_service" value="&lt;b&gt;FSRS-AI Service&lt;/b&gt;&lt;div style=&quot;font-size: 10px;&quot;&gt;(FastAPI)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9fbe7;strokeColor=#c0ca33;strokeWidth=2.5;align=center;fontSize=12;fontColor=#33691e;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="380" y="510" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="auth_db" value="&lt;b&gt;auth_db&lt;/b&gt;&lt;div style=&quot;font-size: 11px;&quot;&gt;(PostgreSQL)&lt;/div&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e0f7fa;strokeColor=#00acc1;strokeWidth=2.5;align=center;fontSize=12;fontColor=#006064;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="600" y="65" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="learn_db" value="&lt;b&gt;learn_db&lt;/b&gt;&lt;div style=&quot;font-size: 11px;&quot;&gt;(PostgreSQL)&lt;/div&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e0f7fa;strokeColor=#00acc1;strokeWidth=2.5;align=center;fontSize=12;fontColor=#006064;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="600" y="175" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="storage_db" value="&lt;b&gt;storage_db&lt;/b&gt;&lt;div style=&quot;font-size: 11px;&quot;&gt;(PostgreSQL)&lt;/div&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e0f7fa;strokeColor=#00acc1;strokeWidth=2.5;align=center;fontSize=12;fontColor=#006064;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="600" y="285" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="generative_db" value="&lt;b&gt;generative_db&lt;/b&gt;&lt;div style=&quot;font-size: 11px;&quot;&gt;(PostgreSQL)&lt;/div&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e0f7fa;strokeColor=#00acc1;strokeWidth=2.5;align=center;fontSize=12;fontColor=#006064;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="600" y="395" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="fsrs_db" value="&lt;b&gt;fsrs_db&lt;/b&gt;&lt;div style=&quot;font-size: 11px;&quot;&gt;(PostgreSQL)&lt;/div&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e0f7fa;strokeColor=#00acc1;strokeWidth=2.5;align=center;fontSize=12;fontColor=#006064;shadow=1;" parent="vps_host" vertex="1">
+                    <mxGeometry x="600" y="505" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;strokeColor=#FF9933;" edge="1" parent="vps_host" source="auth_service" target="redis">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="third_party" value="Third-Party Services" style="shape=swimlane;whiteSpace=wrap;html=1;fillColor=#fff5f5;strokeColor=#ff8a80;strokeWidth=2;align=left;spacingLeft=15;fontStyle=1;fontSize=13;fontColor=#c62828;collapsible=0;dashed=1;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="1160" y="240" width="180" height="310" as="geometry"/>
+                </mxCell>
+                <mxCell id="elevenlabs" value="&lt;b&gt;ElevenLabs&lt;/b&gt;&lt;div style=&quot;font-size: 10px;&quot;&gt;(STT / TTS API)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#ff1744;strokeWidth=1.5;align=center;fontSize=11;fontColor=#c62828;shadow=1;" parent="third_party" vertex="1">
+                    <mxGeometry x="20" y="40" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="ollama" value="&lt;b&gt;Ollama / OpenAI&lt;/b&gt;&lt;div style=&quot;font-size: 10px;&quot;&gt;(LLM API)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#ff1744;strokeWidth=1.5;align=center;fontSize=11;fontColor=#c62828;shadow=1;" parent="third_party" vertex="1">
+                    <mxGeometry x="20" y="120" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cloudinary" value="&lt;b&gt;Cloudinary&lt;/b&gt;&lt;div style=&quot;font-size: 10px;&quot;&gt;(CDN / Media API)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#ff1744;strokeWidth=1.5;align=center;fontSize=11;fontColor=#c62828;shadow=1;" parent="third_party" vertex="1">
+                    <mxGeometry x="20" y="200" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_browser_nginx" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2.5;strokeColor=#1e88e5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" parent="1" source="fe_browser" target="nginx" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="250" y="310"/>
+                            <mxPoint x="250" y="380"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge_mobile_nginx" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2.5;strokeColor=#5e35b1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" parent="1" source="mobile_capacitor" target="nginx" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="250" y="450"/>
+                            <mxPoint x="250" y="420"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge_nginx_gateway" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2.5;strokeColor=#00897b;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="nginx" target="gateway" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_gateway_redis" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#FF9933;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="gateway" target="redis" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_learn_redis" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#fb8c00;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="learn_service" target="redis" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_gateway_auth" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#8e24aa;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="gateway" target="auth_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="620" y="380"/>
+                            <mxPoint x="620" y="195"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge_gateway_learn" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#8e24aa;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="gateway" target="learn_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="630" y="400"/>
+                            <mxPoint x="630" y="305"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge_gateway_storage" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#8e24aa;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="gateway" target="storage_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="640" y="420"/>
+                            <mxPoint x="640" y="415"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge_gateway_generative" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#8e24aa;exitX=1;exitY=0.85;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="gateway" target="generative_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="650" y="428"/>
+                            <mxPoint x="650" y="525"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge_gateway_fsrs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#8e24aa;exitX=1;exitY=0.95;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="gateway" target="fsrs_service" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="620" y="436"/>
+                            <mxPoint x="620" y="635"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge_auth_db" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#43a047;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="auth_service" target="auth_db" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_learn_db" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#43a047;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="learn_service" target="learn_db" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_storage_db" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#43a047;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="storage_service" target="storage_db" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_generative_db" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#43a047;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="generative_service" target="generative_db" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_fsrs_db" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#43a047;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="fsrs_service" target="fsrs_db" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge_storage_cloudinary" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#d81b60;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="storage_service" target="cloudinary" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="860" y="415"/>
+                            <mxPoint x="860" y="470"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge_generative_ollama" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#d81b60;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="generative_service" target="ollama" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="840" y="535"/>
+                            <mxPoint x="880" y="535"/>
+                            <mxPoint x="880" y="580"/>
+                            <mxPoint x="1130" y="580"/>
+                            <mxPoint x="1130" y="390"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge_generative_elevenlabs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#d81b60;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="generative_service" target="elevenlabs" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="840" y="535"/>
+                            <mxPoint x="870" y="535"/>
+                            <mxPoint x="870" y="590"/>
+                            <mxPoint x="1140" y="590"/>
+                            <mxPoint x="1140" y="310"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

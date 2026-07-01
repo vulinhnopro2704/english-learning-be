@@ -23,6 +23,17 @@ export class OllamaService implements OnModuleInit {
       headers: {
         Authorization: `Bearer ${this.config.apiKey}`,
       },
+      fetch: (url, options) => {
+        // Set a configurable timeout in seconds (default: 300 seconds / 5 minutes for reasoning models)
+        const timeoutSeconds = parseInt(
+          this.configService.get<string>('OLLAMA_TIMEOUT') ?? '300',
+          10,
+        );
+        return fetch(url, {
+          ...options,
+          signal: AbortSignal.timeout(timeoutSeconds * 1000),
+        });
+      },
     });
   }
 
@@ -269,7 +280,7 @@ export class OllamaService implements OnModuleInit {
       };
       return {
         name: error.name,
-        message: error.message,
+        message: error.message || 'Unknown error',
         statusCode: ollamaError.status_code,
         body:
           typeof ollamaError.cause === 'string' ? ollamaError.cause : undefined,
@@ -287,7 +298,7 @@ export class OllamaService implements OnModuleInit {
    */
   private classifyOllamaError(error: unknown): ApiException {
     const details = this.extractErrorDetails(error);
-    const message = details.message.toLowerCase();
+    const message = (details.message || '').toLowerCase();
 
     // Connection / network errors
     if (

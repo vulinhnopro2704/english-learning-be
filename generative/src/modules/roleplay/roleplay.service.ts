@@ -526,15 +526,23 @@ export class RoleplayService {
       `[Roleplay] Calling Ollama — messageCount=${messages.length} systemPromptLength=${systemPrompt.length}`,
     );
 
-    const result = await this.ollamaService.chat({
-      modelProfile: 'chat',
-      messages,
-      system: systemPrompt,
-      json: true,
-      options: {
-        num_predict: 1800, // Limit response token length for faster generation
-      },
-    });
+    let result;
+    try {
+      result = await this.ollamaService.chat({
+        modelProfile: 'chat',
+        messages,
+        system: systemPrompt,
+        json: true,
+        options: {
+          num_predict: 1800, // Limit response token length for faster generation
+        },
+      });
+    } catch (chatError) {
+      this.logger.error(
+        `[Roleplay] Ollama chat failed — error=${chatError instanceof Error ? chatError.message : String(chatError)} stack=${chatError instanceof Error ? chatError.stack : ''}`,
+      );
+      throw chatError;
+    }
 
     const rawText = result.content;
 

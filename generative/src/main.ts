@@ -6,6 +6,7 @@ import express from 'express';
 import { setupApiDocs } from '@english-learning/nest-api-docs';
 import { setupApiErrorHandling } from '@english-learning/nest-error-handler';
 import { AppModule } from './app.module';
+import { LoggingExceptionFilter } from './common/filters/logging-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,6 +16,7 @@ async function bootstrap() {
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   setupApiErrorHandling(app);
+  app.useGlobalFilters(new LoggingExceptionFilter());
 
   const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3001')
     .split(',')
