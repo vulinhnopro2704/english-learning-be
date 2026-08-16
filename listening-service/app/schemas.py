@@ -57,6 +57,30 @@ class ExtractTranscriptResponse(BaseModel):
     )
 
 
+class VocabularyItem(BaseModel):
+    """Step 1 - Nghe bắt âm: Vocabulary item for flashcard practice."""
+
+    id: int = Field(..., description="Vocabulary item identifier")
+    word: str = Field(..., description="English word or phrase")
+    part_of_speech: Optional[str] = Field(default="n", description="Part of speech (n, v, adj, adv)")
+    phonetic: Optional[str] = Field(default="", description="IPA phonetic transcription (e.g., /ˌɔːtəˈmætɪk/)")
+    meaning_vi: str = Field(..., description="Vietnamese definition")
+    example: Optional[str] = Field(default="", description="Example sentence")
+    example_vi: Optional[str] = Field(default="", description="Example sentence translated to Vietnamese")
+    audio_url: Optional[str] = Field(default=None, description="Direct audio pronunciation URL")
+
+
+class QuizQuestion(BaseModel):
+    """Step 2 - Nghe vận dụng: Comprehension multiple-choice question."""
+
+    id: int = Field(..., description="Question identifier")
+    question: str = Field(..., description="Question prompt")
+    options: List[str] = Field(..., description="Answer choices (3-4 options)")
+    correct_answer_index: int = Field(..., description="0-indexed correct option")
+    explanation: Optional[str] = Field(default="", description="Explanation of why this answer is correct")
+    segment_timestamp: Optional[float] = Field(default=0.0, description="Video timestamp to review for this question")
+
+
 class ProcessVideoRequest(BaseModel):
     """Payload for processing YouTube video into a ready-to-use lesson."""
 
@@ -64,22 +88,73 @@ class ProcessVideoRequest(BaseModel):
     title: Optional[str] = Field(
         default=None, description="Optional custom title for the lesson"
     )
+    description: Optional[str] = Field(
+        default=None, description="Optional description of lesson content"
+    )
     difficulty: Optional[str] = Field(
         default="medium",
         description="Exercise difficulty level: 'easy', 'medium', 'hard'",
     )
     is_published: Optional[bool] = Field(
         default=True,
-        description="Admin visibility flag (True = public, False = admin only)",
+        description="Visibility status (True = public, False = draft)",
     )
 
 
-class ProcessVideoResponse(BaseModel):
-    """Complete processed lesson payload for frontend practice."""
+class UpdateLessonRequest(BaseModel):
+    """Payload for updating an existing listening lesson."""
 
+    title: Optional[str] = Field(default=None, description="Updated title")
+    description: Optional[str] = Field(default=None, description="Updated description")
+    difficulty: Optional[str] = Field(default=None, description="Updated difficulty")
+    is_published: Optional[bool] = Field(default=None, description="Updated published status")
+
+
+class LessonSummary(BaseModel):
+    """Brief summary of a processed YouTube lesson for list/roadmap views."""
+
+    id: str = Field(..., description="Unique Lesson ID")
     video_id: str = Field(..., description="YouTube Video ID")
     title: str = Field(..., description="Lesson title")
-    language: str = Field(..., description="Language code")
-    is_published: bool = Field(..., description="Visibility status")
+    description: Optional[str] = Field(default="", description="Lesson description")
+    thumbnail_url: str = Field(..., description="YouTube video thumbnail URL")
+    duration: Optional[str] = Field(default="03:30", description="Formatted duration (MM:SS)")
+    difficulty: str = Field(default="medium", description="Difficulty level")
+    language: str = Field(default="en", description="Language code")
+    is_published: bool = Field(default=True, description="Visibility status")
+    total_segments: int = Field(default=0, description="Total sentence segments")
+    total_vocab: int = Field(default=0, description="Count of key vocabulary items")
+    total_quiz: int = Field(default=0, description="Count of comprehension quiz questions")
+    created_at: Optional[str] = Field(default=None, description="ISO Creation timestamp")
+    updated_at: Optional[str] = Field(default=None, description="ISO Update timestamp")
+
+
+class LessonDetail(BaseModel):
+    """Complete lesson payload including all 3 learning steps."""
+
+    id: str = Field(..., description="Unique Lesson ID")
+    video_id: str = Field(..., description="YouTube Video ID")
+    title: str = Field(..., description="Lesson title")
+    description: Optional[str] = Field(default="", description="Lesson description")
+    thumbnail_url: str = Field(..., description="YouTube video thumbnail URL")
+    duration: Optional[str] = Field(default="03:30", description="Formatted duration (MM:SS)")
+    difficulty: str = Field(default="medium", description="Difficulty level")
+    language: str = Field(default="en", description="Language code")
+    is_published: bool = Field(default=True, description="Visibility status")
     total_segments: int = Field(..., description="Number of segments")
-    segments: List[Segment] = Field(..., description="Interactive segments with blanks")
+    vocabulary_list: List[VocabularyItem] = Field(default=[], description="Step 1: Vocab items")
+    quiz_questions: List[QuizQuestion] = Field(default=[], description="Step 2: Quiz questions")
+    segments: List[Segment] = Field(..., description="Step 3: Cloze segments with blanks")
+    created_at: Optional[str] = Field(default=None, description="ISO Creation timestamp")
+    updated_at: Optional[str] = Field(default=None, description="ISO Update timestamp")
+
+
+class LessonListResponse(BaseModel):
+    """Paginated list of listening lessons."""
+
+    total: int = Field(..., description="Total available lessons count")
+    items: List[LessonSummary] = Field(..., description="List of lesson summaries")
+
+
+# Backward compatibility alias
+ProcessVideoResponse = LessonDetail
