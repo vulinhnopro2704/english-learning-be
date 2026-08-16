@@ -129,35 +129,39 @@ export class GatewayProxyService {
 
       let forwardedIdentity: AccessTokenPayload | null = null;
       let userProfile: any | null = null;
+      const isListeningRoute = req.path.startsWith('/listening/api/v1/listening');
+
       if (this.requiresAuth(req.method, req.path)) {
         try {
           forwardedIdentity = await this.verifyAccessToken(req);
           userProfile = await this.redisService.getUserProfile(forwardedIdentity.sub);
         } catch (error) {
-          const errorResponse =
-            error instanceof ApiException ? error.getResponse() : undefined;
-          const errorCode =
-            typeof errorResponse === 'object' &&
-            errorResponse !== null &&
-            typeof (errorResponse as { errorCode?: unknown }).errorCode ===
-              'string'
-              ? (errorResponse as { errorCode: string }).errorCode
-              : 'UNAUTHORIZED';
-          const message =
-            typeof errorResponse === 'object' &&
-            errorResponse !== null &&
-            typeof (errorResponse as { message?: unknown }).message === 'string'
-              ? (errorResponse as { message: string }).message
-              : 'Unauthorized';
-          res.status(HttpStatus.UNAUTHORIZED).json(
-            createApiErrorResponse({
-              statusCode: HttpStatus.UNAUTHORIZED,
-              errorCode,
-              message,
-              traceId: this.getTraceId(req),
-            }),
-          );
-          return;
+          if (!isListeningRoute) {
+            const errorResponse =
+              error instanceof ApiException ? error.getResponse() : undefined;
+            const errorCode =
+              typeof errorResponse === 'object' &&
+              errorResponse !== null &&
+              typeof (errorResponse as { errorCode?: unknown }).errorCode ===
+                'string'
+                ? (errorResponse as { errorCode: string }).errorCode
+                : 'UNAUTHORIZED';
+            const message =
+              typeof errorResponse === 'object' &&
+              errorResponse !== null &&
+              typeof (errorResponse as { message?: unknown }).message === 'string'
+                ? (errorResponse as { message: string }).message
+                : 'Unauthorized';
+            res.status(HttpStatus.UNAUTHORIZED).json(
+              createApiErrorResponse({
+                statusCode: HttpStatus.UNAUTHORIZED,
+                errorCode,
+                message,
+                traceId: this.getTraceId(req),
+              }),
+            );
+            return;
+          }
         }
       }
 
@@ -243,7 +247,7 @@ export class GatewayProxyService {
       return this.generativeUpstreamUrl;
     }
 
-    if (path.startsWith('/listening') || path.startsWith('/api/v1/listening')) {
+    if (path.startsWith('/listening')) {
       return this.listeningUpstreamUrl;
     }
 

@@ -11,7 +11,7 @@ from app.services.youtube_service import YouTubeService
 from app.services.blank_generator import BlankGeneratorService
 from app.dependencies import get_current_user, require_admin_role, UserAuth
 
-router = APIRouter(prefix="/api/v1/listening", tags=["Listening"])
+router = APIRouter(prefix="", tags=["Listening"])
 
 
 @router.post("/extract", response_model=ExtractTranscriptResponse)
@@ -36,9 +36,9 @@ async def extract_transcript(
 @router.post("/process-video", response_model=ProcessVideoResponse)
 async def process_video(
     payload: ProcessVideoRequest,
-    user: UserAuth = Depends(require_admin_role),
+    user: UserAuth = Depends(get_current_user),
 ):
-    """Process a YouTube video into a complete interactive listening lesson (Admin Only)."""
+    """Process a YouTube video into a complete interactive listening lesson."""
     video_id, language, is_generated, raw_segments = YouTubeService.get_transcript(
         payload.youtube_url
     )
