@@ -155,6 +155,25 @@ services:
     networks:
       - app-network
 
+  # ── Listening Service ─────────────────────────────
+  listening:
+    image: ${LISTENING_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/listening-service:latest}
+    build:
+      context: ./listening-service
+      dockerfile: Dockerfile
+    container_name: listening-service
+    expose:
+      - '${LISTENING_PORT:-3006}'
+    ports:
+      - '${LISTENING_PORT:-3006}:3006'
+    environment:
+      - PORT=${LISTENING_PORT:-3006}
+      - HOST=0.0.0.0
+      - ROOT_PATH=${LISTENING_ROOT_PATH:-/listening}
+    restart: no
+    networks:
+      - app-network
+
   # ── Redis ─────────────────────────────────────────
   redis:
     image: redis:7-alpine

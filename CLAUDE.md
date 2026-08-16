@@ -4,8 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 1) Quick map
 
-- Monorepo services: `auth/`, `learn/`, `storage/`, `gateway/`, `fsrs-ai/`, `generative/`.
-- Public entry: `gateway` (routes `/api/*` to backend services, `/fsrs-ai/*` to FSRS-AI upstream).
+- Monorepo services: `auth/`, `learn/`, `storage/`, `gateway/`, `fsrs-ai/`, `generative/`, `listening-service/`.
+- Public entry: `gateway` (routes `/api/*` to backend services, `/fsrs-ai/*` to FSRS-AI, `/listening/*` to Listening service).
 - FSRS integration lives mainly in `learn` + `fsrs-ai`.
 - `notification/` is a scaffold, not yet active.
 

@@ -133,7 +133,16 @@ export class RoleplayController {
     @Body() dto: StartRoleplayDto,
     @CurrentUser() user: any,
   ): Promise<StartRoleplayResult> {
-    return this.roleplayService.startSession(dto, user.id, user.email);
+    try {
+      this.logger.log(`Starting role-play session for user=${user?.id} scenario=${dto.scenarioId}`);
+      return await this.roleplayService.startSession(dto, user.id, user.email);
+    } catch (error) {
+      this.logger.error(
+        `Error starting role-play session for user=${user?.id} scenario=${dto.scenarioId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw error;
+    }
   }
 
   @ApiOperation({ summary: 'Chat with the AI in a role-play session' })
@@ -144,7 +153,16 @@ export class RoleplayController {
   @Post('chat')
   @HttpCode(HttpStatus.OK)
   async chat(@Body() dto: ChatRoleplayDto): Promise<ChatRoleplayResult> {
-    return this.roleplayService.chat(dto);
+    try {
+      this.logger.log(`Received chat request for session=${dto.sessionId}`);
+      return await this.roleplayService.chat(dto);
+    } catch (error) {
+      this.logger.error(
+        `Error in role-play chat for session=${dto.sessionId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw error;
+    }
   }
 
   @ApiOperation({ summary: 'Chat with AI using voice in a role-play session' })

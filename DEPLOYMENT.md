@@ -48,13 +48,15 @@ Push to main ──► GitHub Actions
 
 ### Port Assignments
 
-| Service | Default Port |
-| ------- | ------------ |
-| Gateway | 3000         |
-| Auth    | 3001         |
-| Learn   | 3002         |
-| Storage | 3003         |
-| FSRS-AI | 3004         |
+| Service           | Default Port |
+| ----------------- | ------------ |
+| Gateway           | 3000         |
+| Auth              | 3001         |
+| Learn             | 3002         |
+| Storage           | 3003         |
+| FSRS-AI           | 3004         |
+| Generative        | 3005         |
+| Listening Service | 3006         |
 
 > Tất cả port đều cấu hình qua environment variables.
 

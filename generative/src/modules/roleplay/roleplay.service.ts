@@ -35,17 +35,21 @@ export class RoleplayService {
   ) {}
 
   async getScenarios(filters?: any) {
-    return this.prisma.scenario.findMany({
+    const scenarios = await this.prisma.scenario.findMany({
       where: {
         isPublic: true,
         ...filters,
       },
       orderBy: { createdAt: 'desc' },
     });
+    return scenarios.map((s) => ({
+      ...s,
+      requiredTasks: this.getRequiredTasks(s.requiredTasks),
+    }));
   }
 
   async createScenario(dto: CreateScenarioDto, creatorId?: string) {
-    return this.prisma.scenario.create({
+    const scenario = await this.prisma.scenario.create({
       data: {
         title: dto.title,
         description: dto.description,
@@ -59,6 +63,10 @@ export class RoleplayService {
         type: 'SYSTEM',
       },
     });
+    return {
+      ...scenario,
+      requiredTasks: this.getRequiredTasks(scenario.requiredTasks),
+    };
   }
 
   async generateScenario(dto: GenerateScenarioDto, creatorId?: string) {
@@ -119,7 +127,7 @@ export class RoleplayService {
       });
     }
 
-    return this.prisma.scenario.create({
+    const created = await this.prisma.scenario.create({
       data: {
         title: generatedData.title,
         description: generatedData.description,
@@ -133,6 +141,10 @@ export class RoleplayService {
         type: 'AI_GENERATED',
       },
     });
+    return {
+      ...created,
+      requiredTasks: this.getRequiredTasks(created.requiredTasks),
+    };
   }
 
   async updateScenario(id: string, dto: UpdateScenarioDto) {
@@ -144,7 +156,7 @@ export class RoleplayService {
         message: `Scenario with ID ${id} not found`,
       });
     }
-    return this.prisma.scenario.update({
+    const updated = await this.prisma.scenario.update({
       where: { id },
       data: {
         title: dto.title,
@@ -157,6 +169,10 @@ export class RoleplayService {
         isPublic: dto.isPublic,
       },
     });
+    return {
+      ...updated,
+      requiredTasks: this.getRequiredTasks(updated.requiredTasks),
+    };
   }
 
   async deleteScenario(id: string) {
@@ -353,12 +369,16 @@ export class RoleplayService {
       currentGrammarFeedback.push(llmResponse.grammar_feedback);
     }
 
+    const updatedTask1 = session.sessionEvaluation.task1Completed || llmResponse.task_evaluation.task_1_completed;
+    const updatedTask2 = session.sessionEvaluation.task2Completed || llmResponse.task_evaluation.task_2_completed;
+    const updatedTask3 = session.sessionEvaluation.task3Completed || llmResponse.task_evaluation.task_3_completed;
+
     await this.prisma.sessionEvaluation.update({
       where: { id: session.sessionEvaluation.id },
       data: {
-        task1Completed: llmResponse.task_evaluation.task_1_completed,
-        task2Completed: llmResponse.task_evaluation.task_2_completed,
-        task3Completed: llmResponse.task_evaluation.task_3_completed,
+        task1Completed: updatedTask1,
+        task2Completed: updatedTask2,
+        task3Completed: updatedTask3,
         grammarFeedback: currentGrammarFeedback,
       },
     });
@@ -404,6 +424,11 @@ export class RoleplayService {
 
     return {
       ...llmResponse,
+      task_evaluation: {
+        task_1_completed: updatedTask1,
+        task_2_completed: updatedTask2,
+        task_3_completed: updatedTask3,
+      },
       audio: audioResult,
     };
   }
@@ -466,8 +491,36 @@ export class RoleplayService {
     this.logger.debug(`Summary: ${summaryResponse}`);
   }
 
+  private getRequiredTasks(requiredTasks: any): string[] {
+    if (!requiredTasks) return [];
+    if (Array.isArray(requiredTasks)) {
+      return requiredTasks.map(String);
+    }
+    if (typeof requiredTasks === 'string') {
+      try {
+        const parsed = JSON.parse(requiredTasks);
+        if (Array.isArray(parsed)) {
+          return parsed.map(String);
+        }
+      } catch {
+        // Not a JSON string, maybe a comma-separated string?
+        return requiredTasks.split(',').map((t) => t.trim());
+      }
+    }
+    if (typeof requiredTasks === 'object') {
+      // Check if it has a tasks array
+      if (Array.isArray((requiredTasks as any).tasks)) {
+        return (requiredTasks as any).tasks.map(String);
+      }
+      if (Array.isArray((requiredTasks as any).requiredTasks)) {
+        return (requiredTasks as any).requiredTasks.map(String);
+      }
+    }
+    return [];
+  }
+
   private buildSystemPrompt(user: any, scenario: any, taskStatus: any): string {
-    const tasks = scenario.requiredTasks as string[];
+    const tasks = this.getRequiredTasks(scenario.requiredTasks);
 
     return `
       You are an AI English Tutor who teaches through role-play conversations. You are speaking directly with the learner.
@@ -558,10 +611,65 @@ export class RoleplayService {
           .replace(/```$/i, '')
           .trim();
       }
-      return JSON.parse(sanitized) as RoleplayLlmResponse;
+      const parsed = JSON.parse(sanitized);
+
+      // Validate parsed structure
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('Parsed response is not an object');
+      }
+
+      const taskEval = parsed.task_evaluation || {};
+
+      const getTaskStatus = (keyNum: number): boolean => {
+        // Try various possible keys in the parsed json
+        const snakeKey = `task_${keyNum}_completed`;
+        const camelKey = `task${keyNum}Completed`;
+        const shortSnakeKey = `task_${keyNum}`;
+        const shortCamelKey = `task${keyNum}`;
+        
+        const val = taskEval[snakeKey] !== undefined ? taskEval[snakeKey] :
+                    taskEval[camelKey] !== undefined ? taskEval[camelKey] :
+                    taskEval[shortSnakeKey] !== undefined ? taskEval[shortSnakeKey] :
+                    taskEval[shortCamelKey] !== undefined ? taskEval[shortCamelKey] :
+                    parsed[snakeKey] !== undefined ? parsed[snakeKey] :
+                    parsed[camelKey] !== undefined ? parsed[camelKey] :
+                    parsed[shortSnakeKey] !== undefined ? parsed[shortSnakeKey] :
+                    parsed[shortCamelKey] !== undefined ? parsed[shortCamelKey] :
+                    undefined;
+
+        if (val === undefined) {
+          return keyNum === 1 ? (currentStatus?.task_1_completed ?? false) :
+                 keyNum === 2 ? (currentStatus?.task_2_completed ?? false) :
+                 (currentStatus?.task_3_completed ?? false);
+        }
+
+        if (typeof val === 'string') {
+          return val.toLowerCase() === 'true';
+        }
+        return !!val;
+      };
+
+      const validatedStatus: TaskEvaluation = {
+        task_1_completed: getTaskStatus(1),
+        task_2_completed: getTaskStatus(2),
+        task_3_completed: getTaskStatus(3),
+      };
+
+      return {
+        ai_spoken_response: typeof parsed.ai_spoken_response === 'string'
+          ? parsed.ai_spoken_response
+          : (rawText.trim() || 'I see. Please go on.'),
+        task_evaluation: validatedStatus,
+        grammar_feedback: typeof parsed.grammar_feedback === 'string'
+          ? parsed.grammar_feedback
+          : null,
+        scenario_completed: typeof parsed.scenario_completed === 'boolean'
+          ? parsed.scenario_completed
+          : false,
+      };
     } catch (error) {
       this.logger.warn(
-        `[Roleplay] Failed to parse JSON from Ollama, using fallback parser. Error: ${error instanceof Error ? error.message : String(error)}. Raw: ${rawText.slice(0, 200)}`,
+        `[Roleplay] Failed to parse/validate JSON from Ollama, using fallback parser. Error: ${error instanceof Error ? error.message : String(error)}. Raw: ${rawText.slice(0, 200)}`,
       );
 
       const fallbackResponse = rawText.trim() || 'I see. Please go on.';
@@ -610,7 +718,7 @@ export class RoleplayService {
   }
 
   async getSessionHistory(userId: string) {
-    return this.prisma.session.findMany({
+    const sessions = await this.prisma.session.findMany({
       where: { userId },
       include: {
         scenario: true,
@@ -618,6 +726,13 @@ export class RoleplayService {
       },
       orderBy: { startedAt: 'desc' },
     });
+    return sessions.map((session) => ({
+      ...session,
+      scenario: {
+        ...session.scenario,
+        requiredTasks: this.getRequiredTasks(session.scenario.requiredTasks),
+      },
+    }));
   }
 
   async getSessionDetails(sessionId: string) {
@@ -640,7 +755,13 @@ export class RoleplayService {
       });
     }
 
-    return session;
+    return {
+      ...session,
+      scenario: {
+        ...session.scenario,
+        requiredTasks: this.getRequiredTasks(session.scenario.requiredTasks),
+      },
+    };
   }
 
   async translateMessage(text: string): Promise<string> {
