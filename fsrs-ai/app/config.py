@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     FSRS_TRAIN_MIN_IMPROVEMENT_PCT: float = 0.02
     FSRS_TRAIN_METRIC: str = "log_loss"
     FSRS_RESCHEDULE_MAX_SHIFT_RATIO: float = 0.3
-    FSRS_ASYNC_RESCHEDULE_ENABLED: bool = True
+    CORS_ORIGIN: str = "*"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

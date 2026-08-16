@@ -508,6 +508,7 @@ jobs:
             PORT=${{ secrets.LISTENING_PORT || '3006' }}
             HOST=0.0.0.0
             ROOT_PATH=${{ secrets.LISTENING_ROOT_PATH || '/listening' }}
+            CORS_ORIGINS=${{ secrets.CORS_ORIGIN || '*' }}
             ENVEOF
 
             # ── Pull images & deploy (partial success tolerant) ──

@@ -130,6 +130,7 @@ services:
       - FSRS_TRAIN_METRIC=${FSRS_TRAIN_METRIC:-log_loss}
       - FSRS_RESCHEDULE_MAX_SHIFT_RATIO=${FSRS_RESCHEDULE_MAX_SHIFT_RATIO:-0.3}
       - FSRS_ASYNC_RESCHEDULE_ENABLED=${FSRS_ASYNC_RESCHEDULE_ENABLED:-true}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
     restart: no
     networks:
       - app-network
@@ -170,6 +171,7 @@ services:
       - PORT=${LISTENING_PORT:-3006}
       - HOST=0.0.0.0
       - ROOT_PATH=${LISTENING_ROOT_PATH:-/listening}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
     restart: no
     networks:
       - app-network

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     SERVICE_NAME: str = "listening-service"
     ROOT_PATH: str = "/listening"
     SWAGGER_ENABLED: bool = True
+    CORS_ORIGIN: str = "*"
 
     class Config:
         env_file = ".env"
