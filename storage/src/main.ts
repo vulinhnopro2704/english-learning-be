@@ -24,7 +24,9 @@ async function bootstrap() {
     }),
   );
 
-  app.setGlobalPrefix('v1');
+  app.setGlobalPrefix('v1', {
+    exclude: ['health'],
+  });
   setupApiErrorHandling(app);
 
   const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3001')
