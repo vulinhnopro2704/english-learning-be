@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     ROOT_PATH: str = "/listening"
     SWAGGER_ENABLED: bool = True
     CORS_ORIGIN: str = "*"
+    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/english_learning"
 
     class Config:
         env_file = ".env"

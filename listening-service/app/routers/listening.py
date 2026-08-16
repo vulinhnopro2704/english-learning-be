@@ -2,6 +2,7 @@
 
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas import (
     ExtractTranscriptRequest,
     ExtractTranscriptResponse,
@@ -12,7 +13,8 @@ from app.schemas import (
 )
 from app.services.youtube_service import YouTubeService
 from app.services.lesson_generator import LessonGeneratorService
-from app.repositories.lesson_repo import lesson_repository
+from app.repositories.lesson_repo import LessonRepository
+from app.database import get_db
 from app.dependencies import get_current_user, UserAuth
 
 router = APIRouter(prefix="", tags=["Listening"])
@@ -25,10 +27,12 @@ async def list_lessons(
     is_published: Optional[bool] = Query(default=None, description="Filter by published status"),
     limit: int = Query(default=50, ge=1, le=100, description="Items per page"),
     offset: int = Query(default=0, ge=0, description="Page offset"),
+    db: AsyncSession = Depends(get_db),
     user: UserAuth = Depends(get_current_user),
 ):
     """List all processed YouTube listening lessons with optional search and filtering."""
-    total, items = lesson_repository.list_lessons(
+    total, items = await LessonRepository.list_lessons(
+        db=db,
         query=query,
         difficulty=difficulty,
         is_published=is_published,
@@ -41,10 +45,11 @@ async def list_lessons(
 @router.get("/lessons/{lesson_id}", response_model=LessonDetail)
 async def get_lesson(
     lesson_id: str,
+    db: AsyncSession = Depends(get_db),
     user: UserAuth = Depends(get_current_user),
 ):
     """Retrieve full 3-step structured listening lesson by ID."""
-    lesson = lesson_repository.get_lesson(lesson_id)
+    lesson = await LessonRepository.get_lesson(db=db, lesson_id=lesson_id)
     if not lesson:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -56,9 +61,10 @@ async def get_lesson(
 @router.post("/process-video", response_model=LessonDetail, status_code=status.HTTP_201_CREATED)
 async def process_video(
     payload: ProcessVideoRequest,
+    db: AsyncSession = Depends(get_db),
     user: UserAuth = Depends(get_current_user),
 ):
-    """Process a YouTube video into a complete 3-step interactive listening lesson and persist to database."""
+    """Process a YouTube video into a complete 3-step interactive listening lesson and persist to PostgreSQL."""
     video_id, language, is_generated, raw_segments = YouTubeService.get_transcript(
         payload.youtube_url
     )
@@ -78,7 +84,8 @@ async def process_video(
     description = payload.description or f"Interactive listening lesson created from YouTube video {video_id}."
     thumbnail_url = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
 
-    created_lesson = lesson_repository.create_lesson(
+    created_lesson = await LessonRepository.create_lesson(
+        db=db,
         video_id=video_id,
         title=title,
         description=description,
@@ -99,10 +106,12 @@ async def process_video(
 async def update_lesson(
     lesson_id: str,
     payload: UpdateLessonRequest,
+    db: AsyncSession = Depends(get_db),
     user: UserAuth = Depends(get_current_user),
 ):
     """Update metadata of an existing listening lesson."""
-    updated = lesson_repository.update_lesson(
+    updated = await LessonRepository.update_lesson(
+        db=db,
         lesson_id=lesson_id,
         title=payload.title,
         description=payload.description,
@@ -120,10 +129,11 @@ async def update_lesson(
 @router.delete("/lessons/{lesson_id}", status_code=status.HTTP_200_OK)
 async def delete_lesson(
     lesson_id: str,
+    db: AsyncSession = Depends(get_db),
     user: UserAuth = Depends(get_current_user),
 ):
     """Delete a listening lesson by ID."""
-    success = lesson_repository.delete_lesson(lesson_id)
+    success = await LessonRepository.delete_lesson(db=db, lesson_id=lesson_id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

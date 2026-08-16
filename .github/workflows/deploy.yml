@@ -375,6 +375,7 @@ jobs:
             STORAGE_DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
             GENERATIVE_DATABASE_URL=${{ secrets.GENERATIVE_DATABASE_URL }}
             FSRS_AI_DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
+            LISTENING_DATABASE_URL=${{ secrets.LISTENING_DATABASE_URL || secrets.FSRS_AI_DATABASE_URL }}
             FSRS_AI_ROOT_PATH=${{ secrets.FSRS_AI_ROOT_PATH || '/fsrs-ai' }}
             LISTENING_ROOT_PATH=${{ secrets.LISTENING_ROOT_PATH || '/listening' }}
             FSRS_TRAIN_MIN_VALID_LOGS=${{ secrets.FSRS_TRAIN_MIN_VALID_LOGS || '50' }}
@@ -508,7 +509,8 @@ jobs:
             PORT=${{ secrets.LISTENING_PORT || '3006' }}
             HOST=0.0.0.0
             ROOT_PATH=${{ secrets.LISTENING_ROOT_PATH || '/listening' }}
-            CORS_ORIGINS=${{ secrets.CORS_ORIGIN || '*' }}
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN || '*' }}
+            DATABASE_URL=${{ secrets.LISTENING_DATABASE_URL || secrets.FSRS_AI_DATABASE_URL }}
             ENVEOF
 
             # ── Pull images & deploy (partial success tolerant) ──

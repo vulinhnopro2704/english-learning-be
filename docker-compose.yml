@@ -175,6 +175,7 @@ services:
       - HOST=0.0.0.0
       - ROOT_PATH=${LISTENING_ROOT_PATH:-/listening}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - DATABASE_URL=${DATABASE_URL}
     restart: no
     networks:
       - app-network
