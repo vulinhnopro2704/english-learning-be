@@ -339,10 +339,18 @@ jobs:
 
             # ── Download docker-compose.yml directly (no git clone needed) ──
             TMP_COMPOSE="$(mktemp "$DEPLOY_DIR/docker-compose.yml.XXXXXX")"
-            curl -fsSL --retry 3 --connect-timeout 10 \
+            if curl -fsSL --retry 3 --connect-timeout 10 \
               "https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.yml" \
-              -o "$TMP_COMPOSE"
-            mv "$TMP_COMPOSE" docker-compose.yml
+              -o "$TMP_COMPOSE"; then
+              mv "$TMP_COMPOSE" docker-compose.yml
+            else
+              echo "⚠️ Failed to download docker-compose.yml from GitHub; keeping existing file if present"
+              rm -f "$TMP_COMPOSE"
+              if [ ! -s docker-compose.yml ]; then
+                echo "❌ No valid docker-compose.yml available on server"
+                exit 1
+              fi
+            fi
 
             # ── Login to GHCR ──
             echo "${{ secrets.GHCR_PAT }}" | sudo_run docker login ghcr.io -u ${{ secrets.VPS_USER }} --password-stdin
