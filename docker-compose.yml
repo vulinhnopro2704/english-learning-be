@@ -13,6 +13,7 @@ services:
       - STORAGE_UPSTREAM_URL=${STORAGE_UPSTREAM_URL:-http://storage:3003}
       - FSRS_AI_UPSTREAM_URL=${FSRS_AI_UPSTREAM_URL:-http://fsrs-ai:3004}
       - GENERATIVE_UPSTREAM_URL=${GENERATIVE_UPSTREAM_URL:-http://generative:3005}
+      - LISTENING_UPSTREAM_URL=${LISTENING_UPSTREAM_URL:-http://listening:3006}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - REDIS_URL=${REDIS_URL:-redis://:${REDIS_PASSWORD:-changeme}@redis:6379}
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
@@ -36,6 +37,8 @@ services:
       fsrs-ai:
         condition: service_started
       generative:
+        condition: service_started
+      listening:
         condition: service_started
     restart: unless-stopped
     networks:
