@@ -23,9 +23,8 @@ app = FastAPI(
 )
 
 # Configure CORS with dynamic origin matching for credentialed requests
-cors_origins = [
-    origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()
-]
+raw_cors = getattr(settings, "CORS_ORIGIN", None) or getattr(settings, "CORS_ORIGINS", None) or "*"
+cors_origins = [origin.strip() for origin in raw_cors.split(",") if origin.strip()]
 
 if "*" in cors_origins:
     app.add_middleware(
