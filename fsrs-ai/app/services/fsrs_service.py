@@ -173,7 +173,7 @@ async def get_due_count(db: AsyncSession, user_id: UUID) -> int:
     """Get the total count of due cards without limit."""
     now = datetime.now(timezone.utc)
     result = await db.execute(
-        select(func.count()).where(
+        select(func.count(CardMemoryState.id)).where(
             CardMemoryState.user_id == user_id,
             (CardMemoryState.next_review <= now) | (CardMemoryState.next_review.is_(None)),
         )
@@ -367,7 +367,7 @@ async def get_stats(db: AsyncSession, user_id: UUID) -> dict:
     """Get FSRS statistics for a user."""
     # State counts
     state_counts = await db.execute(
-        select(CardMemoryState.state, func.count())
+        select(CardMemoryState.state, func.count(CardMemoryState.id))
         .where(CardMemoryState.user_id == user_id)
         .group_by(CardMemoryState.state)
     )
@@ -379,7 +379,7 @@ async def get_stats(db: AsyncSession, user_id: UUID) -> dict:
     # Due count
     now = datetime.now(timezone.utc)
     due_result = await db.execute(
-        select(func.count()).where(
+        select(func.count(CardMemoryState.id)).where(
             CardMemoryState.user_id == user_id,
             (CardMemoryState.next_review <= now) | (CardMemoryState.next_review.is_(None)),
         )
@@ -396,7 +396,7 @@ async def get_stats(db: AsyncSession, user_id: UUID) -> dict:
 
     # Total reviews
     review_count_result = await db.execute(
-        select(func.count()).select_from(ReviewLog).where(
+        select(func.count(ReviewLog.id)).select_from(ReviewLog).where(
             ReviewLog.user_id == user_id,
         )
     )

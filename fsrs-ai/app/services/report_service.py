@@ -71,7 +71,7 @@ async def get_insights(db: AsyncSession, user_id: UUID, window: str) -> dict:
     )
 
     due_7d_result = await db.execute(
-        select(func.count())
+        select(func.count(CardMemoryState.id))
         .where(
             CardMemoryState.user_id == user_id,
             CardMemoryState.next_review.is_not(None),
@@ -83,7 +83,7 @@ async def get_insights(db: AsyncSession, user_id: UUID, window: str) -> dict:
     tomorrow_start = datetime.combine((now + timedelta(days=1)).date(), time.min, tzinfo=timezone.utc)
     tomorrow_end = datetime.combine((now + timedelta(days=1)).date(), time.max, tzinfo=timezone.utc)
     due_tomorrow_result = await db.execute(
-        select(func.count())
+        select(func.count(CardMemoryState.id))
         .where(
             CardMemoryState.user_id == user_id,
             CardMemoryState.next_review.is_not(None),
@@ -94,7 +94,7 @@ async def get_insights(db: AsyncSession, user_id: UUID, window: str) -> dict:
     due_tomorrow = int(due_tomorrow_result.scalar() or 0)
 
     state_counts_result = await db.execute(
-        select(CardMemoryState.state, func.count())
+        select(CardMemoryState.state, func.count(CardMemoryState.id))
         .where(CardMemoryState.user_id == user_id)
         .group_by(CardMemoryState.state)
     )
@@ -153,10 +153,10 @@ async def get_daily_report(
     rows_result = await db.execute(
         select(
             func.date(ReviewLog.reviewed_at).label("day"),
-            func.count().label("reviews"),
+            func.count(ReviewLog.id).label("reviews"),
             func.avg(case((ReviewLog.grade >= 2, 1.0), else_=0.0)).label("accuracy"),
             func.avg(ReviewLog.duration_ms).label("avg_response_ms"),
-            func.count().label("due_completed"),
+            func.count(ReviewLog.id).label("due_completed"),
         )
         .where(
             ReviewLog.user_id == user_id,
@@ -219,7 +219,7 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> dict:
     now = datetime.now(timezone.utc)
 
     overdue_result = await db.execute(
-        select(func.count())
+        select(func.count(CardMemoryState.id))
         .where(
             CardMemoryState.user_id == user_id,
             CardMemoryState.next_review.is_not(None),
@@ -269,7 +269,7 @@ async def get_recommendations(db: AsyncSession, user_id: UUID) -> dict:
     accuracy_delta_pct = round(current_acc - previous_acc, 4)
 
     due_7d_result = await db.execute(
-        select(func.count())
+        select(func.count(CardMemoryState.id))
         .where(
             CardMemoryState.user_id == user_id,
             CardMemoryState.next_review.is_not(None),

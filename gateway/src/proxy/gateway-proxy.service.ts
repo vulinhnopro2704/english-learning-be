@@ -61,7 +61,7 @@ export class GatewayProxyService {
       'http://generative:3005';
     this.listeningUpstreamUrl =
       this.configService.get<string>('LISTENING_UPSTREAM_URL') ??
-      'http://127.0.0.1:3006';
+      'http://listening:3006';
     this.swaggerPath = `/${(this.configService.get<string>('SWAGGER_PATH') ?? 'api-docs').replace(/^\/+/, '')}`;
     this.swaggerEnabled =
       (this.configService.get<string>('SWAGGER_ENABLED') ?? 'true') === 'true';
