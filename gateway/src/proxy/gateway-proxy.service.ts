@@ -129,7 +129,7 @@ export class GatewayProxyService {
 
       let forwardedIdentity: AccessTokenPayload | null = null;
       let userProfile: any | null = null;
-      const isListeningRoute = req.path.startsWith('/listening/api/v1/listening');
+      const isListeningRoute = req.path.startsWith('/listening');
 
       if (this.requiresAuth(req.method, req.path)) {
         try {

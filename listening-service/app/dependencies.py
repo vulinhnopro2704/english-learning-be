@@ -21,22 +21,24 @@ def get_current_user(
     x_user_role: Optional[str] = Header(None, alias="x-user-role"),
     x_user_email: Optional[str] = Header(None, alias="x-user-email"),
 ) -> UserAuth:
-    """Extract authenticated user identity forwarded by API Gateway.
-
-    Raises:
-        HTTPException 401: If x-user-id header is missing.
-    """
-    if not x_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing required authentication header (x-user-id). Access via API Gateway.",
-        )
-
+    """Extract authenticated user identity forwarded by API Gateway (or guest context)."""
     return UserAuth(
-        user_id=x_user_id,
+        user_id=x_user_id or "guest",
         role=x_user_role or "user",
         email=x_user_email or "",
     )
+
+
+def require_auth_user(
+    user: UserAuth = Depends(get_current_user),
+) -> UserAuth:
+    """Enforce authenticated user context."""
+    if user.user_id == "guest":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required.",
+        )
+    return user
 
 
 def require_admin_role(

@@ -27,15 +27,22 @@ async function bootstrap() {
 
   setupApiErrorHandling(app);
 
-  const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
+  const rawCorsOrigins = (process.env.CORS_ORIGIN ?? '*')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  app.enableCors({
-    origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
-    credentials: true,
-  });
+  if (rawCorsOrigins.includes('*') || rawCorsOrigins.length === 0) {
+    app.enableCors({
+      origin: true,
+      credentials: true,
+    });
+  } else {
+    app.enableCors({
+      origin: rawCorsOrigins.length === 1 ? rawCorsOrigins[0] : rawCorsOrigins,
+      credentials: true,
+    });
+  }
 
   const trustProxy = process.env.TRUST_PROXY ?? 'loopback';
   const expressApp = app.getHttpAdapter().getInstance();
