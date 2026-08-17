@@ -7,8 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.database import init_db, async_session
-from app.repositories.lesson_repo import LessonRepository
+from app.database import init_db
 from app.routers import listening
 
 
@@ -17,8 +16,6 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for database schema & tables initialization."""
     try:
         await init_db()
-        async with async_session() as session:
-            await LessonRepository.seed_default_lessons(session)
     except Exception as e:
         print(f"[ListeningService] Database initialization warning: {e}")
     yield
