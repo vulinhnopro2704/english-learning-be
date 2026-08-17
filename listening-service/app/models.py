@@ -15,7 +15,7 @@ from sqlalchemy import (
     MetaData,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, relationship
 
 
 class Base(DeclarativeBase):
@@ -52,21 +52,21 @@ class ListeningLesson(Base):
     )
 
     # Relational Child Entities
-    vocabularies: List["LessonVocabulary"] = relationship(
+    vocabularies: Mapped[List["LessonVocabulary"]] = relationship(
         "LessonVocabulary",
         back_populates="lesson",
         cascade="all, delete-orphan",
         order_by="LessonVocabulary.order",
         lazy="selectin",
     )
-    quizzes: List["LessonQuiz"] = relationship(
+    quizzes: Mapped[List["LessonQuiz"]] = relationship(
         "LessonQuiz",
         back_populates="lesson",
         cascade="all, delete-orphan",
         order_by="LessonQuiz.order",
         lazy="selectin",
     )
-    segments: List["LessonSegment"] = relationship(
+    segments: Mapped[List["LessonSegment"]] = relationship(
         "LessonSegment",
         back_populates="lesson",
         cascade="all, delete-orphan",
@@ -98,7 +98,7 @@ class LessonVocabulary(Base):
     audio_url = Column("audioUrl", String(500), nullable=True)
     created_at = Column("createdAt", DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-    lesson: Optional[ListeningLesson] = relationship("ListeningLesson", back_populates="vocabularies")
+    lesson: Mapped[Optional[ListeningLesson]] = relationship("ListeningLesson", back_populates="vocabularies")
 
 
 class LessonQuiz(Base):
@@ -122,7 +122,7 @@ class LessonQuiz(Base):
     segment_timestamp = Column("segmentTimestamp", Float, nullable=False, default=0.0)
     created_at = Column("createdAt", DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-    lesson: Optional[ListeningLesson] = relationship("ListeningLesson", back_populates="quizzes")
+    lesson: Mapped[Optional[ListeningLesson]] = relationship("ListeningLesson", back_populates="quizzes")
 
 
 class LessonSegment(Base):
@@ -146,8 +146,8 @@ class LessonSegment(Base):
     masked_text = Column("maskedText", Text, nullable=True)
     created_at = Column("createdAt", DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-    lesson: Optional[ListeningLesson] = relationship("ListeningLesson", back_populates="segments")
-    blanks: List["SegmentBlank"] = relationship(
+    lesson: Mapped[Optional[ListeningLesson]] = relationship("ListeningLesson", back_populates="segments")
+    blanks: Mapped[List["SegmentBlank"]] = relationship(
         "SegmentBlank",
         back_populates="segment",
         cascade="all, delete-orphan",
@@ -174,4 +174,4 @@ class SegmentBlank(Base):
     hint = Column("hint", String(255), nullable=False)
     created_at = Column("createdAt", DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-    segment: Optional[LessonSegment] = relationship("LessonSegment", back_populates="blanks")
+    segment: Mapped[Optional[LessonSegment]] = relationship("LessonSegment", back_populates="blanks")
