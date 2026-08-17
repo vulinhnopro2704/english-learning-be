@@ -2,7 +2,7 @@
 
 import re
 from typing import List, Tuple
-from app.schemas import Segment, VocabularyItem, QuizQuestion
+from app.schemas import Segment, VocabularyItem, QuizQuestion, BlankItem
 from app.services.blank_generator import BlankGeneratorService
 
 # Pre-compiled dictionary of common academic & listening vocabulary for instant phonetic & meaning mapping
@@ -138,13 +138,33 @@ class LessonGeneratorService:
             raw_segments, difficulty=difficulty
         )
 
+        cloze_segments = [
+            Segment(
+                id=s.get("id", idx + 1),
+                start=float(s.get("start", 0.0)),
+                end=float(s.get("end", 0.0)),
+                duration=float(s.get("duration", 0.0)),
+                text=s.get("text", ""),
+                masked_text=s.get("masked_text"),
+                blanks=[
+                    BlankItem(
+                        index=b.get("index", b_idx),
+                        original_word=b.get("original_word", ""),
+                        hint=b.get("hint", ""),
+                    )
+                    for b_idx, b in enumerate(s.get("blanks", []))
+                ],
+            )
+            for idx, s in enumerate(enriched_segments)
+        ]
+
         # Step 1: Vocabulary extraction
         vocabulary_list = cls._extract_vocabulary(raw_segments)
 
         # Step 2: Quiz generation
         quiz_questions = cls._generate_quiz_questions(raw_segments)
 
-        return vocabulary_list, quiz_questions, enriched_segments
+        return vocabulary_list, quiz_questions, cloze_segments
 
     @classmethod
     def _extract_vocabulary(cls, raw_segments: List[dict]) -> List[VocabularyItem]:

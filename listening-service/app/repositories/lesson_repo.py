@@ -197,61 +197,117 @@ class LessonRepository:
 
         # 1. Step 1: Lesson Vocabularies
         for idx, vocab in enumerate(vocabulary_list):
+            if isinstance(vocab, dict):
+                w = vocab.get("word", "")
+                pos = vocab.get("part_of_speech", "n")
+                pho = vocab.get("phonetic", "")
+                m = vocab.get("meaning_vi", "")
+                ex = vocab.get("example", "")
+                ex_vi = vocab.get("example_vi", "")
+                audio = vocab.get("audio_url")
+            else:
+                w = getattr(vocab, "word", "")
+                pos = getattr(vocab, "part_of_speech", "n")
+                pho = getattr(vocab, "phonetic", "")
+                m = getattr(vocab, "meaning_vi", "")
+                ex = getattr(vocab, "example", "")
+                ex_vi = getattr(vocab, "example_vi", "")
+                audio = getattr(vocab, "audio_url", None)
+
             lesson.vocabularies.append(
                 LessonVocabulary(
                     id=generate_uuid("vocab"),
                     lesson_id=lesson_id,
                     order=idx + 1,
-                    word=vocab.word,
-                    part_of_speech=vocab.part_of_speech,
-                    phonetic=vocab.phonetic,
-                    meaning_vi=vocab.meaning_vi,
-                    example=vocab.example,
-                    example_vi=vocab.example_vi,
-                    audio_url=vocab.audio_url,
+                    word=w,
+                    part_of_speech=pos,
+                    phonetic=pho,
+                    meaning_vi=m,
+                    example=ex,
+                    example_vi=ex_vi,
+                    audio_url=audio,
                     created_at=now,
                 )
             )
 
         # 2. Step 2: Lesson Quizzes
         for idx, quiz in enumerate(quiz_questions):
+            if isinstance(quiz, dict):
+                q_text = quiz.get("question", "")
+                opts = quiz.get("options") or []
+                ans = quiz.get("correct_answer_index", 0)
+                exp = quiz.get("explanation", "")
+                ts = float(quiz.get("segment_timestamp", 0.0) or 0.0)
+            else:
+                q_text = getattr(quiz, "question", "")
+                opts = getattr(quiz, "options", [])
+                ans = getattr(quiz, "correct_answer_index", 0)
+                exp = getattr(quiz, "explanation", "")
+                ts = float(getattr(quiz, "segment_timestamp", 0.0) or 0.0)
+
             lesson.quizzes.append(
                 LessonQuiz(
                     id=generate_uuid("quiz"),
                     lesson_id=lesson_id,
                     order=idx + 1,
-                    question=quiz.question,
-                    options=quiz.options,
-                    correct_answer_index=quiz.correct_answer_index,
-                    explanation=quiz.explanation,
-                    segment_timestamp=quiz.segment_timestamp or 0.0,
+                    question=q_text,
+                    options=list(opts),
+                    correct_answer_index=ans,
+                    explanation=exp,
+                    segment_timestamp=ts,
                     created_at=now,
                 )
             )
 
         # 3. Step 3: Lesson Segments and Blanks
         for idx, seg in enumerate(segments):
+            if isinstance(seg, dict):
+                s_idx = seg.get("segment_index", seg.get("id", idx + 1))
+                st = float(seg.get("start", seg.get("start_time", 0.0)))
+                et = float(seg.get("end", seg.get("end_time", 0.0)))
+                dur = float(seg.get("duration", round(et - st, 2) if et else 0.0))
+                txt = seg.get("text", "")
+                mtxt = seg.get("masked_text", txt)
+                raw_blanks = seg.get("blanks") or []
+            else:
+                s_idx = getattr(seg, "segment_index", getattr(seg, "id", idx + 1))
+                st = float(getattr(seg, "start", getattr(seg, "start_time", 0.0)))
+                et = float(getattr(seg, "end", getattr(seg, "end_time", 0.0)))
+                dur = float(getattr(seg, "duration", round(et - st, 2) if et else 0.0))
+                txt = getattr(seg, "text", "")
+                mtxt = getattr(seg, "masked_text", txt)
+                raw_blanks = getattr(seg, "blanks", []) or []
+
             seg_id = generate_uuid("seg")
             db_segment = LessonSegment(
                 id=seg_id,
                 lesson_id=lesson_id,
-                segment_index=idx + 1,
-                start_time=seg.start,
-                end_time=seg.end,
-                duration=seg.duration,
-                text=seg.text,
-                masked_text=seg.masked_text,
+                segment_index=s_idx,
+                start_time=st,
+                end_time=et,
+                duration=dur,
+                text=txt,
+                masked_text=mtxt,
                 created_at=now,
             )
 
-            for b in (seg.blanks or []):
+            for b in raw_blanks:
+                if isinstance(b, dict):
+                    b_idx = b.get("index", b.get("blank_index", 0))
+                    b_word = b.get("original_word", "")
+                    b_hint = b.get("hint", "")
+                else:
+                    b_idx = getattr(b, "index", getattr(b, "blank_index", 0))
+                    b_word = getattr(b, "original_word", "")
+                    b_hint = getattr(b, "hint", "")
+
                 db_segment.blanks.append(
                     SegmentBlank(
                         id=generate_uuid("blank"),
                         segment_id=seg_id,
-                        blank_index=b.index,
-                        original_word=b.original_word,
-                        hint=b.hint,
+                        blank_index=b_idx,
+                        original_word=b_word,
+                        hint=b_hint,
                         created_at=now,
                     )
                 )
