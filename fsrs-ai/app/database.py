@@ -7,8 +7,12 @@ database_url = settings.DATABASE_URL
 
 
 def _normalize_asyncpg_url(url: str) -> str:
-    normalized = url
-    if normalized.startswith("postgresql://"):
+    normalized = (url or "").strip()
+    if normalized.startswith("postgresqlasyncpg://"):
+        normalized = normalized.replace("postgresqlasyncpg://", "postgresql+asyncpg://", 1)
+    elif normalized.startswith("postgres://"):
+        normalized = normalized.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif normalized.startswith("postgresql://"):
         normalized = normalized.replace("postgresql://", "postgresql+asyncpg://", 1)
 
     split_url = urlsplit(normalized)
