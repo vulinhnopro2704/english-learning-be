@@ -16,11 +16,15 @@ class YouTubeService:
 
     @classmethod
     def _get_cookies_file(cls) -> Optional[str]:
-        """Resolve path to YouTube cookies file if available."""
-        if getattr(settings, "YOUTUBE_COOKIES_PATH", None) and os.path.isfile(settings.YOUTUBE_COOKIES_PATH):
+        """Resolve path to YouTube cookies file if available and non-empty."""
+        if (
+            getattr(settings, "YOUTUBE_COOKIES_PATH", None)
+            and os.path.isfile(settings.YOUTUBE_COOKIES_PATH)
+            and os.path.getsize(settings.YOUTUBE_COOKIES_PATH) > 0
+        ):
             return settings.YOUTUBE_COOKIES_PATH
         for candidate in ["cookies.txt", "/app/cookies.txt", "listening-service/cookies.txt"]:
-            if os.path.isfile(candidate):
+            if os.path.isfile(candidate) and os.path.getsize(candidate) > 0:
                 return candidate
         raw_content = getattr(settings, "YOUTUBE_COOKIES_CONTENT", None)
         if raw_content and raw_content.strip():

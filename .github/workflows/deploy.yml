@@ -512,7 +512,14 @@ jobs:
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN || '*' }}
             DATABASE_URL=${{ secrets.LISTENING_DATABASE_URL || secrets.FSRS_AI_DATABASE_URL }}
             GENERATIVE_SERVICE_URL=http://generative:${{ secrets.GENERATIVE_PORT || '3005' }}
+            YOUTUBE_PROXY=${{ secrets.YOUTUBE_PROXY }}
             ENVEOF
+
+            # ── Create listening-service/cookies.txt ──
+            touch listening-service/cookies.txt
+            cat > listening-service/cookies.txt << 'COOKIE_EOF'
+${{ secrets.YOUTUBE_COOKIES }}
+COOKIE_EOF
 
             # ── Pull images & deploy (partial success tolerant) ──
             pull_if_built() {

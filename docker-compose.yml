@@ -170,6 +170,8 @@ services:
       - '${LISTENING_PORT:-3006}'
     ports:
       - '${LISTENING_PORT:-3006}:3006'
+    volumes:
+      - ./listening-service/cookies.txt:/app/cookies.txt:ro
     environment:
       - DATABASE_URL=${LISTENING_DATABASE_URL}
       - PORT=${LISTENING_PORT:-3006}
@@ -177,6 +179,7 @@ services:
       - ROOT_PATH=${LISTENING_ROOT_PATH:-/listening}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - GENERATIVE_SERVICE_URL=${GENERATIVE_SERVICE_URL:-http://generative:3005}
+      - YOUTUBE_PROXY=${YOUTUBE_PROXY:-}
     depends_on:
       - generative
     restart: no
