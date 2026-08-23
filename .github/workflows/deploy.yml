@@ -299,6 +299,8 @@ jobs:
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
+        env:
+          YOUTUBE_COOKIES_DATA: ${{ secrets.YOUTUBE_COOKIES }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -307,7 +309,7 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           timeout: 80s
           command_timeout: 30m
-          envs: BUILD_GATEWAY_RESULT,BUILD_AUTH_RESULT,BUILD_LEARN_RESULT,BUILD_STORAGE_RESULT,BUILD_FSRS_AI_RESULT,BUILD_GENERATIVE_RESULT,BUILD_LISTENING_RESULT
+          envs: BUILD_GATEWAY_RESULT,BUILD_AUTH_RESULT,BUILD_LEARN_RESULT,BUILD_STORAGE_RESULT,BUILD_FSRS_AI_RESULT,BUILD_GENERATIVE_RESULT,BUILD_LISTENING_RESULT,YOUTUBE_COOKIES_DATA
           script: |
             set -u
 
@@ -516,10 +518,11 @@ jobs:
             ENVEOF
 
             # ── Create listening-service/cookies.txt ──
+            mkdir -p listening-service
             touch listening-service/cookies.txt
-            cat > listening-service/cookies.txt << 'COOKIE_EOF'
-${{ secrets.YOUTUBE_COOKIES }}
-COOKIE_EOF
+            if [ -n "${YOUTUBE_COOKIES_DATA:-}" ]; then
+              printf '%s\n' "$YOUTUBE_COOKIES_DATA" > listening-service/cookies.txt
+            fi
 
             # ── Pull images & deploy (partial success tolerant) ──
             pull_if_built() {
