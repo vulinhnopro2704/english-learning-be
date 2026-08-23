@@ -64,8 +64,40 @@ async def get_db():
 
 
 async def init_db():
-    """Initialize PostgreSQL schema 'listening' and tables."""
+    """Initialize PostgreSQL schema 'listening', tables, and sync missing columns."""
     from app.models import Base
     async with engine.begin() as conn:
         await conn.execute(text("CREATE SCHEMA IF NOT EXISTS listening;"))
         await conn.run_sync(Base.metadata.create_all)
+
+        migration_statements = [
+            # listening.lessons
+            'ALTER TABLE listening.lessons ADD COLUMN IF NOT EXISTS "status" VARCHAR(32) NOT NULL DEFAULT \'READY\';',
+            'ALTER TABLE listening.lessons ADD COLUMN IF NOT EXISTS "errorMessage" TEXT;',
+            'ALTER TABLE listening.lessons ADD COLUMN IF NOT EXISTS "order" INTEGER NOT NULL DEFAULT 0;',
+            'ALTER TABLE listening.lessons ADD COLUMN IF NOT EXISTS "duration" VARCHAR(32) NOT NULL DEFAULT \'03:30\';',
+            'ALTER TABLE listening.lessons ADD COLUMN IF NOT EXISTS "difficulty" VARCHAR(32) NOT NULL DEFAULT \'medium\';',
+            'ALTER TABLE listening.lessons ADD COLUMN IF NOT EXISTS "language" VARCHAR(16) NOT NULL DEFAULT \'en\';',
+            'ALTER TABLE listening.lessons ADD COLUMN IF NOT EXISTS "isPublished" BOOLEAN NOT NULL DEFAULT TRUE;',
+            # listening.lesson_vocabularies
+            'ALTER TABLE listening.lesson_vocabularies ADD COLUMN IF NOT EXISTS "partOfSpeech" VARCHAR(64);',
+            'ALTER TABLE listening.lesson_vocabularies ADD COLUMN IF NOT EXISTS "phonetic" VARCHAR(255);',
+            'ALTER TABLE listening.lesson_vocabularies ADD COLUMN IF NOT EXISTS "meaningVi" TEXT NOT NULL DEFAULT \'\';',
+            'ALTER TABLE listening.lesson_vocabularies ADD COLUMN IF NOT EXISTS "example" TEXT;',
+            'ALTER TABLE listening.lesson_vocabularies ADD COLUMN IF NOT EXISTS "exampleVi" TEXT;',
+            'ALTER TABLE listening.lesson_vocabularies ADD COLUMN IF NOT EXISTS "audioUrl" VARCHAR(500);',
+            # listening.lesson_quizzes
+            'ALTER TABLE listening.lesson_quizzes ADD COLUMN IF NOT EXISTS "correctAnswerIndex" INTEGER NOT NULL DEFAULT 0;',
+            'ALTER TABLE listening.lesson_quizzes ADD COLUMN IF NOT EXISTS "explanation" TEXT;',
+            'ALTER TABLE listening.lesson_quizzes ADD COLUMN IF NOT EXISTS "segmentTimestamp" DOUBLE PRECISION NOT NULL DEFAULT 0.0;',
+            # listening.lesson_segments
+            'ALTER TABLE listening.lesson_segments ADD COLUMN IF NOT EXISTS "maskedText" TEXT;',
+            # listening.segment_blanks
+            'ALTER TABLE listening.segment_blanks ADD COLUMN IF NOT EXISTS "originalWord" VARCHAR(255) NOT NULL DEFAULT \'\';',
+            'ALTER TABLE listening.segment_blanks ADD COLUMN IF NOT EXISTS "hint" VARCHAR(255) NOT NULL DEFAULT \'\';',
+        ]
+        for stmt in migration_statements:
+            try:
+                await conn.execute(text(stmt))
+            except Exception:
+                pass

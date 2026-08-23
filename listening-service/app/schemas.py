@@ -211,7 +211,3 @@ class RegenerateQuizRequest(BaseModel):
 
     difficulty: Optional[str] = Field(default=None, description="Difficulty level ('easy', 'medium', 'hard')")
     target_quiz_count: Optional[int] = Field(default=4, ge=2, le=8, description="Desired count of quiz questions (3-5)")
-
-
-# Backward compatibility alias
-ProcessVideoResponse = LessonDetail
