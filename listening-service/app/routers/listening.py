@@ -1,12 +1,12 @@
-"""FastAPI router for YouTube listening, transcript, and full CRUD lesson endpoints."""
-
+import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas import (
     ExtractTranscriptRequest,
     ExtractTranscriptResponse,
     ProcessVideoRequest,
+    ProcessVideoResponse,
     UpdateLessonRequest,
     LessonDetail,
     LessonListResponse,
@@ -19,10 +19,72 @@ from app.schemas import (
 from app.services.youtube_service import YouTubeService
 from app.services.lesson_generator import LessonGeneratorService
 from app.repositories.lesson_repo import LessonRepository
-from app.database import get_db
+from app.database import get_db, async_session
 from app.dependencies import get_current_user, UserAuth
 
+logger = logging.getLogger("listening-service")
+
 router = APIRouter(prefix="", tags=["Listening"])
+
+
+async def _process_video_job(
+    lesson_id: str,
+    youtube_url: str,
+    video_id: str,
+    custom_title: Optional[str],
+    difficulty: str,
+):
+    """Background task to extract transcript, run AI generation, and save lesson data."""
+    logger.info(
+        f"[BackgroundJob] Starting async AI lesson generation for lesson {lesson_id} (video={video_id})"
+    )
+    async with async_session() as db:
+        try:
+            _, language, _, raw_segments = YouTubeService.get_transcript(youtube_url)
+            if not raw_segments:
+                raise ValueError("Could not extract transcript segments from YouTube video")
+
+            title = custom_title or f"YouTube Listening Lesson ({video_id})"
+
+            # Run 3-step AI generation
+            vocab_list, quiz_list, cloze_segments = (
+                LessonGeneratorService.generate_lesson_content(
+                    raw_segments=raw_segments,
+                    difficulty=difficulty,
+                    title=title,
+                    target_vocab_count=12,
+                    target_quiz_count=4,
+                )
+            )
+
+            total_seconds = int(raw_segments[-1]["end"]) if raw_segments else 180
+            mins = total_seconds // 60
+            secs = total_seconds % 60
+            duration_str = f"{mins:02d}:{secs:02d}"
+
+            await LessonRepository.populate_lesson_content(
+                db=db,
+                lesson_id=lesson_id,
+                title=title,
+                duration=duration_str,
+                language=language,
+                vocabulary_list=vocab_list,
+                quiz_questions=quiz_list,
+                segments=cloze_segments,
+            )
+            logger.info(
+                f"[BackgroundJob] Successfully completed AI generation for lesson {lesson_id}"
+            )
+        except Exception as e:
+            logger.error(
+                f"[BackgroundJob] Failed AI generation for lesson {lesson_id}: {e}",
+                exc_info=True,
+            )
+            await LessonRepository.mark_lesson_failed(
+                db=db,
+                lesson_id=lesson_id,
+                error_message=str(e),
+            )
 
 
 @router.get("/lessons", response_model=LessonListResponse)
@@ -123,58 +185,46 @@ async def get_lesson_segments(
     )
 
 
-@router.post("/process-video", response_model=LessonDetail, status_code=status.HTTP_201_CREATED)
+@router.post("/process-video", response_model=ProcessVideoResponse, status_code=status.HTTP_202_ACCEPTED)
 async def process_video(
     payload: ProcessVideoRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     user: UserAuth = Depends(get_current_user),
 ):
-    """Process a YouTube video into a complete 3-step interactive listening lesson and persist to PostgreSQL."""
-    video_id, language, is_generated, raw_segments = YouTubeService.get_transcript(
-        payload.youtube_url
-    )
-
-    if not raw_segments:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not extract any transcript segments from the provided YouTube video.",
-        )
-
-    title = payload.title or f"YouTube Listening Lesson ({video_id})"
+    """Process a YouTube video asynchronously in the background and return 202 Accepted immediately."""
+    video_id = YouTubeService.extract_video_id(payload.youtube_url)
+    title = payload.title or f"YouTube Video ({video_id})"
     description = payload.description or f"Interactive listening lesson created from YouTube video {video_id}."
     thumbnail_url = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
 
-    # Automatically generate Step 1 (Vocab: 10-15 words via AI + Mochi Dict), Step 2 (Quiz), and Step 3 (Cloze)
-    vocab_list, quiz_list, cloze_segments = LessonGeneratorService.generate_lesson_content(
-        raw_segments=raw_segments,
-        difficulty=payload.difficulty or "medium",
-        title=title,
-        target_vocab_count=12,
-        target_quiz_count=4,
-    )
-
-    # Compute duration
-    total_seconds = int(raw_segments[-1]["end"]) if raw_segments else 180
-    mins = total_seconds // 60
-    secs = total_seconds % 60
-    duration_str = f"{mins:02d}:{secs:02d}"
-
-    created_lesson = await LessonRepository.create_lesson(
+    lesson_id = await LessonRepository.create_placeholder_lesson(
         db=db,
         video_id=video_id,
         title=title,
         description=description,
         thumbnail_url=thumbnail_url,
-        duration=duration_str,
         difficulty=payload.difficulty or "medium",
-        language=language,
+        language="en",
         is_published=payload.is_published if payload.is_published is not None else True,
-        vocabulary_list=vocab_list,
-        quiz_questions=quiz_list,
-        segments=cloze_segments,
     )
 
-    return created_lesson
+    background_tasks.add_task(
+        _process_video_job,
+        lesson_id=lesson_id,
+        youtube_url=payload.youtube_url,
+        video_id=video_id,
+        custom_title=payload.title,
+        difficulty=payload.difficulty or "medium",
+    )
+
+    return ProcessVideoResponse(
+        id=lesson_id,
+        video_id=video_id,
+        title=title,
+        status="PROCESSING",
+        message="Video đã được tiếp nhận và đang được AI xử lý trong nền (1-2 phút).",
+    )
 
 
 @router.post("/lessons/{lesson_id}/regenerate-vocab", response_model=LessonVocabResponse)

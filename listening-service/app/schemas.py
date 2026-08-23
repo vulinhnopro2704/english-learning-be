@@ -124,6 +124,8 @@ class LessonSummary(BaseModel):
     difficulty: str = Field(default="medium", description="Difficulty level")
     language: str = Field(default="en", description="Language code")
     is_published: bool = Field(default=True, description="Visibility status")
+    status: Optional[str] = Field(default="READY", description="Processing status: 'PROCESSING', 'READY', 'FAILED'")
+    error_message: Optional[str] = Field(default=None, description="Error detail if processing failed")
     total_segments: int = Field(default=0, description="Total sentence segments")
     total_vocab: int = Field(default=0, description="Count of key vocabulary items")
     total_quiz: int = Field(default=0, description="Count of comprehension quiz questions")
@@ -143,12 +145,27 @@ class LessonDetail(BaseModel):
     difficulty: str = Field(default="medium", description="Difficulty level")
     language: str = Field(default="en", description="Language code")
     is_published: bool = Field(default=True, description="Visibility status")
+    status: Optional[str] = Field(default="READY", description="Processing status: 'PROCESSING', 'READY', 'FAILED'")
+    error_message: Optional[str] = Field(default=None, description="Error detail if processing failed")
     total_segments: int = Field(..., description="Number of segments")
     vocabulary_list: List[VocabularyItem] = Field(default=[], description="Step 1: Vocab items")
     quiz_questions: List[QuizQuestion] = Field(default=[], description="Step 2: Quiz questions")
     segments: List[Segment] = Field(..., description="Step 3: Cloze segments with blanks")
     created_at: Optional[str] = Field(default=None, description="ISO Creation timestamp")
     updated_at: Optional[str] = Field(default=None, description="ISO Update timestamp")
+
+
+class ProcessVideoResponse(BaseModel):
+    """Instant acknowledgement response for async video import job."""
+
+    id: str = Field(..., description="Created Lesson ID")
+    video_id: str = Field(..., description="YouTube Video ID")
+    title: str = Field(..., description="Lesson title")
+    status: str = Field(default="PROCESSING", description="Current status")
+    message: str = Field(
+        default="Video đã được tiếp nhận và đang được AI xử lý trong nền.",
+        description="User-friendly status message",
+    )
 
 
 class LessonListResponse(BaseModel):

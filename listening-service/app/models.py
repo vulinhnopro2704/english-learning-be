@@ -42,6 +42,8 @@ class ListeningLesson(Base):
     difficulty = Column("difficulty", String(32), nullable=False, default="medium")
     language = Column("language", String(16), nullable=False, default="en")
     is_published = Column("isPublished", Boolean, nullable=False, default=True)
+    status = Column("status", String(32), nullable=False, default="READY")
+    error_message = Column("errorMessage", Text, nullable=True)
     order = Column("order", Integer, nullable=False, default=0)
     created_at = Column("createdAt", DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
