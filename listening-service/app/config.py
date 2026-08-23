@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     SWAGGER_ENABLED: bool = True
     CORS_ORIGIN: str = "*"
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/english_learning"
+    GENERATIVE_SERVICE_URL: str = "http://generative:3005"
 
     class Config:
         env_file = ".env"

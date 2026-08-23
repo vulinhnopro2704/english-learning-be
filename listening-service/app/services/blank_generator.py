@@ -1,7 +1,7 @@
 """Service to generate automatic cloze fill-in-the-blank exercises from transcript text."""
 
 import re
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 # Common English stop words to avoid masking in easy/medium mode
 STOP_WORDS = {
@@ -20,13 +20,17 @@ class BlankGeneratorService:
 
     @classmethod
     def generate_blanks(
-        cls, segments: List[Dict[str, Any]], difficulty: str = "medium"
+        cls,
+        segments: List[Dict[str, Any]],
+        difficulty: str = "medium",
+        target_vocabulary: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """Mask target keywords in transcript segments based on difficulty.
 
         Args:
             segments: List of segment dictionaries with 'text' field.
             difficulty: Difficulty level ('easy', 'medium', 'hard').
+            target_vocabulary: Optional list of key words from Step 1 to prioritize for masking.
 
         Returns:
             List of segments enriched with 'masked_text' and 'blanks'.
@@ -35,22 +39,36 @@ class BlankGeneratorService:
         target_ratio = 0.20 if difficulty == "easy" else (0.30 if difficulty == "medium" else 0.40)
         min_length = 4 if difficulty == "easy" else (3 if difficulty == "medium" else 2)
 
+        target_vocab_set = (
+            {v.lower().strip() for v in target_vocabulary if v}
+            if target_vocabulary
+            else set()
+        )
+
         enriched_segments = []
 
         for segment in segments:
             text = segment.get("text", "")
             words = text.split()
 
-            # Identify eligible words for blanking
-            eligible_indices = []
+            # Identify eligible words and prioritize target vocabulary words
+            priority_indices = []
+            other_indices = []
+
             for idx, word in enumerate(words):
                 clean_word = re.sub(r"[^\w]", "", word).lower()
                 if len(clean_word) >= min_length and clean_word not in STOP_WORDS:
-                    eligible_indices.append(idx)
+                    if clean_word in target_vocab_set:
+                        priority_indices.append(idx)
+                    else:
+                        other_indices.append(idx)
 
             # Determine number of blanks to create for this segment
             target_count = max(1, int(len(words) * target_ratio))
-            selected_indices = sorted(eligible_indices[:target_count]) if eligible_indices else []
+            
+            # Combine prioritized vocabulary matches first, followed by other eligible words
+            combined_candidates = priority_indices + [i for i in other_indices if i not in priority_indices]
+            selected_indices = sorted(combined_candidates[:target_count]) if combined_candidates else []
 
             masked_words = list(words)
             blanks = []

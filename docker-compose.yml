@@ -176,6 +176,9 @@ services:
       - HOST=0.0.0.0
       - ROOT_PATH=${LISTENING_ROOT_PATH:-/listening}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - GENERATIVE_SERVICE_URL=${GENERATIVE_SERVICE_URL:-http://generative:3005}
+    depends_on:
+      - generative
     restart: no
     networks:
       - app-network

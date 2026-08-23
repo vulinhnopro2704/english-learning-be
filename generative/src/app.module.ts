@@ -5,6 +5,7 @@ import { HealthModule } from './modules/health/health.module';
 import { TutorSessionsModule } from './modules/tutor-sessions/tutor-sessions.module';
 import { RoleplayModule } from './modules/roleplay/roleplay.module';
 import { OllamaModule } from './modules/ollama/ollama.module';
+import { ListeningAiModule } from './modules/listening-ai/listening-ai.module';
 
 import { DbModule } from './modules/db/db.module';
 
@@ -19,6 +20,7 @@ import { DbModule } from './modules/db/db.module';
     HealthModule,
     TutorSessionsModule,
     RoleplayModule,
+    ListeningAiModule,
   ],
 })
 export class AppModule {}

@@ -156,5 +156,43 @@ class LessonListResponse(BaseModel):
     items: List[LessonSummary] = Field(..., description="List of lesson summaries")
 
 
+class LessonVocabResponse(BaseModel):
+    """Step 1 response: List of vocabulary items for a lesson."""
+
+    lesson_id: str = Field(..., description="Unique Lesson ID")
+    total_vocab: int = Field(..., description="Count of vocabulary items")
+    vocabulary_list: List[VocabularyItem] = Field(..., description="Step 1: Vocab items")
+
+
+class LessonQuizResponse(BaseModel):
+    """Step 2 response: List of quiz comprehension questions for a lesson."""
+
+    lesson_id: str = Field(..., description="Unique Lesson ID")
+    total_quiz: int = Field(..., description="Count of quiz questions")
+    quiz_questions: List[QuizQuestion] = Field(..., description="Step 2: Quiz questions")
+
+
+class LessonSegmentResponse(BaseModel):
+    """Step 3 response: List of timestamped segments and cloze exercises."""
+
+    lesson_id: str = Field(..., description="Unique Lesson ID")
+    total_segments: int = Field(..., description="Count of segments")
+    segments: List[Segment] = Field(..., description="Step 3: Segments with blanks")
+
+
+class RegenerateVocabRequest(BaseModel):
+    """Request payload for regenerating Step 1 vocabulary items."""
+
+    difficulty: Optional[str] = Field(default=None, description="Difficulty level ('easy', 'medium', 'hard')")
+    target_vocab_count: Optional[int] = Field(default=12, ge=5, le=25, description="Desired count of vocabulary items (10-15)")
+
+
+class RegenerateQuizRequest(BaseModel):
+    """Request payload for regenerating Step 2 quiz questions."""
+
+    difficulty: Optional[str] = Field(default=None, description="Difficulty level ('easy', 'medium', 'hard')")
+    target_quiz_count: Optional[int] = Field(default=4, ge=2, le=8, description="Desired count of quiz questions (3-5)")
+
+
 # Backward compatibility alias
 ProcessVideoResponse = LessonDetail

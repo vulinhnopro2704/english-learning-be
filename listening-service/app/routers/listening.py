@@ -10,6 +10,11 @@ from app.schemas import (
     UpdateLessonRequest,
     LessonDetail,
     LessonListResponse,
+    LessonVocabResponse,
+    LessonQuizResponse,
+    LessonSegmentResponse,
+    RegenerateVocabRequest,
+    RegenerateQuizRequest,
 )
 from app.services.youtube_service import YouTubeService
 from app.services.lesson_generator import LessonGeneratorService
@@ -58,6 +63,66 @@ async def get_lesson(
     return lesson
 
 
+@router.get("/lessons/{lesson_id}/vocabularies", response_model=LessonVocabResponse)
+async def get_lesson_vocabularies(
+    lesson_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: UserAuth = Depends(get_current_user),
+):
+    """Step 1 (Nghe bat am): Retrieve key vocabulary flashcards for a lesson."""
+    vocab_items = await LessonRepository.get_lesson_vocabularies(db=db, lesson_id=lesson_id)
+    if vocab_items is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lesson '{lesson_id}' not found",
+        )
+    return LessonVocabResponse(
+        lesson_id=lesson_id,
+        total_vocab=len(vocab_items),
+        vocabulary_list=vocab_items,
+    )
+
+
+@router.get("/lessons/{lesson_id}/quizzes", response_model=LessonQuizResponse)
+async def get_lesson_quizzes(
+    lesson_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: UserAuth = Depends(get_current_user),
+):
+    """Step 2 (Nghe van dung): Retrieve comprehension quiz questions for a lesson."""
+    quizzes = await LessonRepository.get_lesson_quizzes(db=db, lesson_id=lesson_id)
+    if quizzes is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lesson '{lesson_id}' not found",
+        )
+    return LessonQuizResponse(
+        lesson_id=lesson_id,
+        total_quiz=len(quizzes),
+        quiz_questions=quizzes,
+    )
+
+
+@router.get("/lessons/{lesson_id}/segments", response_model=LessonSegmentResponse)
+async def get_lesson_segments(
+    lesson_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: UserAuth = Depends(get_current_user),
+):
+    """Step 3 (Nghe chi tiet & Shadowing): Retrieve timestamped segments and cloze exercises."""
+    segments = await LessonRepository.get_lesson_segments(db=db, lesson_id=lesson_id)
+    if segments is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lesson '{lesson_id}' not found",
+        )
+    return LessonSegmentResponse(
+        lesson_id=lesson_id,
+        total_segments=len(segments),
+        segments=segments,
+    )
+
+
 @router.post("/process-video", response_model=LessonDetail, status_code=status.HTTP_201_CREATED)
 async def process_video(
     payload: ProcessVideoRequest,
@@ -69,9 +134,23 @@ async def process_video(
         payload.youtube_url
     )
 
-    # Automatically generate Step 1 (Vocab), Step 2 (Quiz), and Step 3 (Cloze)
+    if not raw_segments:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not extract any transcript segments from the provided YouTube video.",
+        )
+
+    title = payload.title or f"YouTube Listening Lesson ({video_id})"
+    description = payload.description or f"Interactive listening lesson created from YouTube video {video_id}."
+    thumbnail_url = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+
+    # Automatically generate Step 1 (Vocab: 10-15 words via AI + Mochi Dict), Step 2 (Quiz), and Step 3 (Cloze)
     vocab_list, quiz_list, cloze_segments = LessonGeneratorService.generate_lesson_content(
-        raw_segments, difficulty=payload.difficulty or "medium"
+        raw_segments=raw_segments,
+        difficulty=payload.difficulty or "medium",
+        title=title,
+        target_vocab_count=12,
+        target_quiz_count=4,
     )
 
     # Compute duration
@@ -79,10 +158,6 @@ async def process_video(
     mins = total_seconds // 60
     secs = total_seconds % 60
     duration_str = f"{mins:02d}:{secs:02d}"
-
-    title = payload.title or f"YouTube Listening Lesson ({video_id})"
-    description = payload.description or f"Interactive listening lesson created from YouTube video {video_id}."
-    thumbnail_url = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
 
     created_lesson = await LessonRepository.create_lesson(
         db=db,
@@ -100,6 +175,98 @@ async def process_video(
     )
 
     return created_lesson
+
+
+@router.post("/lessons/{lesson_id}/regenerate-vocab", response_model=LessonVocabResponse)
+async def regenerate_vocab(
+    lesson_id: str,
+    payload: RegenerateVocabRequest = RegenerateVocabRequest(),
+    db: AsyncSession = Depends(get_db),
+    user: UserAuth = Depends(get_current_user),
+):
+    """Regenerate Step 1 vocabulary items using AI pipeline and update lesson."""
+    lesson = await LessonRepository.get_lesson(db=db, lesson_id=lesson_id)
+    if not lesson:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lesson '{lesson_id}' not found",
+        )
+
+    raw_segments = [
+        {
+            "id": s.id,
+            "start": s.start,
+            "end": s.end,
+            "duration": s.duration,
+            "text": s.text,
+        }
+        for s in lesson.segments
+    ]
+
+    target_diff = payload.difficulty or lesson.difficulty
+    target_count = payload.target_vocab_count or 12
+
+    new_vocab_list = LessonGeneratorService.generate_vocabulary_only(
+        raw_segments=raw_segments,
+        difficulty=target_diff,
+        target_vocab_count=target_count,
+    )
+
+    updated_vocab = await LessonRepository.replace_lesson_vocabularies(
+        db=db, lesson_id=lesson_id, new_vocab_list=new_vocab_list
+    )
+
+    return LessonVocabResponse(
+        lesson_id=lesson_id,
+        total_vocab=len(updated_vocab or []),
+        vocabulary_list=updated_vocab or [],
+    )
+
+
+@router.post("/lessons/{lesson_id}/regenerate-quizzes", response_model=LessonQuizResponse)
+async def regenerate_quizzes(
+    lesson_id: str,
+    payload: RegenerateQuizRequest = RegenerateQuizRequest(),
+    db: AsyncSession = Depends(get_db),
+    user: UserAuth = Depends(get_current_user),
+):
+    """Regenerate Step 2 quiz questions using AI pipeline and update lesson."""
+    lesson = await LessonRepository.get_lesson(db=db, lesson_id=lesson_id)
+    if not lesson:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lesson '{lesson_id}' not found",
+        )
+
+    raw_segments = [
+        {
+            "id": s.id,
+            "start": s.start,
+            "end": s.end,
+            "duration": s.duration,
+            "text": s.text,
+        }
+        for s in lesson.segments
+    ]
+
+    target_diff = payload.difficulty or lesson.difficulty
+    target_count = payload.target_quiz_count or 4
+
+    new_quiz_list = LessonGeneratorService.generate_quizzes_only(
+        raw_segments=raw_segments,
+        difficulty=target_diff,
+        target_quiz_count=target_count,
+    )
+
+    updated_quizzes = await LessonRepository.replace_lesson_quizzes(
+        db=db, lesson_id=lesson_id, new_quiz_list=new_quiz_list
+    )
+
+    return LessonQuizResponse(
+        lesson_id=lesson_id,
+        total_quiz=len(updated_quizzes or []),
+        quiz_questions=updated_quizzes or [],
+    )
 
 
 @router.put("/lessons/{lesson_id}", response_model=LessonDetail)

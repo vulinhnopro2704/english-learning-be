@@ -361,3 +361,144 @@ class LessonRepository:
         await db.delete(lesson)
         await db.commit()
         return True
+
+    @staticmethod
+    async def get_lesson_vocabularies(db: AsyncSession, lesson_id: str) -> Optional[List[VocabularyItem]]:
+        """Fetch only Step 1 vocabulary items for a given lesson."""
+        stmt = select(ListeningLesson).where(ListeningLesson.id == lesson_id)
+        result = await db.execute(stmt)
+        lesson = result.scalar_one_or_none()
+        if not lesson:
+            return None
+
+        return [
+            VocabularyItem(
+                id=idx + 1,
+                word=v.word,
+                part_of_speech=v.part_of_speech or "n",
+                phonetic=v.phonetic or "",
+                meaning_vi=v.meaning_vi,
+                example=v.example or "",
+                example_vi=v.example_vi or "",
+                audio_url=v.audio_url,
+            )
+            for idx, v in enumerate(lesson.vocabularies)
+        ]
+
+    @staticmethod
+    async def get_lesson_quizzes(db: AsyncSession, lesson_id: str) -> Optional[List[QuizQuestion]]:
+        """Fetch only Step 2 quiz comprehension questions for a given lesson."""
+        stmt = select(ListeningLesson).where(ListeningLesson.id == lesson_id)
+        result = await db.execute(stmt)
+        lesson = result.scalar_one_or_none()
+        if not lesson:
+            return None
+
+        return [
+            QuizQuestion(
+                id=idx + 1,
+                question=q.question,
+                options=list(q.options),
+                correct_answer_index=q.correct_answer_index,
+                explanation=q.explanation or "",
+                segment_timestamp=q.segment_timestamp,
+            )
+            for idx, q in enumerate(lesson.quizzes)
+        ]
+
+    @staticmethod
+    async def get_lesson_segments(db: AsyncSession, lesson_id: str) -> Optional[List[Segment]]:
+        """Fetch only Step 3 segments and blanks for a given lesson."""
+        stmt = select(ListeningLesson).where(ListeningLesson.id == lesson_id)
+        result = await db.execute(stmt)
+        lesson = result.scalar_one_or_none()
+        if not lesson:
+            return None
+
+        return [
+            Segment(
+                id=s.segment_index,
+                start=s.start_time,
+                end=s.end_time,
+                duration=s.duration,
+                text=s.text,
+                masked_text=s.masked_text,
+                blanks=[
+                    BlankItem(
+                        index=b.blank_index,
+                        original_word=b.original_word,
+                        hint=b.hint,
+                    )
+                    for b in s.blanks
+                ],
+            )
+            for s in lesson.segments
+        ]
+
+    @staticmethod
+    async def replace_lesson_vocabularies(
+        db: AsyncSession, lesson_id: str, new_vocab_list: List[VocabularyItem]
+    ) -> Optional[List[VocabularyItem]]:
+        """Replace Step 1 vocabulary items for a lesson."""
+        stmt = select(ListeningLesson).where(ListeningLesson.id == lesson_id)
+        result = await db.execute(stmt)
+        lesson = result.scalar_one_or_none()
+        if not lesson:
+            return None
+
+        lesson.vocabularies.clear()
+        now = datetime.now(timezone.utc)
+
+        for idx, vocab in enumerate(new_vocab_list):
+            lesson.vocabularies.append(
+                LessonVocabulary(
+                    id=generate_uuid("vocab"),
+                    lesson_id=lesson_id,
+                    order=idx + 1,
+                    word=vocab.word,
+                    part_of_speech=vocab.part_of_speech or "n",
+                    phonetic=vocab.phonetic or "",
+                    meaning_vi=vocab.meaning_vi,
+                    example=vocab.example or "",
+                    example_vi=vocab.example_vi or "",
+                    audio_url=vocab.audio_url,
+                    created_at=now,
+                )
+            )
+
+        lesson.updated_at = now
+        await db.commit()
+        return await LessonRepository.get_lesson_vocabularies(db, lesson_id)
+
+    @staticmethod
+    async def replace_lesson_quizzes(
+        db: AsyncSession, lesson_id: str, new_quiz_list: List[QuizQuestion]
+    ) -> Optional[List[QuizQuestion]]:
+        """Replace Step 2 quiz questions for a lesson."""
+        stmt = select(ListeningLesson).where(ListeningLesson.id == lesson_id)
+        result = await db.execute(stmt)
+        lesson = result.scalar_one_or_none()
+        if not lesson:
+            return None
+
+        lesson.quizzes.clear()
+        now = datetime.now(timezone.utc)
+
+        for idx, quiz in enumerate(new_quiz_list):
+            lesson.quizzes.append(
+                LessonQuiz(
+                    id=generate_uuid("quiz"),
+                    lesson_id=lesson_id,
+                    order=idx + 1,
+                    question=quiz.question,
+                    options=list(quiz.options),
+                    correct_answer_index=quiz.correct_answer_index,
+                    explanation=quiz.explanation or "",
+                    segment_timestamp=quiz.segment_timestamp or 0.0,
+                    created_at=now,
+                )
+            )
+
+        lesson.updated_at = now
+        await db.commit()
+        return await LessonRepository.get_lesson_quizzes(db, lesson_id)
