@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     CORS_ORIGIN: str = "*"
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/english_learning"
     GENERATIVE_SERVICE_URL: str = "http://generative:3005"
+    YOUTUBE_COOKIES_PATH: str | None = None
+    YOUTUBE_COOKIES_CONTENT: str | None = None
+    YOUTUBE_PROXY: str | None = None
 
     class Config:
         env_file = ".env"

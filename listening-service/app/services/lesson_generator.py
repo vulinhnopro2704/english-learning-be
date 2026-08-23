@@ -211,7 +211,7 @@ class LessonGeneratorService:
             logger.info(
                 f"[LessonGenerator] Calling Generative AI service at {url} (segments={len(raw_segments)})"
             )
-            res = requests.post(url, json=payload, timeout=90)
+            res = requests.post(url, json=payload, timeout=300)
 
             if not res.ok:
                 logger.error(

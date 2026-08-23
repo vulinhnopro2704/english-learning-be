@@ -1,15 +1,34 @@
 """YouTube transcript extraction service using yt-dlp with youtube-transcript-api fallback."""
 
+import os
 import re
-from typing import List, Tuple, Dict, Any
+import tempfile
+from typing import List, Tuple, Dict, Any, Optional
 from fastapi import HTTPException
 import requests
 import yt_dlp
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
+from app.config import settings
 
 
 class YouTubeService:
     """Service to parse YouTube URLs and fetch timestamped transcripts."""
+
+    @classmethod
+    def _get_cookies_file(cls) -> Optional[str]:
+        """Resolve path to YouTube cookies file if available."""
+        if getattr(settings, "YOUTUBE_COOKIES_PATH", None) and os.path.isfile(settings.YOUTUBE_COOKIES_PATH):
+            return settings.YOUTUBE_COOKIES_PATH
+        for candidate in ["cookies.txt", "/app/cookies.txt", "listening-service/cookies.txt"]:
+            if os.path.isfile(candidate):
+                return candidate
+        raw_content = getattr(settings, "YOUTUBE_COOKIES_CONTENT", None)
+        if raw_content and raw_content.strip():
+            temp_path = os.path.join(tempfile.gettempdir(), "yt_cookies.txt")
+            with open(temp_path, "w", encoding="utf-8") as f:
+                f.write(raw_content.strip())
+            return temp_path
+        return None
 
     @staticmethod
     def extract_video_id(url_or_id: str) -> str:
@@ -42,15 +61,24 @@ class YouTubeService:
     ) -> Tuple[str, str, bool, List[Dict[str, Any]]]:
         """Fetch transcript via yt-dlp json3 subtitle parser."""
         url = f"https://www.youtube.com/watch?v={video_id}"
+        cookie_file = cls._get_cookies_file()
         ydl_opts = {
             "skip_download": True,
             "writesubtitles": True,
             "writeautomaticsub": True,
-            "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "ios", "web", "mweb"],
+                }
+            },
             "nocheckcertificate": True,
             "quiet": True,
             "no_warnings": True,
         }
+        if cookie_file:
+            ydl_opts["cookiefile"] = cookie_file
+        if getattr(settings, "YOUTUBE_PROXY", None):
+            ydl_opts["proxy"] = settings.YOUTUBE_PROXY
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -71,7 +99,10 @@ class YouTubeService:
             json3_sub = next((s for s in sub_list if s.get("ext") == "json3"), sub_list[0])
             sub_url = json3_sub["url"]
 
-            resp = requests.get(sub_url, timeout=10, verify=False)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            }
+            resp = requests.get(sub_url, headers=headers, timeout=15, verify=False)
             if not resp.ok:
                 raise ValueError("Failed to download subtitle content")
 
@@ -118,6 +149,7 @@ class YouTubeService:
         Tries yt-dlp first for robust caption extraction, falling back to youtube-transcript-api.
         """
         video_id = cls.extract_video_id(youtube_url)
+        cookie_file = cls._get_cookies_file()
 
         # Primary Method: yt-dlp
         try:
@@ -130,7 +162,16 @@ class YouTubeService:
 
         # Fallback Method: youtube-transcript-api
         try:
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            proxies = (
+                {"http": settings.YOUTUBE_PROXY, "https": settings.YOUTUBE_PROXY}
+                if getattr(settings, "YOUTUBE_PROXY", None)
+                else None
+            )
+            transcript_list = YouTubeTranscriptApi.list_transcripts(
+                video_id,
+                proxies=proxies,
+                cookies=cookie_file,
+            )
             try:
                 transcript = transcript_list.find_transcript([preferred_lang, "en", "en-US"])
             except Exception:
