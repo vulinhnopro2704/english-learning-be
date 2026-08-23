@@ -202,6 +202,12 @@ export class GeneratedQuizQuestionDto {
 
   @ApiPropertyOptional({ example: 45.5 })
   segmentTimestamp?: number;
+
+  @ApiPropertyOptional({ example: 42.0 })
+  startTime?: number;
+
+  @ApiPropertyOptional({ example: 58.5 })
+  endTime?: number;
 }
 
 export class GeneratedListeningLessonResponseDto {

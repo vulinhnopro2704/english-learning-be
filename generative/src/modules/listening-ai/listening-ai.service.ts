@@ -207,22 +207,28 @@ Rules:
     const checkpoints = this.selectCheckpoints(segments, targetCount);
 
     const quizPromises = checkpoints.map(async (checkpoint, qIdx) => {
-      const windowSegments = this.getSegmentWindow(segments, checkpoint.segmentIndex, 8);
-      const sectionText = windowSegments.map((s) => s.text).join(' ');
+      const windowSegments = this.getSegmentWindow(segments, checkpoint.segmentIndex, 6);
+      const windowStart = windowSegments[0]?.start ?? checkpoint.timestamp;
+      const windowEnd = windowSegments[windowSegments.length - 1]?.end ?? (windowStart + 15);
+
+      const formattedLines = windowSegments
+        .map((s) => `[${s.start.toFixed(1)}s - ${s.end.toFixed(1)}s]: "${s.text}"`)
+        .join('\n');
       const timestamp = checkpoint.timestamp;
 
       const prompt = `
 You are an expert English teacher creating listening comprehension multiple-choice questions for IELTS/TOEFL practice.
 Target Difficulty: ${difficulty}
 
-Transcript Section (at timestamp ${Math.floor(timestamp)}s):
-"${sectionText}"
+Timestamped Transcript Section (around ${Math.floor(timestamp)}s):
+${formattedLines}
 
 Requirements:
 1. Create 1 deep comprehension or key takeaway multiple-choice question based strictly on what is stated or implied in the section above.
 2. Provide 4 answer options: 1 correct option and 3 plausible, well-crafted distractors.
 3. Provide a clear explanation in Vietnamese explaining why the correct option is right based on the speaker's words.
 4. Specify "correct_answer_index" as 0, 1, 2, or 3.
+5. Specify "start_time" and "end_time" (float numbers in seconds) marking the exact sentence(s) that provide the clue/answer for this question (must be within ${windowStart.toFixed(1)}s and ${windowEnd.toFixed(1)}s).
 
 Return ONLY a valid JSON object with format:
 {
@@ -235,6 +241,8 @@ Return ONLY a valid JSON object with format:
   ],
   "correct_answer_index": 0,
   "explanation": "Giải thích chi tiết bằng tiếng Việt...",
+  "start_time": ${windowStart.toFixed(1)},
+  "end_time": ${windowEnd.toFixed(1)},
   "segment_timestamp": ${timestamp}
 }
 `;
@@ -252,6 +260,8 @@ Return ONLY a valid JSON object with format:
           options: string[];
           correct_answer_index: number;
           explanation: string;
+          start_time?: number;
+          end_time?: number;
           segment_timestamp?: number;
         }>(res.content);
 
@@ -262,7 +272,7 @@ Return ONLY a valid JSON object with format:
         // Ensure 4 options
         const options = parsed.options.slice(0, 4);
         while (options.length < 4) {
-          options.push(`Alternative perspective on ${sectionText.slice(0, 30)}...`);
+          options.push(`Alternative perspective on the topic discussed at ${Math.floor(timestamp)}s`);
         }
 
         let correctIndex = typeof parsed.correct_answer_index === 'number'
@@ -279,31 +289,43 @@ Return ONLY a valid JSON object with format:
           correctIndex = desiredIndex;
         }
 
+        const validStartTime =
+          typeof parsed.start_time === 'number' && parsed.start_time >= 0
+            ? parsed.start_time
+            : windowStart;
+        const validEndTime =
+          typeof parsed.end_time === 'number' && parsed.end_time > validStartTime
+            ? parsed.end_time
+            : windowEnd;
+
         return {
           id: qIdx + 1,
           question: parsed.question,
           options,
           correctAnswerIndex: correctIndex,
           explanation: parsed.explanation || 'Đáp án chính xác được rút ra từ lời nói của người nói trong đoạn video.',
-          segmentTimestamp: parsed.segment_timestamp ?? timestamp,
+          segmentTimestamp: validStartTime,
+          startTime: Number(validStartTime.toFixed(1)),
+          endTime: Number(validEndTime.toFixed(1)),
         };
       } catch (err) {
         this.logger.warn(
           `[ListeningAI] Quiz generation failed for checkpoint ${qIdx}: ${(err as Error).message}`,
         );
-        // Clean dynamic fallback based on current section
         return {
           id: qIdx + 1,
           question: `What is the key idea discussed around ${Math.floor(timestamp)}s in the audio?`,
           options: [
-            `Understanding the main concept: "${sectionText.slice(0, 50)}..."`,
+            `Understanding the main concept: "${windowSegments[0]?.text.slice(0, 50) || 'Main takeaway'}..."`,
             'Ignoring the detailed steps and relying on intuition alone',
             'Comparing completely unrelated topics without context',
             'Stopping practice immediately after starting',
           ],
           correctAnswerIndex: 0,
           explanation: 'Ý chính được người nói đề cập trực tiếp trong đoạn nghe này.',
-          segmentTimestamp: timestamp,
+          segmentTimestamp: windowStart,
+          startTime: Number(windowStart.toFixed(1)),
+          endTime: Number(windowEnd.toFixed(1)),
         };
       }
     });

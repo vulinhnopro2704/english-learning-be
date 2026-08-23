@@ -118,7 +118,9 @@ class LessonRepository:
                 options=list(q.options),
                 correct_answer_index=q.correct_answer_index,
                 explanation=q.explanation or "",
-                segment_timestamp=q.segment_timestamp,
+                segment_timestamp=getattr(q, "segment_timestamp", 0.0),
+                start_time=getattr(q, "start_time", getattr(q, "segment_timestamp", 0.0)),
+                end_time=getattr(q, "end_time", getattr(q, "segment_timestamp", 0.0) + 15.0),
             )
             for idx, q in enumerate(lesson.quizzes)
         ]
@@ -401,7 +403,9 @@ class LessonRepository:
                 options=list(q.options),
                 correct_answer_index=q.correct_answer_index,
                 explanation=q.explanation or "",
-                segment_timestamp=q.segment_timestamp,
+                segment_timestamp=getattr(q, "segment_timestamp", 0.0),
+                start_time=getattr(q, "start_time", getattr(q, "segment_timestamp", 0.0)),
+                end_time=getattr(q, "end_time", getattr(q, "segment_timestamp", 0.0) + 15.0),
             )
             for idx, q in enumerate(lesson.quizzes)
         ]

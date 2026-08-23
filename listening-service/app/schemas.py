@@ -79,6 +79,8 @@ class QuizQuestion(BaseModel):
     correct_answer_index: int = Field(..., description="0-indexed correct option")
     explanation: Optional[str] = Field(default="", description="Explanation of why this answer is correct")
     segment_timestamp: Optional[float] = Field(default=0.0, description="Video timestamp to review for this question")
+    start_time: Optional[float] = Field(default=0.0, description="Exact start time in seconds of the clue segment")
+    end_time: Optional[float] = Field(default=0.0, description="Exact end time in seconds of the clue segment")
 
 
 class ProcessVideoRequest(BaseModel):

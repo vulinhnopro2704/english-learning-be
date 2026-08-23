@@ -166,7 +166,9 @@ class LessonGeneratorService:
                     options=item.get("options", []),
                     correct_answer_index=item.get("correctAnswerIndex", 0),
                     explanation=item.get("explanation", ""),
-                    segment_timestamp=float(item.get("segmentTimestamp", 0.0)),
+                    segment_timestamp=float(item.get("segmentTimestamp", item.get("startTime", 0.0)) or 0.0),
+                    start_time=float(item.get("startTime", item.get("segmentTimestamp", 0.0)) or 0.0),
+                    end_time=float(item.get("endTime", (item.get("startTime", 0.0) or 0.0) + 15.0) or 0.0),
                 )
                 for idx, item in enumerate(data)
             ]
@@ -245,7 +247,9 @@ class LessonGeneratorService:
                     options=item.get("options", []),
                     correct_answer_index=item.get("correctAnswerIndex", 0),
                     explanation=item.get("explanation", ""),
-                    segment_timestamp=float(item.get("segmentTimestamp", 0.0)),
+                    segment_timestamp=float(item.get("segmentTimestamp", item.get("startTime", 0.0)) or 0.0),
+                    start_time=float(item.get("startTime", item.get("segmentTimestamp", 0.0)) or 0.0),
+                    end_time=float(item.get("endTime", (item.get("startTime", 0.0) or 0.0) + 15.0) or 0.0),
                 )
                 for idx, item in enumerate(raw_quizzes)
             ]
