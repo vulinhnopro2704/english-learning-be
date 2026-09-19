@@ -282,11 +282,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ── Deploy to VPS ──────────────────────────────────────
+  # ── Deploy Locally on Personal PC (Self-Hosted Runner) ──────────────────
   deploy:
     if: ${{ always() && (needs.build-gateway.result != 'skipped' || needs.build-auth.result != 'skipped' || needs.build-learn.result != 'skipped' || needs.build-storage.result != 'skipped' || needs.build-fsrs-ai.result != 'skipped' || needs.build-generative.result != 'skipped' || needs.build-listening.result != 'skipped') }}
     needs: [build-gateway, build-auth, build-learn, build-storage, build-fsrs-ai, build-generative, build-listening]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: Production
     env:
       BUILD_GATEWAY_RESULT: ${{ needs.build-gateway.result }}
@@ -296,280 +296,226 @@ jobs:
       BUILD_FSRS_AI_RESULT: ${{ needs.build-fsrs-ai.result }}
       BUILD_GENERATIVE_RESULT: ${{ needs.build-generative.result }}
       BUILD_LISTENING_RESULT: ${{ needs.build-listening.result }}
+      YOUTUBE_COOKIES_DATA: ${{ secrets.YOUTUBE_COOKIES }}
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
-        env:
-          YOUTUBE_COOKIES_DATA: ${{ secrets.YOUTUBE_COOKIES }}
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          password: ${{ secrets.VPS_PASSWORD }}
-          timeout: 80s
-          command_timeout: 30m
-          envs: BUILD_GATEWAY_RESULT,BUILD_AUTH_RESULT,BUILD_LEARN_RESULT,BUILD_STORAGE_RESULT,BUILD_FSRS_AI_RESULT,BUILD_GENERATIVE_RESULT,BUILD_LISTENING_RESULT,YOUTUBE_COOKIES_DATA
-          script: |
-            set -u
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-            export SUDO_PASSWORD='${{ secrets.VPS_PASSWORD }}'
-            SUDO_ASKPASS_SCRIPT="$(mktemp)"
-            cat > "$SUDO_ASKPASS_SCRIPT" << 'EOF'
-            #!/bin/sh
-            printf '%s\n' "$SUDO_PASSWORD"
-            EOF
-            chmod 700 "$SUDO_ASKPASS_SCRIPT"
-            export SUDO_ASKPASS="$SUDO_ASKPASS_SCRIPT"
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            sudo_run() {
-              sudo -A "$@"
-            }
+      - name: Configure Environment Files
+        run: |
+          # ── Create root .env (docker-compose variables) ──
+          cat > .env << 'ENVEOF'
+          GATEWAY_IMAGE=${{ env.IMAGE_PREFIX }}/gateway:latest
+          AUTH_IMAGE=${{ env.IMAGE_PREFIX }}/auth:latest
+          LEARN_IMAGE=${{ env.IMAGE_PREFIX }}/learn:latest
+          STORAGE_IMAGE=${{ env.IMAGE_PREFIX }}/storage:latest
+          FSRS_AI_IMAGE=${{ env.IMAGE_PREFIX }}/fsrs-ai:latest
+          GENERATIVE_IMAGE=${{ env.IMAGE_PREFIX }}/generative:latest
+          LISTENING_IMAGE=${{ env.IMAGE_PREFIX }}/listening-service:latest
+          API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT || '3000' }}
+          AUTH_PORT=${{ secrets.AUTH_PORT }}
+          LEARN_PORT=${{ secrets.LEARN_PORT }}
+          STORAGE_PORT=${{ secrets.STORAGE_PORT || '3003' }}
+          FSRS_AI_PORT=${{ secrets.FSRS_AI_PORT || '3004' }}
+          GENERATIVE_PORT=${{ secrets.GENERATIVE_PORT || '3005' }}
+          LISTENING_PORT=${{ secrets.LISTENING_PORT || '3006' }}
+          LEARN_DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
+          STORAGE_DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
+          GENERATIVE_DATABASE_URL=${{ secrets.GENERATIVE_DATABASE_URL }}
+          FSRS_AI_DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
+          LISTENING_DATABASE_URL=${{ secrets.LISTENING_DATABASE_URL || secrets.FSRS_AI_DATABASE_URL }}
+          FSRS_AI_ROOT_PATH=${{ secrets.FSRS_AI_ROOT_PATH || '/fsrs-ai' }}
+          LISTENING_ROOT_PATH=${{ secrets.LISTENING_ROOT_PATH || '/listening' }}
+          FSRS_TRAIN_MIN_VALID_LOGS=${{ secrets.FSRS_TRAIN_MIN_VALID_LOGS || '50' }}
+          FSRS_TRAIN_MIN_DAYS_SINCE_LAST=${{ secrets.FSRS_TRAIN_MIN_DAYS_SINCE_LAST || '3' }}
+          FSRS_TRAIN_MIN_IMPROVEMENT_PCT=${{ secrets.FSRS_TRAIN_MIN_IMPROVEMENT_PCT || '0.02' }}
+          FSRS_TRAIN_METRIC=${{ secrets.FSRS_TRAIN_METRIC || 'log_loss' }}
+          FSRS_RESCHEDULE_MAX_SHIFT_RATIO=${{ secrets.FSRS_RESCHEDULE_MAX_SHIFT_RATIO || '0.3' }}
+          FSRS_ASYNC_RESCHEDULE_ENABLED=${{ secrets.FSRS_ASYNC_RESCHEDULE_ENABLED || 'true' }}
+          AUTH_UPSTREAM_URL=http://auth:${{ secrets.AUTH_PORT }}
+          LEARN_UPSTREAM_URL=http://learn:${{ secrets.LEARN_PORT }}
+          STORAGE_UPSTREAM_URL=http://storage:${{ secrets.STORAGE_PORT || '3003' }}
+          FSRS_AI_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
+          FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
+          GENERATIVE_UPSTREAM_URL=http://generative:${{ secrets.GENERATIVE_PORT || '3005' }}
+          LISTENING_UPSTREAM_URL=http://listening:${{ secrets.LISTENING_PORT || '3006' }}
+          JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          REDIS_PORT=${{ secrets.REDIS_PORT }}
+          REDIS_DB=${{ secrets.REDIS_DB || '1' }}
+          REDIS_URL=redis://:${{ secrets.REDIS_PASSWORD }}@redis:6379/${{ secrets.REDIS_DB || '1' }}
+          RATE_LIMIT_MAX=${{ secrets.RATE_LIMIT_MAX || '100' }}
+          RATE_LIMIT_WINDOW_SEC=${{ secrets.RATE_LIMIT_WINDOW_SEC || '60' }}
+          TRUST_X_FORWARDED_FOR=${{ secrets.TRUST_X_FORWARDED_FOR || 'true' }}
+          TRUST_PROXY=${{ secrets.TRUST_PROXY || 'loopback' }}
+          CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+          IP_BLACKLIST=${{ secrets.IP_BLACKLIST }}
+          GATEWAY_SWAGGER_ENABLED=${{ secrets.GATEWAY_SWAGGER_ENABLED || 'true' }}
+          GATEWAY_SWAGGER_PATH=${{ secrets.GATEWAY_SWAGGER_PATH || 'api-docs' }}
+          GATEWAY_SWAGGER_TITLE=${{ secrets.GATEWAY_SWAGGER_TITLE || 'API Gateway' }}
+          AUTH_SWAGGER_ENABLED=${{ secrets.AUTH_SWAGGER_ENABLED || 'true' }}
+          AUTH_SWAGGER_PATH=${{ secrets.AUTH_SWAGGER_PATH || 'api-docs' }}
+          AUTH_SWAGGER_TITLE=${{ secrets.AUTH_SWAGGER_TITLE || 'Auth API' }}
+          LEARN_SWAGGER_ENABLED=${{ secrets.LEARN_SWAGGER_ENABLED || 'true' }}
+          LEARN_SWAGGER_PATH=${{ secrets.LEARN_SWAGGER_PATH || 'api-docs' }}
+          LEARN_SWAGGER_TITLE=${{ secrets.LEARN_SWAGGER_TITLE || 'Learn API' }}
+          STORAGE_SWAGGER_ENABLED=${{ secrets.STORAGE_SWAGGER_ENABLED || 'true' }}
+          STORAGE_SWAGGER_PATH=${{ secrets.STORAGE_SWAGGER_PATH || 'api-docs' }}
+          STORAGE_SWAGGER_TITLE=${{ secrets.STORAGE_SWAGGER_TITLE || 'Storage API' }}
+          ENVEOF
 
-            DEPLOY_DIR="${DEPLOY_DIR:-/home/deploy/english-learning-be}"
-            sudo_run mkdir -p "$DEPLOY_DIR"
-            sudo_run chown -R "$USER":"$USER" "$DEPLOY_DIR"
-            cd "$DEPLOY_DIR"
+          # ── Create auth/.env ──
+          mkdir -p auth
+          cat > auth/.env << 'ENVEOF'
+          DATABASE_URL=${{ secrets.AUTH_DATABASE_URL }}
+          REDIS_URL=${{ secrets.REDIS_URL || format('redis://:{0}@redis:6379', secrets.REDIS_PASSWORD) }}
+          PORT=${{ secrets.AUTH_PORT }}
+          NODE_ENV=production
+          JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+          JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION || '1h' }}
+          JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION || '7d' }}
+          COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
+          CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
+          GOOGLE_OAUTH_SUCCESS_REDIRECT_URL=${{ secrets.GOOGLE_OAUTH_SUCCESS_REDIRECT_URL }}
+          GOOGLE_OAUTH_FAILURE_REDIRECT_URL=${{ secrets.GOOGLE_OAUTH_FAILURE_REDIRECT_URL }}
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          MAIL_FROM_ADDRESS=${{ secrets.MAIL_FROM_ADDRESS }}
+          APP_PUBLIC_BASE_URL=${{ secrets.APP_PUBLIC_BASE_URL }}
+          EMAIL_VERIFICATION_TOKEN_TTL_MINUTES=${{ secrets.EMAIL_VERIFICATION_TOKEN_TTL_MINUTES || '60' }}
+          PASSWORD_RESET_TOKEN_TTL_MINUTES=${{ secrets.PASSWORD_RESET_TOKEN_TTL_MINUTES || '30' }}
+          ENVEOF
 
-            # Ensure deploy directory is writable before downloading files
-            test -w "$DEPLOY_DIR" || {
-              echo "❌ No write permission for $DEPLOY_DIR"
-              ls -ld "$DEPLOY_DIR"
-              id
-              exit 1
-            }
+          # ── Create learn/.env ──
+          mkdir -p learn
+          cat > learn/.env << 'ENVEOF'
+          DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
+          JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
+          REDIS_DB=${{ secrets.REDIS_DB || '0' }}
+          REDIS_URL=${{ secrets.REDIS_URL || format('redis://:{0}@redis:6379/{1}', secrets.REDIS_PASSWORD, secrets.REDIS_DB || '0') }}
+          CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+          FSRS_AI_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
+          PORT=${{ secrets.LEARN_PORT }}
+          ENVEOF
 
-            # ── Download docker-compose.yml directly (no git clone needed) ──
-            TMP_COMPOSE="$(mktemp "$DEPLOY_DIR/docker-compose.yml.XXXXXX")"
-            if curl -fsSL --retry 3 --connect-timeout 10 \
-              "https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.yml" \
-              -o "$TMP_COMPOSE"; then
-              mv "$TMP_COMPOSE" docker-compose.yml
+          # ── Create storage/.env ──
+          mkdir -p storage
+          cat > storage/.env << 'ENVEOF'
+          DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
+          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+          SIGNED_URL_TTL_SECONDS=${{ secrets.SIGNED_URL_TTL_SECONDS || '300' }}
+          MAX_FILE_SIZE_MB=${{ secrets.MAX_FILE_SIZE_MB || '10' }}
+          ALLOWED_MIME_TYPES=${{ secrets.ALLOWED_MIME_TYPES || 'image/png,image/jpeg,image/webp,video/mp4,application/pdf' }}
+          CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+          PORT=${{ secrets.STORAGE_PORT || '3003' }}
+          ENVEOF
+
+          # ── Create fsrs-ai/.env ──
+          mkdir -p fsrs-ai
+          cat > fsrs-ai/.env << 'ENVEOF'
+          DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
+          PORT=${{ secrets.FSRS_AI_PORT || '3004' }}
+          ROOT_PATH=${{ secrets.FSRS_AI_ROOT_PATH || '/fsrs-ai' }}
+          FSRS_TRAIN_MIN_VALID_LOGS=${{ secrets.FSRS_TRAIN_MIN_VALID_LOGS || '50' }}
+          FSRS_TRAIN_MIN_DAYS_SINCE_LAST=${{ secrets.FSRS_TRAIN_MIN_DAYS_SINCE_LAST || '3' }}
+          FSRS_TRAIN_MIN_IMPROVEMENT_PCT=${{ secrets.FSRS_TRAIN_MIN_IMPROVEMENT_PCT || '0.02' }}
+          FSRS_TRAIN_METRIC=${{ secrets.FSRS_TRAIN_METRIC || 'log_loss' }}
+          FSRS_RESCHEDULE_MAX_SHIFT_RATIO=${{ secrets.FSRS_RESCHEDULE_MAX_SHIFT_RATIO || '0.3' }}
+          FSRS_ASYNC_RESCHEDULE_ENABLED=${{ secrets.FSRS_ASYNC_RESCHEDULE_ENABLED || 'true' }}
+          ENVEOF
+
+          # ── Create generative/.env ──
+          mkdir -p generative
+          cat > generative/.env << 'ENVEOF'
+          PORT=${{ secrets.GENERATIVE_PORT || '3005' }}
+          DATABASE_URL=${{ secrets.GENERATIVE_DATABASE_URL }}
+          REDIS_URL=${{ secrets.REDIS_URL || format('redis://:{0}@redis:6379/{1}', secrets.REDIS_PASSWORD, secrets.REDIS_DB || '1') }}
+          CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+          OLLAMA_HOST=${{ secrets.OLLAMA_HOST || 'https://ollama.com' }}
+          OLLAMA_API_KEY=${{ secrets.OLLAMA_API_KEY }}
+          OLLAMA_ESSAY_MODEL=${{ secrets.OLLAMA_ESSAY_MODEL || 'gpt-oss:120b-cloud' }}
+          OLLAMA_CHAT_MODEL=${{ secrets.OLLAMA_CHAT_MODEL || 'qwen3.5:cloud' }}
+          OLLAMA_TEMPERATURE=${{ secrets.OLLAMA_TEMPERATURE || '0.5' }}
+          ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID=${{ secrets.ELEVENLABS_VOICE_ID }}
+          ELEVENLABS_MODEL_ID=${{ secrets.ELEVENLABS_MODEL_ID }}
+          ELEVENLABS_STT_MODEL_ID=${{ secrets.ELEVENLABS_STT_MODEL_ID }}
+          ENVEOF
+
+          # ── Create listening-service/.env ──
+          mkdir -p listening-service
+          cat > listening-service/.env << 'ENVEOF'
+          PORT=${{ secrets.LISTENING_PORT || '3006' }}
+          HOST=0.0.0.0
+          ROOT_PATH=${{ secrets.LISTENING_ROOT_PATH || '/listening' }}
+          CORS_ORIGIN=${{ secrets.CORS_ORIGIN || '*' }}
+          DATABASE_URL=${{ secrets.LISTENING_DATABASE_URL || secrets.FSRS_AI_DATABASE_URL }}
+          GENERATIVE_SERVICE_URL=http://generative:${{ secrets.GENERATIVE_PORT || '3005' }}
+          YOUTUBE_PROXY=${{ secrets.YOUTUBE_PROXY }}
+          ENVEOF
+
+          # ── Create listening-service/cookies.txt ──
+          touch listening-service/cookies.txt
+          if [ -n "$YOUTUBE_COOKIES_DATA" ]; then
+            printf '%s\n' "$YOUTUBE_COOKIES_DATA" > listening-service/cookies.txt
+          fi
+
+      - name: Pull and Deploy Services
+        run: |
+          set -u
+
+          pull_if_built() {
+            local service="$1"
+            local build_result="$2"
+
+            if [ "$build_result" = "success" ]; then
+              echo "🔄 Pulling latest image for $service (build succeeded)"
+              docker compose pull "$service" || echo "⚠️ Pull failed for $service, keeping existing image"
             else
-              echo "⚠️ Failed to download docker-compose.yml from GitHub; keeping existing file if present"
-              rm -f "$TMP_COMPOSE"
-              if [ ! -s docker-compose.yml ]; then
-                echo "❌ No valid docker-compose.yml available on server"
-                exit 1
-              fi
+              echo "⚠️ Build for $service = $build_result, skipping pull"
             fi
+          }
 
-            # ── Login to GHCR ──
-            echo "${{ secrets.GHCR_PAT }}" | sudo_run docker login ghcr.io -u ${{ secrets.VPS_USER }} --password-stdin
+          up_service() {
+            local service="$1"
+            echo "🚀 Starting $service"
+            docker compose up -d --no-deps "$service" || echo "⚠️ Failed to start $service"
+          }
 
-            # ── Create root .env (docker-compose variables) ──
-            cat > .env << ENVEOF
-            GATEWAY_IMAGE=${{ env.IMAGE_PREFIX }}/gateway:latest
-            AUTH_IMAGE=${{ env.IMAGE_PREFIX }}/auth:latest
-            LEARN_IMAGE=${{ env.IMAGE_PREFIX }}/learn:latest
-            STORAGE_IMAGE=${{ env.IMAGE_PREFIX }}/storage:latest
-            FSRS_AI_IMAGE=${{ env.IMAGE_PREFIX }}/fsrs-ai:latest
-            GENERATIVE_IMAGE=${{ env.IMAGE_PREFIX }}/generative:latest
-            LISTENING_IMAGE=${{ env.IMAGE_PREFIX }}/listening-service:latest
-            API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT || '3000' }}
-            AUTH_PORT=${{ secrets.AUTH_PORT }}
-            LEARN_PORT=${{ secrets.LEARN_PORT }}
-            STORAGE_PORT=${{ secrets.STORAGE_PORT || '3003' }}
-            FSRS_AI_PORT=${{ secrets.FSRS_AI_PORT || '3004' }}
-            GENERATIVE_PORT=${{ secrets.GENERATIVE_PORT || '3005' }}
-            LISTENING_PORT=${{ secrets.LISTENING_PORT || '3006' }}
-            LEARN_DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
-            STORAGE_DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
-            GENERATIVE_DATABASE_URL=${{ secrets.GENERATIVE_DATABASE_URL }}
-            FSRS_AI_DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
-            LISTENING_DATABASE_URL=${{ secrets.LISTENING_DATABASE_URL || secrets.FSRS_AI_DATABASE_URL }}
-            FSRS_AI_ROOT_PATH=${{ secrets.FSRS_AI_ROOT_PATH || '/fsrs-ai' }}
-            LISTENING_ROOT_PATH=${{ secrets.LISTENING_ROOT_PATH || '/listening' }}
-            FSRS_TRAIN_MIN_VALID_LOGS=${{ secrets.FSRS_TRAIN_MIN_VALID_LOGS || '50' }}
-            FSRS_TRAIN_MIN_DAYS_SINCE_LAST=${{ secrets.FSRS_TRAIN_MIN_DAYS_SINCE_LAST || '3' }}
-            FSRS_TRAIN_MIN_IMPROVEMENT_PCT=${{ secrets.FSRS_TRAIN_MIN_IMPROVEMENT_PCT || '0.02' }}
-            FSRS_TRAIN_METRIC=${{ secrets.FSRS_TRAIN_METRIC || 'log_loss' }}
-            FSRS_RESCHEDULE_MAX_SHIFT_RATIO=${{ secrets.FSRS_RESCHEDULE_MAX_SHIFT_RATIO || '0.3' }}
-            FSRS_ASYNC_RESCHEDULE_ENABLED=${{ secrets.FSRS_ASYNC_RESCHEDULE_ENABLED || 'true' }}
-            AUTH_UPSTREAM_URL=http://auth:${{ secrets.AUTH_PORT }}
-            LEARN_UPSTREAM_URL=http://learn:${{ secrets.LEARN_PORT }}
-            STORAGE_UPSTREAM_URL=http://storage:${{ secrets.STORAGE_PORT || '3003' }}
-            FSRS_AI_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
-            FSRS_AI_UPSTREAM_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
-            GENERATIVE_UPSTREAM_URL=http://generative:${{ secrets.GENERATIVE_PORT || '3005' }}
-            LISTENING_UPSTREAM_URL=http://listening:${{ secrets.LISTENING_PORT || '3006' }}
-            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            REDIS_PORT=${{ secrets.REDIS_PORT }}
-            REDIS_DB=${{ secrets.REDIS_DB || '1' }}
-            REDIS_URL=redis://:${{ secrets.REDIS_PASSWORD }}@redis:6379/${{ secrets.REDIS_DB || '1' }}
-            RATE_LIMIT_MAX=${{ secrets.RATE_LIMIT_MAX || '100' }}
-            RATE_LIMIT_WINDOW_SEC=${{ secrets.RATE_LIMIT_WINDOW_SEC || '60' }}
-            TRUST_X_FORWARDED_FOR=${{ secrets.TRUST_X_FORWARDED_FOR || 'true' }}
-            TRUST_PROXY=${{ secrets.TRUST_PROXY || 'loopback' }}
-            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
-            IP_BLACKLIST=${{ secrets.IP_BLACKLIST }}
-            GATEWAY_SWAGGER_ENABLED=${{ secrets.GATEWAY_SWAGGER_ENABLED || 'true' }}
-            GATEWAY_SWAGGER_PATH=${{ secrets.GATEWAY_SWAGGER_PATH || 'api-docs' }}
-            GATEWAY_SWAGGER_TITLE=${{ secrets.GATEWAY_SWAGGER_TITLE || 'API Gateway' }}
-            AUTH_SWAGGER_ENABLED=${{ secrets.AUTH_SWAGGER_ENABLED || 'true' }}
-            AUTH_SWAGGER_PATH=${{ secrets.AUTH_SWAGGER_PATH || 'api-docs' }}
-            AUTH_SWAGGER_TITLE=${{ secrets.AUTH_SWAGGER_TITLE || 'Auth API' }}
-            LEARN_SWAGGER_ENABLED=${{ secrets.LEARN_SWAGGER_ENABLED || 'true' }}
-            LEARN_SWAGGER_PATH=${{ secrets.LEARN_SWAGGER_PATH || 'api-docs' }}
-            LEARN_SWAGGER_TITLE=${{ secrets.LEARN_SWAGGER_TITLE || 'Learn API' }}
-            STORAGE_SWAGGER_ENABLED=${{ secrets.STORAGE_SWAGGER_ENABLED || 'true' }}
-            STORAGE_SWAGGER_PATH=${{ secrets.STORAGE_SWAGGER_PATH || 'api-docs' }}
-            STORAGE_SWAGGER_TITLE=${{ secrets.STORAGE_SWAGGER_TITLE || 'Storage API' }}
-            ENVEOF
+          # Always ensure infrastructure services run first
+          up_service redis
 
-            # ── Create auth/.env ──
-            mkdir -p auth
-            cat > auth/.env << ENVEOF
-            DATABASE_URL=${{ secrets.AUTH_DATABASE_URL }}
-            REDIS_URL=${{ secrets.REDIS_URL || format('redis://:{0}@redis:6379', secrets.REDIS_PASSWORD) }}
-            PORT=${{ secrets.AUTH_PORT }}
-            NODE_ENV=production
+          pull_if_built auth "$BUILD_AUTH_RESULT"
+          pull_if_built learn "$BUILD_LEARN_RESULT"
+          pull_if_built storage "$BUILD_STORAGE_RESULT"
+          pull_if_built fsrs-ai "$BUILD_FSRS_AI_RESULT"
+          pull_if_built generative "$BUILD_GENERATIVE_RESULT"
+          pull_if_built listening "$BUILD_LISTENING_RESULT"
+          pull_if_built api-gateway "$BUILD_GATEWAY_RESULT"
 
-            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
-            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
-            JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION || '1h' }}
-            JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION || '7d' }}
+          up_service auth
+          up_service learn
+          up_service storage
+          up_service fsrs-ai
+          up_service generative
+          up_service listening
+          up_service api-gateway
 
-            COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
-            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+          if ! docker compose ps --status running --services | grep -qx 'api-gateway'; then
+            echo "❌ api-gateway is not running after deploy"
+            docker compose logs --tail=100 api-gateway || true
+            exit 1
+          fi
 
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
-            GOOGLE_OAUTH_SUCCESS_REDIRECT_URL=${{ secrets.GOOGLE_OAUTH_SUCCESS_REDIRECT_URL }}
-            GOOGLE_OAUTH_FAILURE_REDIRECT_URL=${{ secrets.GOOGLE_OAUTH_FAILURE_REDIRECT_URL }}
-
-            RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
-            MAIL_FROM_ADDRESS=${{ secrets.MAIL_FROM_ADDRESS }}
-            APP_PUBLIC_BASE_URL=${{ secrets.APP_PUBLIC_BASE_URL }}
-            EMAIL_VERIFICATION_TOKEN_TTL_MINUTES=${{ secrets.EMAIL_VERIFICATION_TOKEN_TTL_MINUTES || '60' }}
-            PASSWORD_RESET_TOKEN_TTL_MINUTES=${{ secrets.PASSWORD_RESET_TOKEN_TTL_MINUTES || '30' }}
-            ENVEOF
-
-            # ── Create learn/.env ──
-            mkdir -p learn
-            cat > learn/.env << ENVEOF
-            DATABASE_URL=${{ secrets.LEARN_DATABASE_URL }}
-            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
-            REDIS_DB=${{ secrets.REDIS_DB || '0' }}
-            REDIS_URL=${{ secrets.REDIS_URL || format('redis://:{0}@redis:6379/{1}', secrets.REDIS_PASSWORD, secrets.REDIS_DB || '0') }}
-            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
-            FSRS_AI_URL=http://fsrs-ai:${{ secrets.FSRS_AI_PORT || '3004' }}
-            PORT=${{ secrets.LEARN_PORT }}
-            ENVEOF
-
-            # ── Create storage/.env ──
-            mkdir -p storage
-            cat > storage/.env << ENVEOF
-            DATABASE_URL=${{ secrets.STORAGE_DATABASE_URL }}
-            CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
-            CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
-            CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
-            SIGNED_URL_TTL_SECONDS=${{ secrets.SIGNED_URL_TTL_SECONDS || '300' }}
-            MAX_FILE_SIZE_MB=${{ secrets.MAX_FILE_SIZE_MB || '10' }}
-            ALLOWED_MIME_TYPES=${{ secrets.ALLOWED_MIME_TYPES || 'image/png,image/jpeg,image/webp,video/mp4,application/pdf' }}
-            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
-            PORT=${{ secrets.STORAGE_PORT || '3003' }}
-            ENVEOF
-
-            # ── Create fsrs-ai/.env (for ops debugging parity) ──
-            mkdir -p fsrs-ai
-            cat > fsrs-ai/.env << ENVEOF
-            DATABASE_URL=${{ secrets.FSRS_AI_DATABASE_URL }}
-            PORT=${{ secrets.FSRS_AI_PORT || '3004' }}
-            ROOT_PATH=${{ secrets.FSRS_AI_ROOT_PATH || '/fsrs-ai' }}
-            FSRS_TRAIN_MIN_VALID_LOGS=${{ secrets.FSRS_TRAIN_MIN_VALID_LOGS || '50' }}
-            FSRS_TRAIN_MIN_DAYS_SINCE_LAST=${{ secrets.FSRS_TRAIN_MIN_DAYS_SINCE_LAST || '3' }}
-            FSRS_TRAIN_MIN_IMPROVEMENT_PCT=${{ secrets.FSRS_TRAIN_MIN_IMPROVEMENT_PCT || '0.02' }}
-            FSRS_TRAIN_METRIC=${{ secrets.FSRS_TRAIN_METRIC || 'log_loss' }}
-            FSRS_RESCHEDULE_MAX_SHIFT_RATIO=${{ secrets.FSRS_RESCHEDULE_MAX_SHIFT_RATIO || '0.3' }}
-            FSRS_ASYNC_RESCHEDULE_ENABLED=${{ secrets.FSRS_ASYNC_RESCHEDULE_ENABLED || 'true' }}
-            ENVEOF
-
-            # ── Create generative/.env ──
-            mkdir -p generative
-            cat > generative/.env << ENVEOF
-            PORT=${{ secrets.GENERATIVE_PORT || '3005' }}
-            DATABASE_URL=${{ secrets.GENERATIVE_DATABASE_URL }}
-            REDIS_URL=${{ secrets.REDIS_URL || format('redis://:{0}@redis:6379/{1}', secrets.REDIS_PASSWORD, secrets.REDIS_DB || '1') }}
-            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
-            OLLAMA_HOST=${{ secrets.OLLAMA_HOST || 'https://ollama.com' }}
-            OLLAMA_API_KEY=${{ secrets.OLLAMA_API_KEY }}
-            OLLAMA_ESSAY_MODEL=${{ secrets.OLLAMA_ESSAY_MODEL || 'gpt-oss:120b-cloud' }}
-            OLLAMA_CHAT_MODEL=${{ secrets.OLLAMA_CHAT_MODEL || 'qwen3.5:cloud' }}
-            OLLAMA_TEMPERATURE=${{ secrets.OLLAMA_TEMPERATURE || '0.5' }}
-            ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}
-            ELEVENLABS_VOICE_ID=${{ secrets.ELEVENLABS_VOICE_ID }}
-            ELEVENLABS_MODEL_ID=${{ secrets.ELEVENLABS_MODEL_ID }}
-            ELEVENLABS_STT_MODEL_ID=${{ secrets.ELEVENLABS_STT_MODEL_ID }}
-            ENVEOF
-
-            # ── Create listening-service/.env ──
-            mkdir -p listening-service
-            cat > listening-service/.env << ENVEOF
-            PORT=${{ secrets.LISTENING_PORT || '3006' }}
-            HOST=0.0.0.0
-            ROOT_PATH=${{ secrets.LISTENING_ROOT_PATH || '/listening' }}
-            CORS_ORIGIN=${{ secrets.CORS_ORIGIN || '*' }}
-            DATABASE_URL=${{ secrets.LISTENING_DATABASE_URL || secrets.FSRS_AI_DATABASE_URL }}
-            GENERATIVE_SERVICE_URL=http://generative:${{ secrets.GENERATIVE_PORT || '3005' }}
-            YOUTUBE_PROXY=${{ secrets.YOUTUBE_PROXY }}
-            ENVEOF
-
-            # ── Create listening-service/cookies.txt ──
-            mkdir -p listening-service
-            touch listening-service/cookies.txt
-            if [ -n "${YOUTUBE_COOKIES_DATA:-}" ]; then
-              printf '%s\n' "$YOUTUBE_COOKIES_DATA" > listening-service/cookies.txt
-            fi
-
-            # ── Pull images & deploy (partial success tolerant) ──
-            pull_if_built() {
-              local service="$1"
-              local build_result="$2"
-
-              if [ "$build_result" = "success" ]; then
-                echo "🔄 Pulling latest image for $service (build succeeded)"
-                sudo_run docker compose pull "$service" || echo "⚠️ Pull failed for $service, will keep current local image"
-              else
-                echo "⚠️ Build for $service = $build_result, skip forced pull and keep current local image"
-              fi
-            }
-
-            up_service() {
-              local service="$1"
-              echo "🚀 Starting $service"
-              sudo_run docker compose up -d --no-deps "$service" || echo "⚠️ Failed to start $service"
-            }
-
-            # Always ensure redis and gateway are up.
-            up_service redis
-            pull_if_built auth "$BUILD_AUTH_RESULT"
-            pull_if_built learn "$BUILD_LEARN_RESULT"
-            pull_if_built storage "$BUILD_STORAGE_RESULT"
-            pull_if_built fsrs-ai "$BUILD_FSRS_AI_RESULT"
-            pull_if_built generative "$BUILD_GENERATIVE_RESULT"
-            pull_if_built listening "$BUILD_LISTENING_RESULT"
-            pull_if_built api-gateway "$BUILD_GATEWAY_RESULT"
-
-            up_service auth
-            up_service learn
-            up_service storage
-            up_service fsrs-ai
-            up_service generative
-            up_service listening
-            up_service api-gateway
-
-            if ! sudo_run docker compose ps --status running --services | grep -qx 'api-gateway'; then
-              echo "❌ api-gateway is not running after deploy"
-              sudo_run docker compose logs --tail=100 api-gateway || true
-              exit 1
-            fi
-
-            sudo_run docker image prune -f
-
-            echo "✅ Deployment complete!"
-            sudo_run docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
-            rm -f "$SUDO_ASKPASS_SCRIPT"
+          docker image prune -f
+          echo "✅ Local deployment complete!"
+          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
