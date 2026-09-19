@@ -3,7 +3,14 @@
 Spaced Repetition scheduling & ML optimization microservice.
 """
 
+import asyncio
 from contextlib import asynccontextmanager
+
+# Enforce standard asyncio event loop to prevent uvloop start_tls TLS handshake hangs
+try:
+    asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+except Exception:
+    pass
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
