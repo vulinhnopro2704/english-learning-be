@@ -488,7 +488,7 @@ jobs:
           up_service() {
             local service="$1"
             echo "🚀 Starting $service"
-            docker compose up -d --no-deps "$service" || echo "⚠️ Failed to start $service"
+            docker compose up -d --force-recreate --no-deps "$service" || echo "⚠️ Failed to start $service"
           }
 
           # Always ensure infrastructure services run first
