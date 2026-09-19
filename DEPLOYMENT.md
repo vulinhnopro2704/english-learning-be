@@ -127,6 +127,13 @@ Push to main ──► GitHub Actions
 | `FSRS_AI_DATABASE_URL` | PostgreSQL connection string (asyncpg format cho SQLAlchemy) | `postgresql+asyncpg://user:pass@host/db?ssl=require` |
 | `FSRS_AI_PORT`         | Port cho FSRS-AI service                                     | `3004`                                               |
 
+### 🎧 Listening Service
+
+| Secret                   | Mô tả                                                        | Ví dụ                                                |
+| ------------------------ | ------------------------------------------------------------ | ---------------------------------------------------- |
+| `LISTENING_DATABASE_URL` | PostgreSQL connection string (asyncpg format cho SQLAlchemy) | `postgresql+asyncpg://user:pass@host/db?ssl=require` |
+| `LISTENING_PORT`         | Port cho Listening service                                   | `3006`                                               |
+
 ### 🌐 Shared
 
 | Secret           | Mô tả                                       | Ví dụ                          |
