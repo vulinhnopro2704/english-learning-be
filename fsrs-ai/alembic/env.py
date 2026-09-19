@@ -7,12 +7,14 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.config import settings
 from app.models import Base
-from app.database import _normalize_asyncpg_url
+from app.database import _prepare_asyncpg_config
 
 config = context.config
 
+clean_url, engine_kwargs = _prepare_asyncpg_config(settings.DATABASE_URL)
+
 # Override sqlalchemy.url from .env
-config.set_main_option("sqlalchemy.url", _normalize_asyncpg_url(settings.DATABASE_URL))
+config.set_main_option("sqlalchemy.url", clean_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -45,12 +47,7 @@ async def run_async_migrations() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        connect_args={
-            "timeout": 60,
-            "command_timeout": 60,
-            "statement_cache_size": 0,
-            "prepared_statement_cache_size": 0,
-        },
+        connect_args=engine_kwargs.get("connect_args", {}),
     )
 
     async with connectable.connect() as connection:
