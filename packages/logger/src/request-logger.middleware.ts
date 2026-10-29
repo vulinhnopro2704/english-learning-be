@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { TRACE_ID_HEADER } from './constants';
-import type { RequestLoggerOptions } from './types';
-import { AppLogger } from './app-logger';
+import { TRACE_ID_HEADER } from './constants.js';
+import type { RequestLoggerOptions } from './types.js';
+import { AppLogger } from './app-logger.js';
 
 const getClientIp = (req: Request): string => {
   const forwarded = req.header('x-forwarded-for');

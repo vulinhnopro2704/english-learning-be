@@ -90,12 +90,12 @@ cd <service>
 npm run build          # Nest build
 npm run format         # Prettier --write
 npm run lint           # ESLint --fix
-npm run test           # Jest
-npm run test:watch     # Jest --watch
-npm run test:cov       # Jest --coverage
+npm run test           # Vitest
+npm run test:watch     # Vitest --watch
+npm run test:cov       # Vitest --coverage
 npm run test:e2e       # Jest e2e config
 npm run start:dev      # Nest start --watch
-npm run start:prod     # node dist/src/main.js
+npm run start:prod     # node dist/main.js
 ```
 
 Prisma (auth, learn, storage, generative):

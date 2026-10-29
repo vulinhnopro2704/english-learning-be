@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createLogger, format, transports, Logger } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
-import type { LoggerOptions } from './types';
+import type { LoggerOptions } from './types.js';
 
 const timestamp = (): string => dayjs().format('YYYY/MM/DD HH:mm:ss');
 

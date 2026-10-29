@@ -134,7 +134,9 @@ export class GatewayProxyService {
       if (this.requiresAuth(req.method, req.path)) {
         try {
           forwardedIdentity = await this.verifyAccessToken(req);
-          userProfile = await this.redisService.getUserProfile(forwardedIdentity.sub);
+          userProfile = await this.redisService.getUserProfile(
+            forwardedIdentity.sub,
+          );
         } catch (error) {
           if (!isListeningRoute) {
             const errorResponse =
@@ -149,7 +151,8 @@ export class GatewayProxyService {
             const message =
               typeof errorResponse === 'object' &&
               errorResponse !== null &&
-              typeof (errorResponse as { message?: unknown }).message === 'string'
+              typeof (errorResponse as { message?: unknown }).message ===
+                'string'
                 ? (errorResponse as { message: string }).message
                 : 'Unauthorized';
             res.status(HttpStatus.UNAUTHORIZED).json(
@@ -441,7 +444,12 @@ export class GatewayProxyService {
       targetBase,
     );
 
-    const headers = this.buildForwardHeaders(req, identity, userProfile, clientIp);
+    const headers = this.buildForwardHeaders(
+      req,
+      identity,
+      userProfile,
+      clientIp,
+    );
     const hasBody = !['GET', 'HEAD'].includes(req.method.toUpperCase());
 
     const body = hasBody ? this.buildRequestBody(req, headers) : undefined;
@@ -455,10 +463,7 @@ export class GatewayProxyService {
         redirect: 'manual',
       });
 
-      if (
-        req.path === '/auth/google' ||
-        req.path === '/auth/google/callback'
-      ) {
+      if (req.path === '/auth/google' || req.path === '/auth/google/callback') {
         this.logger.log(
           `OAuth proxy ${req.method.toUpperCase()} ${req.path} -> ${response.status} location=${response.headers.get('location') ?? 'none'} traceId=${this.getTraceId(req)}`,
         );
@@ -468,7 +473,10 @@ export class GatewayProxyService {
       res.status(response.status);
 
       const contentType = response.headers.get('content-type') ?? '';
-      const isAudioOrVideo = contentType.includes('audio') || contentType.includes('video') || contentType.includes('octet-stream');
+      const isAudioOrVideo =
+        contentType.includes('audio') ||
+        contentType.includes('video') ||
+        contentType.includes('octet-stream');
       const isChunked = response.headers.get('transfer-encoding') === 'chunked';
 
       if (response.body && (isAudioOrVideo || isChunked)) {
@@ -606,8 +614,14 @@ export class GatewayProxyService {
       if (userProfile.gender) {
         headers.set('x-user-gender', userProfile.gender);
       }
-      if (Array.isArray(userProfile.hobbies) && userProfile.hobbies.length > 0) {
-        headers.set('x-user-hobbies', encodeURIComponent(userProfile.hobbies.join(',')));
+      if (
+        Array.isArray(userProfile.hobbies) &&
+        userProfile.hobbies.length > 0
+      ) {
+        headers.set(
+          'x-user-hobbies',
+          encodeURIComponent(userProfile.hobbies.join(',')),
+        );
       }
       if (userProfile.funFact) {
         headers.set('x-user-fun-fact', encodeURIComponent(userProfile.funFact));

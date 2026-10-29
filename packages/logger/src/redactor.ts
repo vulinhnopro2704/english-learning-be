@@ -1,5 +1,5 @@
-import { DEFAULT_BODY_MAX, DEFAULT_PREVIEW_LENGTH } from './constants';
-import type { RedactOptions, SanitizedBody } from './types';
+import { DEFAULT_BODY_MAX, DEFAULT_PREVIEW_LENGTH } from './constants.js';
+import type { RedactOptions, SanitizedBody } from './types.js';
 
 const MAX_DEPTH = 8;
 

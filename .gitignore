@@ -48,6 +48,7 @@ dist
 # temp directory
 .temp
 .tmp
+.archify/
 
 # Runtime data
 pids

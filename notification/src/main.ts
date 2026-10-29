@@ -33,7 +33,10 @@ async function bootstrap() {
   });
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
-  appLogger.log(`Application is running on: http://localhost:${port}`, 'Bootstrap');
+  appLogger.log(
+    `Application is running on: http://localhost:${port}`,
+    'Bootstrap',
+  );
   if (swaggerEnabled) {
     appLogger.log(
       `API Docs (Scalar): http://localhost:${port}/${swaggerPath}`,

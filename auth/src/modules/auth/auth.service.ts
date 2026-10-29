@@ -527,8 +527,10 @@ export class AuthService {
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const dataToUpdate: any = {};
     if (dto.name !== undefined) dataToUpdate.name = dto.name;
-    if (dto.phoneNumber !== undefined) dataToUpdate.phoneNumber = dto.phoneNumber;
-    if (dto.dateOfBirth !== undefined) dataToUpdate.dateOfBirth = new Date(dto.dateOfBirth);
+    if (dto.phoneNumber !== undefined)
+      dataToUpdate.phoneNumber = dto.phoneNumber;
+    if (dto.dateOfBirth !== undefined)
+      dataToUpdate.dateOfBirth = new Date(dto.dateOfBirth);
     if (dto.gender !== undefined) dataToUpdate.gender = dto.gender;
     if (dto.hobbies !== undefined) dataToUpdate.hobbies = dto.hobbies;
     if (dto.funFact !== undefined) dataToUpdate.funFact = dto.funFact;

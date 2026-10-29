@@ -335,7 +335,8 @@ export class RoleplayService {
     });
 
     const chatHistory = [...pastMessages, newUserMsg].map((msg) => ({
-      role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+      role: (msg.role === 'user' ? 'user' : 'assistant') as
+        'user' | 'assistant',
       content: msg.content,
     }));
 
@@ -369,9 +370,15 @@ export class RoleplayService {
       currentGrammarFeedback.push(llmResponse.grammar_feedback);
     }
 
-    const updatedTask1 = session.sessionEvaluation.task1Completed || llmResponse.task_evaluation.task_1_completed;
-    const updatedTask2 = session.sessionEvaluation.task2Completed || llmResponse.task_evaluation.task_2_completed;
-    const updatedTask3 = session.sessionEvaluation.task3Completed || llmResponse.task_evaluation.task_3_completed;
+    const updatedTask1 =
+      session.sessionEvaluation.task1Completed ||
+      llmResponse.task_evaluation.task_1_completed;
+    const updatedTask2 =
+      session.sessionEvaluation.task2Completed ||
+      llmResponse.task_evaluation.task_2_completed;
+    const updatedTask3 =
+      session.sessionEvaluation.task3Completed ||
+      llmResponse.task_evaluation.task_3_completed;
 
     await this.prisma.sessionEvaluation.update({
       where: { id: session.sessionEvaluation.id },
@@ -626,21 +633,32 @@ export class RoleplayService {
         const camelKey = `task${keyNum}Completed`;
         const shortSnakeKey = `task_${keyNum}`;
         const shortCamelKey = `task${keyNum}`;
-        
-        const val = taskEval[snakeKey] !== undefined ? taskEval[snakeKey] :
-                    taskEval[camelKey] !== undefined ? taskEval[camelKey] :
-                    taskEval[shortSnakeKey] !== undefined ? taskEval[shortSnakeKey] :
-                    taskEval[shortCamelKey] !== undefined ? taskEval[shortCamelKey] :
-                    parsed[snakeKey] !== undefined ? parsed[snakeKey] :
-                    parsed[camelKey] !== undefined ? parsed[camelKey] :
-                    parsed[shortSnakeKey] !== undefined ? parsed[shortSnakeKey] :
-                    parsed[shortCamelKey] !== undefined ? parsed[shortCamelKey] :
-                    undefined;
+
+        const val =
+          taskEval[snakeKey] !== undefined
+            ? taskEval[snakeKey]
+            : taskEval[camelKey] !== undefined
+              ? taskEval[camelKey]
+              : taskEval[shortSnakeKey] !== undefined
+                ? taskEval[shortSnakeKey]
+                : taskEval[shortCamelKey] !== undefined
+                  ? taskEval[shortCamelKey]
+                  : parsed[snakeKey] !== undefined
+                    ? parsed[snakeKey]
+                    : parsed[camelKey] !== undefined
+                      ? parsed[camelKey]
+                      : parsed[shortSnakeKey] !== undefined
+                        ? parsed[shortSnakeKey]
+                        : parsed[shortCamelKey] !== undefined
+                          ? parsed[shortCamelKey]
+                          : undefined;
 
         if (val === undefined) {
-          return keyNum === 1 ? (currentStatus?.task_1_completed ?? false) :
-                 keyNum === 2 ? (currentStatus?.task_2_completed ?? false) :
-                 (currentStatus?.task_3_completed ?? false);
+          return keyNum === 1
+            ? (currentStatus?.task_1_completed ?? false)
+            : keyNum === 2
+              ? (currentStatus?.task_2_completed ?? false)
+              : (currentStatus?.task_3_completed ?? false);
         }
 
         if (typeof val === 'string') {
@@ -656,16 +674,19 @@ export class RoleplayService {
       };
 
       return {
-        ai_spoken_response: typeof parsed.ai_spoken_response === 'string'
-          ? parsed.ai_spoken_response
-          : (rawText.trim() || 'I see. Please go on.'),
+        ai_spoken_response:
+          typeof parsed.ai_spoken_response === 'string'
+            ? parsed.ai_spoken_response
+            : rawText.trim() || 'I see. Please go on.',
         task_evaluation: validatedStatus,
-        grammar_feedback: typeof parsed.grammar_feedback === 'string'
-          ? parsed.grammar_feedback
-          : null,
-        scenario_completed: typeof parsed.scenario_completed === 'boolean'
-          ? parsed.scenario_completed
-          : false,
+        grammar_feedback:
+          typeof parsed.grammar_feedback === 'string'
+            ? parsed.grammar_feedback
+            : null,
+        scenario_completed:
+          typeof parsed.scenario_completed === 'boolean'
+            ? parsed.scenario_completed
+            : false,
       };
     } catch (error) {
       this.logger.warn(

@@ -27,4 +27,4 @@ ARG PORT=3000
 ENV PORT=${PORT}
 EXPOSE ${PORT}
 
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]

@@ -18,7 +18,9 @@ export class CreateFileDto {
   @IsNotEmpty()
   publicId!: string;
 
-  @ApiProperty({ example: 'https://res.cloudinary.com/demo/image/upload/v1/file_123.png' })
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/demo/image/upload/v1/file_123.png',
+  })
   @IsUrl({ require_tld: false })
   secureUrl!: string;
 

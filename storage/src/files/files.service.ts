@@ -178,7 +178,7 @@ export class FilesService {
       base64Data = parts[1] || parts[0];
     }
     const audioBuffer = Buffer.from(base64Data, 'base64');
-    
+
     const maxSizeMb = Number(
       this.configService.get<string>('MAX_FILE_SIZE_MB') ?? '10',
     );
@@ -192,7 +192,9 @@ export class FilesService {
     }
 
     const format = this.resolveAudioFormat(dto.mimeType, 'audio.mp3');
-    const sourceHash = createHash('sha1').update(base64Data.slice(0, 50) + Date.now().toString()).digest('hex');
+    const sourceHash = createHash('sha1')
+      .update(base64Data.slice(0, 50) + Date.now().toString())
+      .digest('hex');
     const publicId = `${dto.folder}/roleplay-${sourceHash.slice(0, 12)}`;
 
     const uploaded = await this.cloudinaryService.uploadBuffer({

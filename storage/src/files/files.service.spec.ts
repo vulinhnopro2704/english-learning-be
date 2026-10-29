@@ -1,4 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { ConfigService } from '@nestjs/config';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { FileType } from '../generated/prisma/client';
@@ -23,17 +24,19 @@ describe('FilesService', () => {
       folder: 'users/avatar',
       resourceType: 'image',
     }),
-    generateDownloadUrl: jest.fn().mockReturnValue('https://api.cloudinary.com/signed'),
+    generateDownloadUrl: jest
+      .fn()
+      .mockReturnValue('https://api.cloudinary.com/signed'),
   } as unknown as CloudinaryService;
 
   const configMock = {
     get: (key: string) =>
       (
-        {
+        ({
           MAX_FILE_SIZE_MB: '10',
           ALLOWED_MIME_TYPES: 'image/png,image/jpeg',
           SIGNED_URL_TTL_SECONDS: '300',
-        } as Record<string, string>
+        }) as Record<string, string>
       )[key],
   } as ConfigService;
 
@@ -64,7 +67,7 @@ describe('FilesService', () => {
         size: 1024,
         folder: 'users/avatar',
       }),
-    ).toThrow(BadRequestException);
+    ).toThrow(ApiException);
   });
 
   it('should throw not found when file id does not exist', async () => {
@@ -72,7 +75,7 @@ describe('FilesService', () => {
 
     await expect(
       service.getFileById('f8ec6fd6-49cb-4612-afdc-650431e1c5fa'),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(ApiException);
   });
 
   it('should map prisma enum to cloudinary resource type when generating download url', async () => {

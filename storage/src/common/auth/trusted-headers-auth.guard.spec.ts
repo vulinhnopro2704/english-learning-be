@@ -1,5 +1,5 @@
 import type { ExecutionContext } from '@nestjs/common';
-import { UnauthorizedException } from '@nestjs/common';
+import { ApiException } from '@english-learning/nest-error-handler';
 import { TrustedHeadersAuthGuard } from './trusted-headers-auth.guard';
 
 type HeaderRequest = {
@@ -12,9 +12,7 @@ type HeaderRequest = {
   };
 };
 
-const createExecutionContext = (
-  request: HeaderRequest,
-): ExecutionContext =>
+const createExecutionContext = (request: HeaderRequest): ExecutionContext =>
   ({
     switchToHttp: () => ({
       getRequest: () => request,
@@ -32,7 +30,7 @@ describe('TrustedHeadersAuthGuard', () => {
     const context = createExecutionContext({
       header: () => undefined,
     });
-    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+    expect(() => guard.canActivate(context)).toThrow(ApiException);
   });
 
   it('should attach user from trusted headers', () => {

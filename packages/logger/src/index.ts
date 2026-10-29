@@ -1,9 +1,9 @@
 import type { Request } from 'express';
-import { TRACE_ID_HEADER, DEFAULT_REDACT_KEYS } from './constants';
-import { AppLogger } from './app-logger';
-import { createRequestLoggerMiddleware } from './request-logger.middleware';
-import { sanitizeBody } from './redactor';
-import type { LoggerOptions, RequestLoggerOptions, SanitizedBody } from './types';
+import { TRACE_ID_HEADER, DEFAULT_REDACT_KEYS } from './constants.js';
+import { AppLogger } from './app-logger.js';
+import { createRequestLoggerMiddleware } from './request-logger.middleware.js';
+import { sanitizeBody } from './redactor.js';
+import type { LoggerOptions, RequestLoggerOptions, SanitizedBody } from './types.js';
 
 export {
   AppLogger,

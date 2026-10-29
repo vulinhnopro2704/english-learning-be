@@ -30,7 +30,9 @@ export class FileResponseDto {
   @ApiProperty({ example: 'users/avatars/file_123' })
   publicId!: string;
 
-  @ApiProperty({ example: 'https://res.cloudinary.com/demo/image/upload/v1/file_123.png' })
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/demo/image/upload/v1/file_123.png',
+  })
   secureUrl!: string;
 
   @ApiProperty({ enum: ['IMAGE', 'VIDEO', 'FILE'] })

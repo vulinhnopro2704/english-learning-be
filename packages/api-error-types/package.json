@@ -3,8 +3,16 @@
   "version": "0.1.5",
   "description": "Shared API error response types for English Learning platform",
   "license": "MIT",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -16,7 +24,7 @@
     "prepare": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@types/node": "^25.5.2",
+    "@types/node": "^26.6.6",
     "typescript": "^6.0.2"
   }
 }

@@ -134,7 +134,9 @@ export class RoleplayController {
     @CurrentUser() user: any,
   ): Promise<StartRoleplayResult> {
     try {
-      this.logger.log(`Starting role-play session for user=${user?.id} scenario=${dto.scenarioId}`);
+      this.logger.log(
+        `Starting role-play session for user=${user?.id} scenario=${dto.scenarioId}`,
+      );
       return await this.roleplayService.startSession(dto, user.id, user.email);
     } catch (error) {
       this.logger.error(

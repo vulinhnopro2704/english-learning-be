@@ -13,14 +13,110 @@ const MOCHI_BASE_URL =
   'https://mochien-server-release.mochidemy.com/api/v5.0/words/dictionary-english';
 
 const STOP_WORDS = new Set([
-  'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with',
-  'he', 'as', 'you', 'do', 'at', 'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her',
-  'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what', 'so', 'up',
-  'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me', 'when', 'make', 'can', 'like', 'time',
-  'no', 'just', 'him', 'know', 'take', 'people', 'into', 'year', 'your', 'good', 'some', 'could',
-  'them', 'see', 'other', 'than', 'then', 'now', 'look', 'only', 'come', 'its', 'over', 'think',
-  'also', 'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well', 'way', 'even',
-  'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us', 'is', 'are', 'was', 'were',
+  'the',
+  'be',
+  'to',
+  'of',
+  'and',
+  'a',
+  'in',
+  'that',
+  'have',
+  'i',
+  'it',
+  'for',
+  'not',
+  'on',
+  'with',
+  'he',
+  'as',
+  'you',
+  'do',
+  'at',
+  'this',
+  'but',
+  'his',
+  'by',
+  'from',
+  'they',
+  'we',
+  'say',
+  'her',
+  'she',
+  'or',
+  'an',
+  'will',
+  'my',
+  'one',
+  'all',
+  'would',
+  'there',
+  'their',
+  'what',
+  'so',
+  'up',
+  'out',
+  'if',
+  'about',
+  'who',
+  'get',
+  'which',
+  'go',
+  'me',
+  'when',
+  'make',
+  'can',
+  'like',
+  'time',
+  'no',
+  'just',
+  'him',
+  'know',
+  'take',
+  'people',
+  'into',
+  'year',
+  'your',
+  'good',
+  'some',
+  'could',
+  'them',
+  'see',
+  'other',
+  'than',
+  'then',
+  'now',
+  'look',
+  'only',
+  'come',
+  'its',
+  'over',
+  'think',
+  'also',
+  'back',
+  'after',
+  'use',
+  'two',
+  'how',
+  'our',
+  'work',
+  'first',
+  'well',
+  'way',
+  'even',
+  'new',
+  'want',
+  'because',
+  'any',
+  'these',
+  'give',
+  'day',
+  'most',
+  'us',
+  'is',
+  'are',
+  'was',
+  'were',
 ]);
 
 interface MochiWordResult {
@@ -46,7 +142,12 @@ export class ListeningAiService {
   async generateListeningContent(
     dto: GenerateListeningContentDto,
   ): Promise<GeneratedListeningLessonResponseDto> {
-    const { segments, difficulty = 'medium', targetVocabCount = 12, targetQuizCount = 4 } = dto;
+    const {
+      segments,
+      difficulty = 'medium',
+      targetVocabCount = 12,
+      targetQuizCount = 4,
+    } = dto;
 
     this.logger.log(
       `[ListeningAI] Starting content generation — segments=${segments.length} difficulty=${difficulty} targetVocab=${targetVocabCount} targetQuiz=${targetQuizCount}`,
@@ -82,7 +183,11 @@ export class ListeningAiService {
 
     const chunks = this.chunkSegments(segments, 400);
     const cefrTarget =
-      difficulty === 'easy' ? 'A2 to B1' : difficulty === 'hard' ? 'B2 to C1' : 'B1 to B2';
+      difficulty === 'easy'
+        ? 'A2 to B1'
+        : difficulty === 'hard'
+          ? 'B2 to C1'
+          : 'B1 to B2';
 
     // Extract candidate words from each chunk
     const candidatePromises = chunks.map(async (chunk, idx) => {
@@ -153,40 +258,50 @@ Rules:
         const lower = w.toLowerCase();
         if (!STOP_WORDS.has(lower) && !uniqueWordMap.has(lower)) {
           // find sentence
-          const seg = segments.find((s) => s.text.toLowerCase().includes(lower));
+          const seg = segments.find((s) =>
+            s.text.toLowerCase().includes(lower),
+          );
           uniqueWordMap.set(lower, seg ? seg.text : '');
           if (uniqueWordMap.size >= targetCount + 5) break;
         }
       }
     }
 
-    const selectedWords = Array.from(uniqueWordMap.entries()).slice(0, targetCount);
+    const selectedWords = Array.from(uniqueWordMap.entries()).slice(
+      0,
+      targetCount,
+    );
 
     // Enrich each word with standard Mochi Dictionary data
-    const enrichedPromises = selectedWords.map(async ([word, contextSentence], index) => {
-      const mochiData = await this.lookupMochiDictionary(word);
+    const enrichedPromises = selectedWords.map(
+      async ([word, contextSentence], index) => {
+        const mochiData = await this.lookupMochiDictionary(word);
 
-      if (mochiData) {
+        if (mochiData) {
+          return {
+            id: index + 1,
+            word: mochiData.word,
+            partOfSpeech: mochiData.partOfSpeech || 'n',
+            phonetic: mochiData.phonetic || '',
+            meaningVi: mochiData.meaningVi,
+            example: contextSentence || mochiData.example || '',
+            exampleVi: mochiData.exampleVi || '',
+            audioUrl: mochiData.audioUrl || null,
+            externalDictionaryId: mochiData.externalDictionaryId || null,
+          };
+        }
+
+        // If word not found in Mochi dictionary, generate accurate definition via LLM
+        const fallbackItem = await this.generateSingleVocabDefinition(
+          word,
+          contextSentence,
+        );
         return {
           id: index + 1,
-          word: mochiData.word,
-          partOfSpeech: mochiData.partOfSpeech || 'n',
-          phonetic: mochiData.phonetic || '',
-          meaningVi: mochiData.meaningVi,
-          example: contextSentence || mochiData.example || '',
-          exampleVi: mochiData.exampleVi || '',
-          audioUrl: mochiData.audioUrl || null,
-          externalDictionaryId: mochiData.externalDictionaryId || null,
+          ...fallbackItem,
         };
-      }
-
-      // If word not found in Mochi dictionary, generate accurate definition via LLM
-      const fallbackItem = await this.generateSingleVocabDefinition(word, contextSentence);
-      return {
-        id: index + 1,
-        ...fallbackItem,
-      };
-    });
+      },
+    );
 
     return Promise.all(enrichedPromises);
   }
@@ -207,12 +322,19 @@ Rules:
     const checkpoints = this.selectCheckpoints(segments, targetCount);
 
     const quizPromises = checkpoints.map(async (checkpoint, qIdx) => {
-      const windowSegments = this.getSegmentWindow(segments, checkpoint.segmentIndex, 6);
+      const windowSegments = this.getSegmentWindow(
+        segments,
+        checkpoint.segmentIndex,
+        6,
+      );
       const windowStart = windowSegments[0]?.start ?? checkpoint.timestamp;
-      const windowEnd = windowSegments[windowSegments.length - 1]?.end ?? (windowStart + 15);
+      const windowEnd =
+        windowSegments[windowSegments.length - 1]?.end ?? windowStart + 15;
 
       const formattedLines = windowSegments
-        .map((s) => `[${s.start.toFixed(1)}s - ${s.end.toFixed(1)}s]: "${s.text}"`)
+        .map(
+          (s) => `[${s.start.toFixed(1)}s - ${s.end.toFixed(1)}s]: "${s.text}"`,
+        )
         .join('\n');
       const timestamp = checkpoint.timestamp;
 
@@ -265,19 +387,27 @@ Return ONLY a valid JSON object with format:
           segment_timestamp?: number;
         }>(res.content);
 
-        if (!parsed || !parsed.question || !Array.isArray(parsed.options) || parsed.options.length < 2) {
+        if (
+          !parsed ||
+          !parsed.question ||
+          !Array.isArray(parsed.options) ||
+          parsed.options.length < 2
+        ) {
           throw new Error('Invalid quiz response structure from LLM');
         }
 
         // Ensure 4 options
         const options = parsed.options.slice(0, 4);
         while (options.length < 4) {
-          options.push(`Alternative perspective on the topic discussed at ${Math.floor(timestamp)}s`);
+          options.push(
+            `Alternative perspective on the topic discussed at ${Math.floor(timestamp)}s`,
+          );
         }
 
-        let correctIndex = typeof parsed.correct_answer_index === 'number'
-          ? Math.max(0, Math.min(3, parsed.correct_answer_index))
-          : 0;
+        let correctIndex =
+          typeof parsed.correct_answer_index === 'number'
+            ? Math.max(0, Math.min(3, parsed.correct_answer_index))
+            : 0;
 
         // Distribute correct answer index dynamically across questions (0, 1, 2, 3)
         const desiredIndex = qIdx % 4;
@@ -294,7 +424,8 @@ Return ONLY a valid JSON object with format:
             ? parsed.start_time
             : windowStart;
         const validEndTime =
-          typeof parsed.end_time === 'number' && parsed.end_time > validStartTime
+          typeof parsed.end_time === 'number' &&
+          parsed.end_time > validStartTime
             ? parsed.end_time
             : windowEnd;
 
@@ -303,7 +434,9 @@ Return ONLY a valid JSON object with format:
           question: parsed.question,
           options,
           correctAnswerIndex: correctIndex,
-          explanation: parsed.explanation || 'Đáp án chính xác được rút ra từ lời nói của người nói trong đoạn video.',
+          explanation:
+            parsed.explanation ||
+            'Đáp án chính xác được rút ra từ lời nói của người nói trong đoạn video.',
           segmentTimestamp: validStartTime,
           startTime: Number(validStartTime.toFixed(1)),
           endTime: Number(validEndTime.toFixed(1)),
@@ -322,7 +455,8 @@ Return ONLY a valid JSON object with format:
             'Stopping practice immediately after starting',
           ],
           correctAnswerIndex: 0,
-          explanation: 'Ý chính được người nói đề cập trực tiếp trong đoạn nghe này.',
+          explanation:
+            'Ý chính được người nói đề cập trực tiếp trong đoạn nghe này.',
           segmentTimestamp: windowStart,
           startTime: Number(windowStart.toFixed(1)),
           endTime: Number(windowEnd.toFixed(1)),
@@ -359,23 +493,35 @@ Return ONLY a valid JSON object with format:
       }
 
       const payload = (await response.json()) as any;
-      if (!payload || !Array.isArray(payload.data) || payload.data.length === 0) {
+      if (
+        !payload ||
+        !Array.isArray(payload.data) ||
+        payload.data.length === 0
+      ) {
         return null;
       }
 
       const entry = payload.data[0];
       const wordDetail = entry?.words?.[0] || entry;
 
-      const meaningVi = wordDetail?.trans || wordDetail?.definition || `Nghĩa của từ ${cleanWord}`;
-      const phonetic = entry?.phoneticUs || entry?.phoneticUk || wordDetail?.phonetic || '';
-      const audioUrl = entry?.audioUs || entry?.audioUk || wordDetail?.audio || null;
+      const meaningVi =
+        wordDetail?.trans ||
+        wordDetail?.definition ||
+        `Nghĩa của từ ${cleanWord}`;
+      const phonetic =
+        entry?.phoneticUs || entry?.phoneticUk || wordDetail?.phonetic || '';
+      const audioUrl =
+        entry?.audioUs || entry?.audioUk || wordDetail?.audio || null;
       const partOfSpeech = entry?.position || wordDetail?.position || 'n';
       const externalDictionaryId = wordDetail?.id || entry?.id || null;
 
       // Extract example if present in Mochi
       let example = '';
       let exampleVi = '';
-      if (Array.isArray(wordDetail?.sentenceAudio) && wordDetail.sentenceAudio.length > 0) {
+      if (
+        Array.isArray(wordDetail?.sentenceAudio) &&
+        wordDetail.sentenceAudio.length > 0
+      ) {
         example = wordDetail.sentenceAudio[0]?.key || '';
         exampleVi = wordDetail.sentenceAudio[0]?.trans || '';
       }
@@ -455,7 +601,10 @@ Return ONLY a JSON object:
   /**
    * Group segments into chunks of ~targetWordCount words.
    */
-  private chunkSegments(segments: SegmentInputDto[], targetWordCount = 400): SegmentInputDto[][] {
+  private chunkSegments(
+    segments: SegmentInputDto[],
+    targetWordCount = 400,
+  ): SegmentInputDto[][] {
     const chunks: SegmentInputDto[][] = [];
     let currentChunk: SegmentInputDto[] = [];
     let currentWordCount = 0;

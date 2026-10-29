@@ -18,7 +18,8 @@ export class ListeningAiController {
   @Post('generate-lesson-content')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Generate dynamic 3-step listening lesson content (Vocab + Quizzes) via AI pipeline',
+    summary:
+      'Generate dynamic 3-step listening lesson content (Vocab + Quizzes) via AI pipeline',
   })
   @ApiResponse({
     status: 200,
@@ -34,7 +35,8 @@ export class ListeningAiController {
   @Post('extract-vocab')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Extract 10-15 key vocabulary items from transcript enriched with Mochi Dictionary',
+    summary:
+      'Extract 10-15 key vocabulary items from transcript enriched with Mochi Dictionary',
   })
   @ApiResponse({
     status: 200,
@@ -54,7 +56,8 @@ export class ListeningAiController {
   @Post('generate-quizzes')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Generate 3-5 comprehension quiz questions based on transcript checkpoints',
+    summary:
+      'Generate 3-5 comprehension quiz questions based on transcript checkpoints',
   })
   @ApiResponse({
     status: 200,

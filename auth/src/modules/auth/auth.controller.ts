@@ -81,10 +81,7 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth2 callback' })
-  async googleAuthCallback(
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const state = req.query.state as string;
     try {
       const profile = req.user as GoogleCallbackUser;
@@ -123,7 +120,9 @@ export class AuthController {
       );
 
       if (state === 'mobile') {
-        return res.redirect(`vlrc://auth/callback?error=OAUTH_FAILED&message=${encodeURIComponent(message)}`);
+        return res.redirect(
+          `vlrc://auth/callback?error=OAUTH_FAILED&message=${encodeURIComponent(message)}`,
+        );
       }
 
       return res.redirect(
@@ -240,7 +239,11 @@ export class AuthController {
       }
     }
 
-    const result = await this.authService.refreshTokens(user.id, user.jti, accessJti);
+    const result = await this.authService.refreshTokens(
+      user.id,
+      user.jti,
+      accessJti,
+    );
     this.authService.setTokenCookies(
       res,
       result.accessToken,

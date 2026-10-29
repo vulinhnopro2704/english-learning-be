@@ -44,7 +44,9 @@ async function bootstrap() {
   setupApiDocs(app, {
     title: 'Storage API',
     description: 'English Learning Platform — Storage Service',
-    tags: [{ name: 'files', description: 'File upload and retrieval endpoints' }],
+    tags: [
+      { name: 'files', description: 'File upload and retrieval endpoints' },
+    ],
     enableBearerAuth: true,
     enabled: swaggerEnabled,
     swaggerPath,
@@ -52,7 +54,10 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3003;
   await app.listen(port);
-  appLogger.log(`Application is running on: http://localhost:${port}`, 'Bootstrap');
+  appLogger.log(
+    `Application is running on: http://localhost:${port}`,
+    'Bootstrap',
+  );
   if (swaggerEnabled) {
     appLogger.log(
       `API Docs (Scalar): http://localhost:${port}/${swaggerPath}`,
