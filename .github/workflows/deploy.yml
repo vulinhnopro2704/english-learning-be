@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, master]
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate-and-build:
     name: Lint, Test & Build Monolith
@@ -52,3 +56,76 @@ jobs:
 
       - name: Build Production Bundle
         run: pnpm build
+
+  deploy:
+    name: Deploy to Self-hosted Runner
+    runs-on: self-hosted
+    environment: Production
+    needs: [validate-and-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Production .env file
+        shell: bash
+        run: |
+          cat > .env << 'ENVEOF'
+          PORT=${{ secrets.PORT || '3000' }}
+          NODE_ENV=production
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          REDIS_URL=${{ secrets.REDIS_URL || 'redis://redis:6379' }}
+          JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+          JWT_ACCESS_EXPIRES_IN=${{ secrets.JWT_ACCESS_EXPIRATION || '15m' }}
+          JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRATION || '7d' }}
+          CORS_ORIGIN=${{ secrets.CORS_ORIGIN || '*' }}
+          APP_PUBLIC_BASE_URL=${{ secrets.APP_PUBLIC_BASE_URL || 'http://localhost:5173' }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}
+          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+          OLLAMA_HOST=${{ secrets.OLLAMA_HOST }}
+          OLLAMA_API_KEY=${{ secrets.OLLAMA_API_KEY }}
+          OLLAMA_ESSAY_MODEL=${{ secrets.OLLAMA_ESSAY_MODEL || 'gpt-oss:120b-cloud' }}
+          OLLAMA_CHAT_MODEL=${{ secrets.OLLAMA_CHAT_MODEL || 'qwen3.5:cloud' }}
+          OLLAMA_TEMPERATURE=${{ secrets.OLLAMA_TEMPERATURE || '0.5' }}
+          ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID=${{ secrets.ELEVENLABS_VOICE_ID }}
+          ELEVENLABS_MODEL_ID=${{ secrets.ELEVENLABS_MODEL_ID }}
+          ELEVENLABS_STT_MODEL_ID=${{ secrets.ELEVENLABS_STT_MODEL_ID }}
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          MAIL_FROM_ADDRESS=${{ secrets.MAIL_FROM_ADDRESS }}
+          SWAGGER_ENABLED=${{ secrets.SWAGGER_ENABLED || 'true' }}
+          SWAGGER_PATH=${{ secrets.SWAGGER_PATH || 'api-docs' }}
+          ENVEOF
+
+      - name: Build and Start Containers
+        shell: bash
+        run: |
+          docker compose up -d --build --remove-orphans
+
+      - name: Verify Health Endpoint
+        shell: bash
+        run: |
+          PORT_VAL="${{ secrets.PORT || '3000' }}"
+          echo "Verifying health probe on port $PORT_VAL..."
+          for i in $(seq 1 15); do
+            if curl -sf "http://localhost:${PORT_VAL}/health" > /dev/null; then
+              echo "Monolith is healthy and operational!"
+              exit 0
+            fi
+            echo "Waiting for service to be healthy (attempt $i/15)..."
+            sleep 2
+          done
+          echo "Health check failed after 30 seconds"
+          docker compose logs --tail=50 app || true
+          exit 1
+
+      - name: Prune Dangling Docker Images
+        shell: bash
+        run: |
+          docker image prune -f || true
+          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
