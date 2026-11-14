@@ -1,217 +1,42 @@
-# Dummy trigger: rebuild all services
 services:
-  # ── API Gateway (Public Entry) ──────────────────
-  api-gateway:
-    image: ${GATEWAY_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/gateway:latest}
-    container_name: api-gateway
-    ports:
-      - '${API_GATEWAY_PORT:-3000}:${API_GATEWAY_PORT:-3000}'
-    environment:
-      - PORT=${API_GATEWAY_PORT:-3000}
-      - AUTH_UPSTREAM_URL=${AUTH_UPSTREAM_URL:-http://auth:3001}
-      - LEARN_UPSTREAM_URL=${LEARN_UPSTREAM_URL:-http://learn:3002}
-      - STORAGE_UPSTREAM_URL=${STORAGE_UPSTREAM_URL:-http://storage:3003}
-      - FSRS_AI_UPSTREAM_URL=${FSRS_AI_UPSTREAM_URL:-http://fsrs-ai:3004}
-      - GENERATIVE_UPSTREAM_URL=${GENERATIVE_UPSTREAM_URL:-http://generative:3005}
-      - LISTENING_UPSTREAM_URL=${LISTENING_UPSTREAM_URL:-http://listening:3006}
-      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
-      - REDIS_URL=${REDIS_URL:-redis://:${REDIS_PASSWORD:-changeme}@redis:6379}
-      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
-      - RATE_LIMIT_WINDOW_SEC=${RATE_LIMIT_WINDOW_SEC:-60}
-      - TRUST_X_FORWARDED_FOR=${TRUST_X_FORWARDED_FOR:-true}
-      - TRUST_PROXY=${TRUST_PROXY:-loopback}
-      - CORS_ORIGIN=${CORS_ORIGIN:-*}
-      - IP_BLACKLIST=${IP_BLACKLIST:-}
-      - SWAGGER_ENABLED=${GATEWAY_SWAGGER_ENABLED:-true}
-      - SWAGGER_PATH=${GATEWAY_SWAGGER_PATH:-api-docs}
-      - SWAGGER_TITLE=${GATEWAY_SWAGGER_TITLE:-API Gateway}
-    depends_on:
-      redis:
-        condition: service_started
-      auth:
-        condition: service_started
-      learn:
-        condition: service_started
-      storage:
-        condition: service_started
-      fsrs-ai:
-        condition: service_started
-      generative:
-        condition: service_started
-      listening:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - app-network
-
-  # ── Auth Service ──────────────────────────────────
-  auth:
-    image: ${AUTH_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/auth:latest}
-    container_name: auth-service
-    expose:
-      - '${AUTH_PORT:-3001}'
-    env_file:
-      # Includes JWT/CORS and cookie settings (e.g. COOKIE_DOMAIN for production)
-      - ./auth/.env
-    environment:
-      - PORT=${AUTH_PORT:-3001}
-      - SWAGGER_ENABLED=${AUTH_SWAGGER_ENABLED:-true}
-      - SWAGGER_PATH=${AUTH_SWAGGER_PATH:-api-docs}
-      - SWAGGER_TITLE=${AUTH_SWAGGER_TITLE:-Auth API}
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: no
-    networks:
-      - app-network
-
-  # ── Learn Service ─────────────────────────────────
-  learn:
-    image: ${LEARN_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/learn:latest}
-    container_name: learn-service
-    expose:
-      - '${LEARN_PORT:-3002}'
-    env_file:
-      - ./learn/.env
-    environment:
-      - PORT=${LEARN_PORT:-3002}
-      - FSRS_AI_URL=${FSRS_AI_URL:-http://fsrs-ai:3004}
-      - REDIS_DB=${REDIS_DB:-1}
-      - REDIS_URL=${REDIS_URL:-redis://:${REDIS_PASSWORD:-changeme}@redis:6379/${REDIS_DB:-1}}
-      - SWAGGER_ENABLED=${LEARN_SWAGGER_ENABLED:-true}
-      - SWAGGER_PATH=${LEARN_SWAGGER_PATH:-api-docs}
-      - SWAGGER_TITLE=${LEARN_SWAGGER_TITLE:-Learn API}
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: no
-    networks:
-      - app-network
-
-  # ── Storage Service ───────────────────────────────
-  storage:
-    image: ${STORAGE_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/storage:latest}
-    container_name: storage-service
-    expose:
-      - '${STORAGE_PORT:-3003}'
-    env_file:
-      - ./storage/.env
-    environment:
-      - PORT=${STORAGE_PORT:-3003}
-      - SWAGGER_ENABLED=${STORAGE_SWAGGER_ENABLED:-true}
-      - SWAGGER_PATH=${STORAGE_SWAGGER_PATH:-api-docs}
-      - SWAGGER_TITLE=${STORAGE_SWAGGER_TITLE:-Storage API}
-    healthcheck:
-      test:
-        [
-          'CMD',
-          'node',
-          '-e',
-          "fetch('http://127.0.0.1:' + (process.env.PORT || 3003) + '/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 20s
-    restart: no
-    networks:
-      - app-network
-
-  # ── FSRS-AI Service ───────────────────────────────
-  fsrs-ai:
-    image: ${FSRS_AI_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/fsrs-ai:latest}
-    container_name: fsrs-ai-service
-    expose:
-      - '${FSRS_AI_PORT:-3004}'
-    environment:
-      - DATABASE_URL=${FSRS_AI_DATABASE_URL}
-      - PORT=${FSRS_AI_PORT:-3004}
-      - ROOT_PATH=${FSRS_AI_ROOT_PATH:-/fsrs-ai}
-      - FSRS_TRAIN_MIN_VALID_LOGS=${FSRS_TRAIN_MIN_VALID_LOGS:-20}
-      - FSRS_TRAIN_MIN_DAYS_SINCE_LAST=${FSRS_TRAIN_MIN_DAYS_SINCE_LAST:-3}
-      - FSRS_TRAIN_MIN_IMPROVEMENT_PCT=${FSRS_TRAIN_MIN_IMPROVEMENT_PCT:-0.02}
-      - FSRS_TRAIN_METRIC=${FSRS_TRAIN_METRIC:-log_loss}
-      - FSRS_RESCHEDULE_MAX_SHIFT_RATIO=${FSRS_RESCHEDULE_MAX_SHIFT_RATIO:-0.3}
-      - FSRS_ASYNC_RESCHEDULE_ENABLED=${FSRS_ASYNC_RESCHEDULE_ENABLED:-true}
-      - CORS_ORIGIN=${CORS_ORIGIN:-*}
-    restart: no
-    networks:
-      - app-network
-
-  # ── Generative Service ───────────────────────────
-  generative:
-    image: ${GENERATIVE_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/generative:latest}
-    container_name: generative-service
-    expose:
-      - '${GENERATIVE_PORT:-3005}'
-    env_file:
-      - ./generative/.env
-    environment:
-      - PORT=${GENERATIVE_PORT:-3005}
-      - REDIS_URL=${REDIS_URL:-redis://:${REDIS_PASSWORD:-changeme}@redis:6379}
-      - SWAGGER_ENABLED=${GENERATIVE_SWAGGER_ENABLED:-true}
-      - SWAGGER_PATH=${GENERATIVE_SWAGGER_PATH:-api-docs}
-      - SWAGGER_TITLE=${GENERATIVE_SWAGGER_TITLE:-Generative API}
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: no
-    networks:
-      - app-network
-
-  # ── Listening Service ─────────────────────────────
-  listening:
-    image: ${LISTENING_IMAGE:-ghcr.io/vulinhnopro2704/english-learning-be/listening-service:latest}
+  app:
     build:
-      context: ./listening-service
+      context: .
       dockerfile: Dockerfile
-    container_name: listening-service
-    expose:
-      - '${LISTENING_PORT:-3006}'
+    container_name: english-learning-api
+    restart: unless-stopped
     ports:
-      - '${LISTENING_PORT:-3006}:3006'
-    volumes:
-      - ./listening-service/cookies.txt:/app/cookies.txt:ro
+      - '${PORT:-3000}:3000'
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=${LISTENING_DATABASE_URL}
-      - PORT=${LISTENING_PORT:-3006}
-      - HOST=0.0.0.0
-      - ROOT_PATH=${LISTENING_ROOT_PATH:-/listening}
-      - CORS_ORIGIN=${CORS_ORIGIN:-*}
-      - GENERATIVE_SERVICE_URL=${GENERATIVE_SERVICE_URL:-http://generative:3005}
-      - YOUTUBE_PROXY=${YOUTUBE_PROXY:-}
+      - PORT=3000
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     depends_on:
-      - generative
-    restart: no
+      redis:
+        condition: service_healthy
     networks:
-      - app-network
+      - app-net
 
-  # ── Redis ─────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: redis
-    command:
-      - redis-server
-      - --requirepass
-      - ${REDIS_PASSWORD:-changeme}
+    container_name: english-learning-redis
+    restart: unless-stopped
     ports:
-      - '${REDIS_PORT:-6379}:6379'
+      - '6379:6379'
     volumes:
-      - redis-data:/data
-    restart: no
+      - redis_data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-changeme}', 'ping']
-      interval: 10s
-      timeout: 5s
-      retries: 4
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
-      - app-network
-
-volumes:
-  redis-data:
+      - app-net
 
 networks:
-  app-network:
+  app-net:
     driver: bridge
-    driver_opts:
-      com.docker.network.driver.mtu: 1280
+
+volumes:
+  redis_data:

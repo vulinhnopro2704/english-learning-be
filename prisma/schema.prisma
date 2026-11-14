@@ -1,0 +1,599 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/database/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["public", "auth", "storage", "generative", "listening", "fsrs"]
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 1. AUTH SCHEMA
+// ══════════════════════════════════════════════════════════════════════════════
+
+enum UserRole {
+  USER
+  ADMIN
+  CONTENT_CREATOR
+
+  @@schema("auth")
+}
+
+enum AuthProvider {
+  GOOGLE
+  FACEBOOK
+  EMAIL
+
+  @@schema("auth")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+
+  @@schema("auth")
+}
+
+model User {
+  id                         String    @id @db.Uuid
+  email                      String    @unique @db.VarChar(255)
+  name                       String?   @db.VarChar(255)
+  password                   String?   @db.Text
+  avatar                     String?
+  role                       UserRole  @default(USER)
+  emailVerifiedAt            DateTime? @db.Timestamptz(6)
+  emailVerificationTokenHash String?   @db.Text
+  emailVerificationSentAt    DateTime? @db.Timestamptz(6)
+  passwordResetTokenHash     String?   @db.Text
+  passwordResetSentAt        DateTime? @db.Timestamptz(6)
+  createdAt                  DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt                  DateTime  @updatedAt @db.Timestamptz(6)
+  lastLoginAt                DateTime? @db.Timestamptz(6)
+  phoneNumber                String?   @db.VarChar(20)
+  dateOfBirth                DateTime? @db.Date
+  gender                     Gender?
+  hobbies                    String[]
+  funFact                    String?   @db.Text
+
+  accounts AuthAccount[]
+
+  @@index([emailVerificationTokenHash])
+  @@index([passwordResetTokenHash])
+  @@schema("auth")
+}
+
+model AuthAccount {
+  id                String       @id @db.Uuid
+  userId            String       @db.Uuid
+  provider          AuthProvider
+  providerAccountId String
+  accessToken       String?      @db.Text
+  refreshToken      String?      @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@schema("auth")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 2. STORAGE SCHEMA
+// ══════════════════════════════════════════════════════════════════════════════
+
+enum FileType {
+  IMAGE
+  VIDEO
+  FILE
+
+  @@schema("storage")
+}
+
+model StorageFile {
+  id        String   @id @default(uuid()) @db.Uuid
+  publicId  String   @unique @map("public_id") @db.VarChar(255)
+  secureUrl String   @map("secure_url") @db.Text
+  type      FileType
+  format    String?  @db.VarChar(20)
+  size      Int
+  ownerId   String   @map("owner_id") @db.Uuid
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([ownerId, createdAt(sort: Desc)], map: "idx_files_owner_created")
+  @@index([type, createdAt(sort: Desc)], map: "idx_files_type_created")
+  @@map("files")
+  @@schema("storage")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 3. GENERATIVE SCHEMA
+// ══════════════════════════════════════════════════════════════════════════════
+
+enum ScenarioType {
+  SYSTEM
+  AI_GENERATED
+  USER_CREATED
+
+  @@schema("generative")
+}
+
+model GenerativeUser {
+  id           String              @id @default(uuid())
+  name         String
+  englishLevel String              @map("english_level")
+  sessions     GenerativeSession[]
+
+  @@map("users")
+  @@schema("generative")
+}
+
+model GenerativeScenario {
+  id            String              @id @default(uuid())
+  title         String
+  description   String
+  aiPersona     String              @map("ai_persona")
+  userPersona   String              @map("user_persona")
+  requiredTasks Json                @map("required_tasks")
+  type          ScenarioType        @default(SYSTEM)
+  level         String?
+  topic         String?
+  isPublic      Boolean             @default(true) @map("is_public")
+  creatorId     String?             @map("creator_id")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @default(now()) @map("updated_at")
+  sessions      GenerativeSession[]
+
+  @@map("scenarios")
+  @@schema("generative")
+}
+
+model GenerativeSession {
+  id                String                       @id @default(uuid())
+  userId            String                       @map("user_id")
+  scenarioId        String                       @map("scenario_id")
+  status            String                       @default("active")
+  startedAt         DateTime                     @default(now()) @map("started_at")
+  endedAt           DateTime?                    @map("ended_at")
+  user              GenerativeUser               @relation(fields: [userId], references: [id])
+  scenario          GenerativeScenario           @relation(fields: [scenarioId], references: [id])
+  messages          GenerativeMessage[]
+  sessionEvaluation GenerativeSessionEvaluation?
+
+  @@map("sessions")
+  @@schema("generative")
+}
+
+model GenerativeMessage {
+  id              String            @id @default(uuid())
+  sessionId       String            @map("session_id")
+  role            String
+  content         String
+  audioUrl        String?           @map("audio_url")
+  translation     String?
+  grammarFeedback String?           @map("grammar_feedback")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  session         GenerativeSession @relation(fields: [sessionId], references: [id])
+
+  @@map("messages")
+  @@schema("generative")
+}
+
+model GenerativeSessionEvaluation {
+  id              String            @id @default(uuid())
+  sessionId       String            @unique @map("session_id")
+  task1Completed  Boolean           @default(false) @map("task_1_completed")
+  task2Completed  Boolean           @default(false) @map("task_2_completed")
+  task3Completed  Boolean           @default(false) @map("task_3_completed")
+  grammarFeedback Json?             @map("grammar_feedback")
+  session         GenerativeSession @relation(fields: [sessionId], references: [id])
+
+  @@map("session_evaluations")
+  @@schema("generative")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 4. FSRS SCHEMA
+// ══════════════════════════════════════════════════════════════════════════════
+
+model CardMemoryState {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @db.Uuid
+  wordId         Int
+  state          Int       @default(0)
+  difficulty     Float     @default(0.0)
+  stability      Float     @default(0.0)
+  retrievability Float     @default(1.0)
+  nextReview     DateTime? @db.Timestamptz(6)
+  lastReviewedAt DateTime? @db.Timestamptz(6)
+  reps           Int       @default(0)
+  lapses         Int       @default(0)
+  cardData       Json?
+
+  @@unique([userId, wordId], name: "uq_user_word")
+  @@index([userId, nextReview], name: "ix_user_next_review")
+  @@map("card_memory_state")
+  @@schema("fsrs")
+}
+
+model ReviewLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  wordId        Int
+  grade         Int
+  durationMs    Int      @default(0)
+  state         Int      @default(0)
+  difficulty    Float    @default(0.0)
+  stability     Float    @default(0.0)
+  elapsedDays   Float    @default(0.0)
+  scheduledDays Float    @default(0.0)
+  reviewedAt    DateTime @default(now()) @db.Timestamptz(6)
+  logData       Json?
+
+  @@index([userId, wordId], name: "ix_review_user_word")
+  @@index([reviewedAt], name: "ix_review_reviewed_at")
+  @@map("review_log")
+  @@schema("fsrs")
+}
+
+model FSRSConfig {
+  userId              String    @id @db.Uuid
+  weights             Json
+  requestRetention    Float     @default(0.9)
+  easyDays            Json
+  maxReviewsPerDay    Int       @default(100)
+  lastTrainedAt       DateTime? @db.Timestamptz(6)
+  currentModelVersion Int       @default(0)
+  updatedAt           DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@map("fsrs_config")
+  @@schema("fsrs")
+}
+
+model FSRSModelVersion {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @db.Uuid
+  version          Int
+  weights          Json
+  requestRetention Float    @default(0.9)
+  sampleSize       Int      @default(0)
+  metricType       String   @default("log_loss")
+  metricBaseline   Float?
+  metricCandidate  Float?
+  improvementPct   Float?
+  status           String   @default("accepted")
+  trainedAt        DateTime @default(now()) @db.Timestamptz(6)
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([userId, version], name: "uq_fsrs_model_user_version")
+  @@index([userId, status], name: "ix_fsrs_model_user_status")
+  @@map("fsrs_model_version")
+  @@schema("fsrs")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 5. LISTENING SCHEMA
+// ══════════════════════════════════════════════════════════════════════════════
+
+model ListeningLesson {
+  id           String    @id @default(uuid()) @db.VarChar(64)
+  videoId      String    @db.VarChar(32)
+  title        String    @db.VarChar(500)
+  description  String?   @db.Text
+  thumbnailUrl String    @db.VarChar(500)
+  duration     String    @default("03:30") @db.VarChar(32)
+  difficulty   String    @default("medium") @db.VarChar(32)
+  language     String    @default("en") @db.VarChar(16)
+  isPublished  Boolean   @default(true)
+  status       String    @default("READY") @db.VarChar(32)
+  errorMessage String?   @db.Text
+  order        Int       @default(0)
+  createdAt    DateTime? @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime? @updatedAt @db.Timestamptz(6)
+
+  vocabularies LessonVocabulary[]
+  quizzes      LessonQuiz[]
+  segments     LessonSegment[]
+
+  @@index([videoId])
+  @@map("lessons")
+  @@schema("listening")
+}
+
+model LessonVocabulary {
+  id           String    @id @default(uuid()) @db.VarChar(64)
+  lessonId     String    @db.VarChar(64)
+  order        Int       @default(0)
+  word         String    @db.VarChar(255)
+  partOfSpeech String?   @db.VarChar(64)
+  phonetic     String?   @db.VarChar(255)
+  meaningVi    String    @db.Text
+  example      String?   @db.Text
+  exampleVi    String?   @db.Text
+  audioUrl     String?   @db.VarChar(500)
+  createdAt    DateTime? @default(now()) @db.Timestamptz(6)
+
+  lesson ListeningLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@map("lesson_vocabularies")
+  @@schema("listening")
+}
+
+model LessonQuiz {
+  id                 String    @id @default(uuid()) @db.VarChar(64)
+  lessonId           String    @db.VarChar(64)
+  order              Int       @default(0)
+  question           String    @db.Text
+  options            String[]
+  correctAnswerIndex Int       @default(0)
+  explanation        String?   @db.Text
+  segmentTimestamp   Float     @default(0.0)
+  createdAt          DateTime? @default(now()) @db.Timestamptz(6)
+
+  lesson ListeningLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@map("lesson_quizzes")
+  @@schema("listening")
+}
+
+model LessonSegment {
+  id           String    @id @default(uuid()) @db.VarChar(64)
+  lessonId     String    @db.VarChar(64)
+  segmentIndex Int       @default(0)
+  startTime    Float
+  endTime      Float
+  duration     Float
+  text         String    @db.Text
+  maskedText   String?   @db.Text
+  createdAt    DateTime? @default(now()) @db.Timestamptz(6)
+
+  lesson ListeningLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  blanks SegmentBlank[]
+
+  @@index([lessonId])
+  @@map("lesson_segments")
+  @@schema("listening")
+}
+
+model SegmentBlank {
+  id           String    @id @default(uuid()) @db.VarChar(64)
+  segmentId    String    @db.VarChar(64)
+  blankIndex   Int       @default(0)
+  originalWord String    @db.VarChar(255)
+  hint         String    @db.VarChar(255)
+  createdAt    DateTime? @default(now()) @db.Timestamptz(6)
+
+  segment LessonSegment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  @@index([segmentId])
+  @@map("segment_blanks")
+  @@schema("listening")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 6. PUBLIC SCHEMA (Learn domain)
+// ══════════════════════════════════════════════════════════════════════════════
+
+enum LessonStatus {
+  LOCKED
+  UNLOCKED
+  IN_PROGRESS
+  COMPLETED
+
+  @@schema("public")
+}
+
+enum WordMasteryLevel {
+  NEW
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+  LEVEL_4
+  LEVEL_5
+
+  @@schema("public")
+}
+
+enum PracticeType {
+  FSRS
+  LEARN_LESSON
+  DICTIONARY_SAVE
+
+  @@schema("public")
+}
+
+model Course {
+  id              Int                  @id @default(autoincrement())
+  title           String               @db.VarChar(255)
+  enTitle         String?              @db.VarChar(255)
+  description     String?
+  image           String?              @db.VarChar(255)
+  createdAt       DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime             @updatedAt @db.Timestamptz(6)
+  icon            String?              @db.VarChar(10)
+  isPublished     Boolean              @default(false)
+  isUserCreated   Boolean              @default(false)
+  createdByUserId String?              @db.Uuid
+  order           Int                  @default(0)
+  lessons         Lesson[]
+  progress        UserCourseProgress[]
+
+  @@index([createdByUserId])
+  @@index([isUserCreated, createdByUserId])
+  @@schema("public")
+}
+
+model Lesson {
+  id              Int                  @id @default(autoincrement())
+  title           String               @db.VarChar(255)
+  description     String?
+  image           String?              @db.VarChar(255)
+  createdAt       DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime             @updatedAt @db.Timestamptz(6)
+  courseId        Int?
+  isPublished     Boolean              @default(false)
+  isUserCreated   Boolean              @default(false)
+  createdByUserId String?              @db.Uuid
+  order           Int                  @default(0)
+  course          Course?              @relation(fields: [courseId], references: [id])
+  progress        UserLessonProgress[]
+  words           Word[]
+  sessions        PracticeSession[]
+
+  @@index([courseId])
+  @@index([createdByUserId])
+  @@index([isUserCreated, createdByUserId])
+  @@schema("public")
+}
+
+model Word {
+  id                   Int                  @id @default(autoincrement())
+  word                 String               @db.VarChar(255)
+  sourceProvider       String               @default("internal") @db.VarChar(50)
+  externalDictionaryId Int?
+  pronunciation        String?              @db.VarChar(255)
+  phoneticUs           String?              @db.VarChar(255)
+  phoneticUk           String?              @db.VarChar(255)
+  meaning              String
+  example              String?
+  exampleVi            String?
+  image                String?              @db.VarChar(255)
+  audio                String?              @db.VarChar(255)
+  audioUs              String?              @db.VarChar(255)
+  audioUk              String?              @db.VarChar(255)
+  audioUsFileId        String?              @db.Uuid
+  audioUkFileId        String?              @db.Uuid
+  dictionaryMetadata   Json?
+  createdAt            DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime             @updatedAt @db.Timestamptz(6)
+  lessonId             Int?
+  pos                  String?              @db.VarChar(255)
+  cefr                 String?              @db.VarChar(10)
+  vocabularyNotes      UserVocabularyNote[]
+  progress             UserWordProgress[]
+  examples             WordExample[]
+  lesson               Lesson?              @relation(fields: [lessonId], references: [id])
+
+  @@index([lessonId])
+  @@index([sourceProvider, externalDictionaryId])
+  @@schema("public")
+}
+
+model WordExample {
+  id           Int      @id @default(autoincrement())
+  wordId       Int
+  example      String
+  exampleVi    String?
+  exampleAudio String?  @db.VarChar(255)
+  order        Int      @default(0)
+  source       Json?
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+  word         Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([wordId, example])
+  @@index([wordId])
+  @@index([wordId, order])
+  @@schema("public")
+}
+
+model UserStreak {
+  userId        String   @id @db.Uuid
+  currentStreak Int      @default(0)
+  longestStreak Int      @default(0)
+  lastActivity  DateTime @db.Timestamptz(6)
+
+  @@schema("public")
+}
+
+model UserCourseProgress {
+  id             Int      @id @default(autoincrement())
+  userId         String   @db.Uuid
+  courseId       Int
+  isCompleted    Boolean  @default(false)
+  startedAt      DateTime @default(now()) @db.Timestamptz(6)
+  lastAccessedAt DateTime @updatedAt @db.Timestamptz(6)
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@schema("public")
+}
+
+model UserLessonProgress {
+  id          Int          @id @default(autoincrement())
+  userId      String       @db.Uuid
+  lessonId    Int
+  status      LessonStatus @default(LOCKED)
+  score       Int          @default(0)
+  completedAt DateTime?    @db.Timestamptz(6)
+  lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@schema("public")
+}
+
+model UserWordProgress {
+  id             Int              @id @default(autoincrement())
+  userId         String           @db.Uuid
+  wordId         Int
+  status         WordMasteryLevel @default(NEW)
+  proficiency    Int              @default(0)
+  nextReview     DateTime?        @db.Timestamptz(6)
+  lastReviewedAt DateTime?        @db.Timestamptz(6)
+  reviewCount    Int              @default(0)
+  correctCount   Int              @default(0)
+  state          Int              @default(0)
+  difficulty     Float            @default(0)
+  stability      Float            @default(0)
+  interval       Int              @default(0)
+  reps           Int              @default(0)
+  lapses         Int              @default(0)
+  word           Word             @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordId])
+  @@index([userId])
+  @@index([nextReview])
+  @@index([userId, status])
+  @@schema("public")
+}
+
+model UserVocabularyNote {
+  id            Int      @id @default(autoincrement())
+  userId        String   @db.Uuid
+  wordId        Int
+  note          String?
+  isFavorite    Boolean  @default(false)
+  customExample String?
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(6)
+  word          Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordId])
+  @@index([userId])
+  @@schema("public")
+}
+
+model PracticeSession {
+  id              Int          @id @default(autoincrement())
+  userId          String       @db.Uuid
+  type            PracticeType
+  lessonId        Int?
+  totalWords      Int          @default(0)
+  correctCount    Int          @default(0)
+  totalDurationMs Int          @default(0)
+  startedAt       DateTime     @default(now()) @db.Timestamptz(6)
+  completedAt     DateTime?    @db.Timestamptz(6)
+  lesson          Lesson?      @relation(fields: [lessonId], references: [id])
+
+  @@index([userId])
+  @@index([userId, type])
+  @@schema("public")
+}

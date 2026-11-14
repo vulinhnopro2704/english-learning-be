@@ -1,140 +1,78 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code and AI agents working with this repository.
 
-## 1) Quick map
+## 1. Project Overview
 
-- Monorepo services: `auth/`, `learn/`, `storage/`, `gateway/`, `fsrs-ai/`, `generative/`, `listening-service/`.
-- Public entry: `gateway` (routes `/api/*` to backend services, `/fsrs-ai/*` to FSRS-AI, `/listening/*` to Listening service).
-- FSRS integration lives mainly in `learn` + `fsrs-ai`.
-- `notification/` is a scaffold, not yet active.
+- **Architecture**: NestJS 12 (v12.5.0) Modular Monolith
+- **Compiler**: Rspack 2 (`nest-cli.json` with `@nestjs/cli`)
+- **Package Manager**: pnpm (v12+)
+- **Test Runner**: Vitest (v5.1+)
+- **ORM**: Prisma 7 (Multi-Schema PostgreSQL on Neon)
+- **Cache**: Redis (ioredis) with scope-based invalidation & JWT blacklist
+- **Spaced Repetition**: Pure TypeScript `ts-fsrs` + Rust WASI optimizer (`@open-spaced-repetition/binding`)
+- **Listening**: `youtubei.js` transcript extraction + TypeScript Cloze generator
+- **API Documentation**: Scalar UI & Swagger UI at `/api-docs`
 
-## 2) FSRS-AI quick context (high priority)
+---
 
-- Service dir: `fsrs-ai/` (FastAPI + SQLAlchemy + `fsrs[optimizer]`).
-- App entry: `fsrs-ai/app/main.py`.
-- Routers: `fsrs-ai/app/routers/review.py`, `optimize.py`, `helper.py`, `report.py`.
-- Core logic: `fsrs-ai/app/services/fsrs_service.py`, `optimizer_service.py`, `report_service.py`.
-- DB models: `fsrs-ai/app/models.py` (schema `fsrs`): `card_memory_state`, `review_log`, `fsrs_config`.
-- Migrations: `alembic/` + `alembic.ini`.
-- Important docs: `fsrs-ai/PLAN.md` (authoritative plan), `fsrs-ai/SPEC_FSRS_V6_OPTIMIZATION.md` (API + policy contract), `fsrs-ai/README.md`.
+## 2. Directory Structure
 
-## 3) Current API surface (FSRS-AI)
+- `src/main.ts`: Application bootstrap with CORS, cookie-parser, and global prefix `/api/v1`
+- `src/app.module.ts`: Root module wiring 16 domain modules, global guards, and filter
+- `src/common/`: Global cross-cutting concerns:
+  - `exceptions/api.exception.ts`: Standardized error envelope
+  - `filters/api-exception.filter.ts`: Global exception filter
+  - `pipes/api-validation.pipe.ts`: Structured validation pipe
+  - `guards/`: `JwtAuthGuard`, `RolesGuard`
+  - `decorators/`: `@GetCurrentUser()`, `@Public()`, `@Roles()`
+  - `docs/api-docs.ts`: Scalar and Swagger setup
+- `src/database/`: `PrismaService` and multi-schema client
+- `src/redis/`: Global `RedisService`
+- `src/modules/`: Domain modules:
+  - `auth`, `users`, `courses`, `lessons`, `words`, `vocabulary`, `dictionary`, `progress`, `streak`, `practice`, `fsrs`, `listening`, `storage`, `generative`, `notification`, `health`
 
-- `GET /api/v1/fsrs/due?user_id=<uuid>&limit=<1..200>`
-- `POST /api/v1/fsrs/review`
-- `POST /api/v1/fsrs/review/bulk`
-- `POST /api/v1/fsrs/init-cards?user_id=<uuid>&word_ids=1&word_ids=2`
-- `GET /api/v1/fsrs/stats?user_id=<uuid>`
-- `POST /api/v1/fsrs/optimize`
-- `POST /api/v1/fsrs/optimize/rollback`
-- `POST /api/v1/fsrs/helper/reschedule`
-- `GET /api/v1/fsrs/insights`
-- `GET /api/v1/fsrs/report/daily`
-- `GET /api/v1/fsrs/recommendations`
-- `GET /api/v1/fsrs/cards/risk`
-- Health: `GET /health`, Docs: `/api-docs` (or `/fsrs-ai/api-docs` via gateway)
-- Gateway forwards `x-user-id` after JWT validation; FSRS query endpoints resolve user from header.
+---
 
-## 4) Learn service integration points
-
-- Due words proxy + hydrate word data: `learn/src/modules/practice/practice.service.ts` -> `getDueWords()`
-- Submit FSRS practice: `learn/src/modules/practice/practice.service.ts` -> `submitFSRS()` calls `POST /api/v1/fsrs/review/bulk`
-- Init cards when completing lesson: `learn/src/modules/lessons/lessons.service.ts` -> `completeLesson()` calls `POST /api/v1/fsrs/init-cards`
-
-## 5) Learn service modules
-
-`learn/src/modules/`: `courses`, `lessons`, `words`, `vocabulary`, `progress`, `streak`, `dictionary`, `practice`, `redis`, `db`, `auth`.
-- Prisma schema: `learn/prisma/schema.prisma`.
-- Redis cache namespace: `learn:v1`, key format `learn:v1:<scope>:u:<user-or-public>:q:<serialized-params>`.
-- TTLs: SHORT=60s, MEDIUM=5min, LONG=24h. Mutate APIs invalidate cache by scope.
-
-## 6) Auth service modules
-
-`auth/src/modules/`: `auth` (login/register/JWT/OAuth), `users`, `redis`, `db`.
-- Prisma schema: `auth/prisma/schema.prisma`.
-- JWT access/refresh tokens, Google OAuth, email verification, password reset via Resend.
-
-## 7) Storage service modules
-
-`storage/src/modules/`: `files` (upload via Cloudinary, signed URLs, ingest audio), `cloudinary`, `prisma`, `health`, `common/auth`.
-- Prisma schema: `storage/prisma/schema.prisma`.
-- Auth: trusted-headers guard (from gateway).
-
-## 8) Generative service modules
-
-`generative/src/modules/`: `llm`, `tutor-sessions`, `tts`, `ollama`, `roleplay`, `redis`, `db`, `health`.
-- Prisma schema: `generative/prisma/schema.prisma`.
-- Uses Ollama API for LLM, ElevenLabs for TTS/STT.
-
-## 9) Gateway
-
-`gateway/src/`: `proxy/gateway-proxy.service.ts` (HTTP reverse proxy to upstream services), `redis/redis.service.ts`.
-- JWT verification + Redis revocation check + per-IP rate limiting (100 req/min) + IP blacklist at gateway.
-- All learn routes require valid JWT at gateway before forwarding.
-- Services communicate via internal Docker DNS over HTTP (no TCP-only).
-
-## 10) Shared packages
-
-`packages/`:
-- `logger/` - Winston-based request logger middleware + app logger
-- `api-error-types/` - Shared error type definitions
-- `nest-error-handler/` - Global NestJS exception filter
-- `nest-api-docs/` - Scalar API docs setup
-
-## 11) Commands per service
-
-Each NestJS service (`auth/`, `learn/`, `storage/`, `gateway/`, `generative/`, `notification/`):
-```bash
-cd <service>
-npm run build          # Nest build
-npm run format         # Prettier --write
-npm run lint           # ESLint --fix
-npm run test           # Vitest
-npm run test:watch     # Vitest --watch
-npm run test:cov       # Vitest --coverage
-npm run test:e2e       # Jest e2e config
-npm run start:dev      # Nest start --watch
-npm run start:prod     # node dist/main.js
-```
-
-Prisma (auth, learn, storage, generative):
-```bash
-npx prisma generate    # Generate client
-npx prisma migrate dev # Dev migration
-npx prisma migrate deploy # Prod migration
-```
-
-FSRS-AI:
-```bash
-cd fsrs-ai
-pip install -r requirements.txt
-alembic upgrade head   # Run migrations
-uvicorn app.main:app --host 0.0.0.0 --port 3004  # Run locally
-```
-
-## 12) Docker / local dev
+## 3. Essential Commands
 
 ```bash
-docker compose up -d        # Start all services
-docker compose ps           # Check status
-docker compose logs -f <service>  # View logs
-docker compose restart <service>  # Restart a service
+# Install dependencies
+pnpm install
+
+# Generate Prisma client for all 6 schemas
+pnpm prisma:generate
+
+# Start in development mode
+pnpm dev
+
+# Type check
+pnpm exec tsc --noEmit
+
+# Run Vitest test suite
+pnpm test
+
+# Build production bundle (Rspack, <100ms)
+pnpm build
+
+# Start production server
+pnpm start:prod
 ```
 
-Ports: gateway=3000, auth=3001, learn=3002, storage=3003, fsrs-ai=3004, generative=3005.
+---
 
-## 13) CI/CD
+## 4. Coding Standards & Conventions
 
-- Trigger: push to `main` (path-filtered per service).
-- Each service builds a Docker image, pushes to GHCR.
-- Deploy step: SSH to VPS, download docker-compose.yml + create .env files, pull images, `docker compose up -d`.
-- Partial success: services that fail to build keep their current image; gateway always restarted last.
-
-## 14) Important caveats
-
-- `fsrs-ai/.env` contains DB URL; never commit secrets.
-- Bulk review loops item-by-item, commits per item via `review_card()`.
-- Optimizer requires >=10 valid logs with `log_data` JSON from py-fsrs.
-- New optimizer policy defaults are env-driven (min logs, cooldown days, improvement threshold).
-- Prettier config: single quotes, semicolons, trailing commas, 100char width, 2-space indent, LF line endings.
+1. **Strict Typing**:
+   - Zero `any` types. Always declare strongly-typed DTOs or interfaces.
+   - Avoid unsafe type casting (`as unknown as ...`).
+2. **Standardized Error Handling**:
+   - Throw `ApiException` from `src/common/exceptions/api.exception.ts` with `statusCode`, `errorCode`, and `message`.
+3. **Authentication & Authorization**:
+   - `JwtAuthGuard` is globally applied.
+   - Mark open endpoints with `@Public()`.
+   - Access authenticated user via `@GetCurrentUser() user: CurrentUser` or `@GetCurrentUser('id') userId: string`.
+   - Restrict roles using `@UseGuards(RolesGuard)` and `@Roles('ADMIN', 'CONTENT_CREATOR')`.
+4. **Caching & Invalidation**:
+   - Use `this.redisService.buildCacheKey(scope, options)` and `this.redisService.buildScopePattern(scope)`.
+   - Mutating operations must invalidate related cache patterns.
