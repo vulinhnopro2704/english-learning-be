@@ -10,7 +10,6 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { FsrsSchedulerService } from './services/fsrs-scheduler.service';
 import { FsrsOptimizerService } from './services/fsrs-optimizer.service';
-import { FsrsReportService } from './services/fsrs-report.service';
 import {
   ReviewRequestDto,
   BulkReviewRequestDto,
@@ -27,7 +26,6 @@ export class FsrsController {
   constructor(
     private readonly schedulerService: FsrsSchedulerService,
     private readonly optimizerService: FsrsOptimizerService,
-    private readonly reportService: FsrsReportService,
   ) {}
 
   @Get('due')
@@ -86,18 +84,6 @@ export class FsrsController {
     return this.schedulerService.getStats(userId);
   }
 
-  @Get('cards/risk')
-  @ApiOperation({ summary: 'Get cards most at risk of forgetting' })
-  async getCardsRisk(
-    @GetCurrentUser('id') authUserId: string,
-    @Query('user_id') queryUserId?: string,
-    @Query('limit') limit?: string,
-  ) {
-    const userId = queryUserId || authUserId;
-    const parsedLimit = limit ? parseInt(limit, 10) : 10;
-    return this.schedulerService.getCardsRisk(userId, parsedLimit);
-  }
-
   @Post('optimize')
   @ApiOperation({ summary: 'Trigger AI parameter optimization from review history' })
   async optimize(
@@ -116,26 +102,5 @@ export class FsrsController {
   ) {
     const userId = dto.userId || authUserId;
     return this.optimizerService.rollbackModel(userId, dto.targetVersion);
-  }
-
-  @Get('insights')
-  @ApiOperation({ summary: 'Get memory score and retention insights' })
-  async getInsights(
-    @GetCurrentUser('id') authUserId: string,
-    @Query('user_id') queryUserId?: string,
-    @Query('window') window?: string,
-  ) {
-    const userId = queryUserId || authUserId;
-    return this.reportService.getInsights(userId, window || '30d');
-  }
-
-  @Get('report/daily')
-  @ApiOperation({ summary: 'Get 14-day due card forecast' })
-  async getDailyReport(
-    @GetCurrentUser('id') authUserId: string,
-    @Query('user_id') queryUserId?: string,
-  ) {
-    const userId = queryUserId || authUserId;
-    return this.reportService.getDailyReport(userId);
   }
 }

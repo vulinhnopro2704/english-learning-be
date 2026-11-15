@@ -59,21 +59,4 @@ export class PracticeController {
   ) {
     return this.practiceService.getDueWords(userId, filter);
   }
-
-  @Get('fsrs/risk')
-  @ApiOperation({
-    summary: 'Get high risk cards for review priority',
-    description:
-      'Fetch high risk cards from FSRS analytics, then hydrate with word details.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'List of words with high risk to forget',
-  })
-  getRiskCards(
-    @GetCurrentUser('id') userId: string,
-    @Query() filter: FSRSRiskFilterDto,
-  ) {
-    return this.practiceService.getRiskCards(userId, filter);
-  }
 }

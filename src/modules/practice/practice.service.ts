@@ -3,13 +3,11 @@ import { PrismaService } from '../../database/prisma.service';
 import { StreakService } from '../streak/streak.service';
 import { RedisService, CACHE_TTL_SECONDS } from '../../redis/redis.service';
 import { FsrsSchedulerService } from '../fsrs/services/fsrs-scheduler.service';
-import { FsrsReportService } from '../fsrs/services/fsrs-report.service';
 import type { ExerciseType } from '../fsrs/dtos';
 import {
   SubmitFSRSPracticeDto,
   PracticeHistoryFilterDto,
   FSRSDueFilterDto,
-  FSRSRiskFilterDto,
 } from './dtos/practice.dto';
 import type { Prisma, PracticeType } from '../../database/generated/prisma/client';
 
@@ -22,7 +20,6 @@ export class PracticeService {
     private readonly streakService: StreakService,
     private readonly redisService: RedisService,
     private readonly fsrsSchedulerService: FsrsSchedulerService,
-    private readonly fsrsReportService: FsrsReportService,
   ) {}
 
   private async invalidateUserCaches(userId: string) {
@@ -242,75 +239,6 @@ export class PracticeService {
       hasMore && data.length > 0 ? (data[data.length - 1]?.id ?? null) : null;
 
     const response = { data, pagination: { nextCursor, hasMore, total } };
-
-    await this.redisService.setJson(
-      cacheKey,
-      response,
-      CACHE_TTL_SECONDS.SHORT,
-    );
-
-    return response;
-  }
-
-  // FSRS Risk Cards
-
-  async getRiskCards(userId: string, filter: FSRSRiskFilterDto) {
-    const cacheKey = this.redisService.buildCacheKey('practice', {
-      userId,
-      params: {
-        endpoint: 'getRiskCards',
-        filter: filter as unknown as Record<string, unknown>,
-      },
-    });
-
-    const cached =
-      await this.redisService.getJson<Record<string, unknown>>(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    const take = filter.take ?? 20;
-    const riskPayload = await this.fsrsReportService.getRiskCards(userId, take);
-    const items = riskPayload.metrics.items;
-
-    if (items.length === 0) {
-      await this.redisService.setJson(
-        cacheKey,
-        riskPayload,
-        CACHE_TTL_SECONDS.SHORT,
-      );
-      return riskPayload;
-    }
-
-    const wordIds = items.map((i) => i.wordId);
-
-    const words = await this.prisma.word.findMany({
-      where: { id: { in: wordIds } },
-      select: {
-        id: true,
-        word: true,
-        pronunciation: true,
-        meaning: true,
-        example: true,
-        exampleVi: true,
-        image: true,
-        audio: true,
-        pos: true,
-        cefr: true,
-      },
-    });
-
-    const byId = new Map(words.map((w) => [w.id, w]));
-
-    const response = {
-      ...riskPayload,
-      metrics: {
-        items: items.map((item) => ({
-          ...item,
-          word: byId.get(item.wordId) ?? null,
-        })),
-      },
-    };
 
     await this.redisService.setJson(
       cacheKey,
